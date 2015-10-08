@@ -121,7 +121,11 @@ int main(int argc, char** argv)
         double sunElevation = boost::lexical_cast<double>(str);
 
         std::getline(fin, str, ',');
-        double satelliteInclination = boost::lexical_cast<double>(str);
+        double satelliteInclination = 0.0;
+        if (!str.empty())
+        {
+            boost::lexical_cast<double>(str);
+        }
 
         std::getline(fin, str, ',');
         double lookAngle = boost::lexical_cast<double>(str);
@@ -189,6 +193,14 @@ int main(int argc, char** argv)
         std::getline(fin, str, ',');
         double swCornerLon = boost::lexical_cast<double>(str);
 
+        std::ostringstream polygonStream;
+        polygonStream << "ST_GeographyFromText('SRID=4326;POLYGON((";
+        polygonStream << swCornerLon << " " << swCornerLat << ",";
+        polygonStream << seCornerLon << " " << seCornerLat << ",";
+        polygonStream << neCornerLon << " " << neCornerLat << ",";
+        polygonStream << nwCornerLon << " " << nwCornerLat << ",";
+        polygonStream << swCornerLon << " " << swCornerLat << "))')";
+
         std::string displayId;
         std::getline(fin, displayId, ',');
 
@@ -204,8 +216,8 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        queryStream << "INSERT INTO public.scenes (sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudMin, cloudMax) ";
-        queryStream << "VALUES('" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << satelliteInclination << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'," << cloudMin << "," << cloudMax << "); ";
+        queryStream << "INSERT INTO public.scenes (sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudMin, cloudMax, bounds) ";
+        queryStream << "VALUES('" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << satelliteInclination << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'," << cloudMin << "," << cloudMax << "," << polygonStream.str() << "); ";
 
         counter++;
     }
@@ -218,7 +230,7 @@ int main(int argc, char** argv)
 
     //--------------------------------------------------------------
 
-    const bool doInsert = false;
+    const bool doInsert = true;
 
     if (doInsert)
     {

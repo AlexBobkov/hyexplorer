@@ -13,6 +13,7 @@ CREATE TABLE public.scenes
   scenetime timestamp without time zone,
   cloudmin integer,
   cloudmax integer,
+  bounds geography(POLYGON,4326),
   CONSTRAINT scenes_pk PRIMARY KEY (sceneid)
 )
 WITH (
