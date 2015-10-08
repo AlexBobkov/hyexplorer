@@ -11,6 +11,8 @@ CREATE TABLE public.scenes
   satelliteinclination double precision,
   lookangle double precision,
   scenetime timestamp without time zone,
+  cloudmin integer,
+  cloudmax integer,
   CONSTRAINT scenes_pk PRIMARY KEY (sceneid)
 )
 WITH (

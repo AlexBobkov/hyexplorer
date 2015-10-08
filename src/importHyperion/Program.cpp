@@ -47,7 +47,6 @@ int main(int argc, char** argv)
     int counter = 0;
 
     std::ostringstream queryStream;
-    //QTextStream queryStream;
     queryStream << "BEGIN;";
 
     while (true)
@@ -67,6 +66,29 @@ int main(int argc, char** argv)
 
         std::string cloudStr;
         std::getline(fin, cloudStr, ',');
+
+        int cloudMin = 0;
+        int cloudMax = 0;
+
+        if (!cloudStr.empty())
+        {
+            if (cloudStr[0] == '0')
+            {
+                std::size_t index = cloudStr.find('%');
+                std::string cloudMaxStr = cloudStr.substr(5, index - 5);
+                cloudMax = boost::lexical_cast<int>(cloudMaxStr);
+            }
+            else
+            {
+                std::size_t indexMin = cloudStr.find('%');
+                std::string cloudMinStr = cloudStr.substr(0, indexMin);
+                cloudMin = boost::lexical_cast<int>(cloudMinStr);
+
+                std::size_t indexMax = cloudStr.find('%', indexMin + 1);
+                std::string cloudMaxStr = cloudStr.substr(indexMin + 5, indexMax - indexMin - 5);
+                cloudMax = boost::lexical_cast<int>(cloudMaxStr);
+            }
+        }
 
         std::getline(fin, str, ',');
         int orbitPath = boost::lexical_cast<int>(str);
@@ -182,26 +204,31 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        //std::cout << "Name " << sceneId << " " << orbitPath << " " << processingLevel << " " << sunElevation << " " << centerLat << " " << centerLon << " " << downloadLink << std::endl << std::endl;
-
-        queryStream << "INSERT INTO public.scenes (sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime) ";
-        queryStream << "VALUES('" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << satelliteInclination << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'); ";
+        queryStream << "INSERT INTO public.scenes (sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudMin, cloudMax) ";
+        queryStream << "VALUES('" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << satelliteInclination << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'," << cloudMin << "," << cloudMax << "); ";
 
         counter++;
     }
 
-    std::cout << "Finish parsing file. Start inserting.\n";
-
     queryStream << "COMMIT;ANALYZE public.scenes;";
 
-    QSqlQuery query;    
-    if (!query.exec(queryStream.str().c_str()))
-    {
-        qDebug() << "Failed to execute insert query: " << query.lastError().text();
-        return 1;
-    }
-
     fin.close();
+
+    std::cout << "Finish parsing file. Start inserting.\n";    
+
+    //--------------------------------------------------------------
+
+    const bool doInsert = false;
+
+    if (doInsert)
+    {
+        QSqlQuery query;
+        if (!query.exec(queryStream.str().c_str()))
+        {
+            qDebug() << "Failed to execute insert query: " << query.lastError().text();
+            return 1;
+        }
+    }    
 
     std::cout << "Records " << counter << std::endl;
 
