@@ -1,5 +1,12 @@
 #include <boost/lexical_cast.hpp>
 
+#include <QSqlDatabase>
+#include <QSqlError>
+#include <QSqlQuery>
+#include <QApplication>
+#include <QDebug>
+#include <QDateTime>
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -13,6 +20,20 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    QApplication app(argc, argv);
+
+    QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
+    db.setHostName("localhost");
+    db.setDatabaseName("GeoPortal");
+    db.setUserName("user");
+    db.setPassword("user");
+
+    if (!db.open())
+    {
+        qDebug() << "Failed to open database:" << db.lastError().text();
+        return 1;
+    }
+
     std::ifstream fin(argv[1]);
     if (!fin)
     {
@@ -22,8 +43,12 @@ int main(int argc, char** argv)
 
     std::string str;
     std::getline(fin, str); //first line
-        
+
     int counter = 0;
+
+    std::ostringstream queryStream;
+    //QTextStream queryStream;
+    queryStream << "BEGIN;";
 
     while (true)
     {
@@ -37,6 +62,8 @@ int main(int argc, char** argv)
 
         std::string acquisitionDateStr;
         std::getline(fin, acquisitionDateStr, ',');
+
+        QDateTime sceneTime = QDateTime::fromString(acquisitionDateStr.c_str(), "yyyy/MM/dd");
 
         std::string cloudStr;
         std::getline(fin, cloudStr, ',');
@@ -61,7 +88,7 @@ int main(int argc, char** argv)
 
         std::string sceneStartTimeStr;
         std::getline(fin, sceneStartTimeStr, ',');
-
+        
         std::string sceneStopTimeStr;
         std::getline(fin, sceneStopTimeStr, ',');
 
@@ -157,12 +184,26 @@ int main(int argc, char** argv)
 
         //std::cout << "Name " << sceneId << " " << orbitPath << " " << processingLevel << " " << sunElevation << " " << centerLat << " " << centerLon << " " << downloadLink << std::endl << std::endl;
 
+        queryStream << "INSERT INTO public.scenes (sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime) ";
+        queryStream << "VALUES('" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << satelliteInclination << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'); ";
+
         counter++;
     }
 
-    std::cout << "Records " << counter << std::endl;
+    std::cout << "Finish parsing file. Start inserting.\n";
+
+    queryStream << "COMMIT;ANALYZE public.scenes;";
+
+    QSqlQuery query;    
+    if (!query.exec(queryStream.str().c_str()))
+    {
+        qDebug() << "Failed to execute insert query: " << query.lastError().text();
+        return 1;
+    }
 
     fin.close();
+
+    std::cout << "Records " << counter << std::endl;
 
     return 0;
 }
