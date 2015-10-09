@@ -1,5 +1,3 @@
-#include <boost/lexical_cast.hpp>
-
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -7,10 +5,14 @@
 #include <QDebug>
 #include <QDateTime>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
+
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <iomanip>
 
 int main(int argc, char** argv)
 {
@@ -23,10 +25,17 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
+#if 1
     db.setHostName("localhost");
     db.setDatabaseName("GeoPortal");
     db.setUserName("user");
     db.setPassword("user");
+#else
+    db.setHostName("178.62.140.44");
+    db.setDatabaseName("GeoPortal");
+    db.setUserName("portal");
+    db.setPassword("PortalPass");
+#endif
 
     if (!db.open())
     {
@@ -67,13 +76,15 @@ int main(int argc, char** argv)
         std::string cloudStr;
         std::getline(fin, cloudStr, ',');
 
-        int cloudMin = 0;
-        int cloudMax = 0;
+        boost::optional<int> cloudMin;
+        boost::optional<int> cloudMax;
 
         if (!cloudStr.empty())
         {
             if (cloudStr[0] == '0')
             {
+                cloudMin = 0;
+
                 std::size_t index = cloudStr.find('%');
                 std::string cloudMaxStr = cloudStr.substr(5, index - 5);
                 cloudMax = boost::lexical_cast<int>(cloudMaxStr);
@@ -121,10 +132,10 @@ int main(int argc, char** argv)
         double sunElevation = boost::lexical_cast<double>(str);
 
         std::getline(fin, str, ',');
-        double satelliteInclination = 0.0;
+        boost::optional<double> satelliteInclination;
         if (!str.empty())
         {
-            boost::lexical_cast<double>(str);
+            satelliteInclination = boost::lexical_cast<double>(str);
         }
 
         std::getline(fin, str, ',');
@@ -194,6 +205,7 @@ int main(int argc, char** argv)
         double swCornerLon = boost::lexical_cast<double>(str);
 
         std::ostringstream polygonStream;
+        polygonStream << std::setprecision(15);
         polygonStream << "ST_GeographyFromText('SRID=4326;POLYGON((";
         polygonStream << swCornerLon << " " << swCornerLat << ",";
         polygonStream << seCornerLon << " " << seCornerLat << ",";
@@ -216,8 +228,27 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        queryStream << "INSERT INTO public.scenes (sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudMin, cloudMax, bounds) ";
-        queryStream << "VALUES('" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << satelliteInclination << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'," << cloudMin << "," << cloudMax << "," << polygonStream.str() << "); ";
+        queryStream << "INSERT INTO public.scenes (sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, lookangle, scenetime, bounds";
+        if (cloudMin && cloudMax)
+        {
+            queryStream << ", cloudMin, cloudMax";
+        }
+        if (satelliteInclination)
+        {
+            queryStream << ", satelliteinclination";
+        }
+        queryStream << ") ";
+
+        queryStream << "VALUES('Hyperion','" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'," << polygonStream.str();
+        if (cloudMin && cloudMax)
+        {
+            queryStream << "," << *cloudMin << "," << *cloudMax;
+        }
+        if (satelliteInclination)
+        {
+            queryStream << "," << *satelliteInclination;
+        }
+        queryStream << "); ";
 
         counter++;
     }
