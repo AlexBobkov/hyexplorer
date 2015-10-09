@@ -1,12 +1,14 @@
 ﻿#pragma once
 
+#include "ui_MainWindow.h"
+
+#include <osgEarth/MapNode>
+
 #include <QtGui>
 #include <QMainWindow>
 #include <QLabel>
 #include <QTabWidget>
 #include <QPushButton>
-
-#include "ui_MainWindow.h"
 
 class MainWindow : public QMainWindow
 {
@@ -16,11 +18,15 @@ public:
     explicit MainWindow();
     virtual ~MainWindow();
 
+    void setMapNode(osgEarth::MapNode* mapNode);
+
 public slots:
-    void test();
+    void loadScenes();
 
 private:
     void initUi();
 
     Ui::MainWindow _ui;
+
+    osg::ref_ptr<osgEarth::MapNode> _mapNode;
 };
