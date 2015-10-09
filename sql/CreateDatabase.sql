@@ -1,5 +1,5 @@
 CREATE DATABASE "GeoPortal"
-  WITH OWNER = postgres
+  WITH OWNER = portal
        ENCODING = 'UTF8'
        TABLESPACE = pg_default
        LC_COLLATE = 'Russian_Russia.1251'
