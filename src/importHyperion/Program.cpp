@@ -121,6 +121,26 @@ int main(int argc, char** argv)
 
         std::string sceneStartTimeStr;
         std::getline(fin, sceneStartTimeStr, ',');
+
+        //Вытаскиваем из переменной sceneStartTimeStr время
+        //Формат переменной: 
+        //YYYY:DDD:HH:MM:SS:SSS
+        //YYYY - four - digit year
+        //DDD - Julian day(001 - 366 * )(*for leap year)
+        //HH - hours(00 - 23)
+        //MM - minutes(00 - 59)
+        //SS.SSS - seconds(00.000 - 59.999)
+        std::size_t index = sceneStartTimeStr.find(':', 5);
+        QTime startTime = QTime::fromString(sceneStartTimeStr.substr(index + 1).c_str(), "HH:mm:ss.zzz");
+        if (!startTime.isValid())
+        {
+            startTime = QTime::fromString(sceneStartTimeStr.substr(index + 1).c_str(), "HH:mm:ss");
+        }
+        if (!startTime.isValid())
+        {
+            std::cerr << "Failed to parse time " << sceneStartTimeStr << std::endl;
+        }
+        sceneTime.setTime(startTime);
         
         std::string sceneStopTimeStr;
         std::getline(fin, sceneStopTimeStr, ',');
