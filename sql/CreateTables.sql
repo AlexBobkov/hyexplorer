@@ -22,3 +22,5 @@ WITH (
 );
 ALTER TABLE public.scenes
   OWNER TO "portal";
+
+CREATE INDEX scenes_bounds_index ON scenes USING GIST (bounds);

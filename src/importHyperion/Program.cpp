@@ -14,6 +14,8 @@
 #include <sstream>
 #include <iomanip>
 
+const bool doInsert = true;
+
 int main(int argc, char** argv)
 {
     if (argc != 2)
@@ -25,7 +27,7 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
-#if 1
+#if 0
     db.setHostName("localhost");
     db.setDatabaseName("GeoPortal");
     db.setUserName("user");
@@ -271,17 +273,31 @@ int main(int argc, char** argv)
         queryStream << "); ";
 
         counter++;
+
+        if (counter % 10000 == 0)
+        {
+            std::cout << "Insert counter " << counter << std::endl;
+
+            queryStream << "COMMIT;ANALYZE public.scenes;";
+
+            if (doInsert)
+            {
+                QSqlQuery query;
+                if (!query.exec(queryStream.str().c_str()))
+                {
+                    qDebug() << "Failed to execute insert query: " << query.lastError().text();
+                    return 1;
+                }
+            }
+
+            queryStream = std::ostringstream();
+            queryStream << "BEGIN;";
+        }
     }
 
+    std::cout << "Insert counter " << counter << std::endl;
+
     queryStream << "COMMIT;ANALYZE public.scenes;";
-
-    fin.close();
-
-    std::cout << "Finish parsing file. Start inserting.\n";    
-
-    //--------------------------------------------------------------
-
-    const bool doInsert = true;
 
     if (doInsert)
     {
@@ -291,8 +307,10 @@ int main(int argc, char** argv)
             qDebug() << "Failed to execute insert query: " << query.lastError().text();
             return 1;
         }
-    }    
+    }
 
+    fin.close();
+     
     std::cout << "Records " << counter << std::endl;
 
     return 0;
