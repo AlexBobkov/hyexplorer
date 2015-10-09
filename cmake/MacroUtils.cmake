@@ -1,0 +1,10 @@
+#Макрос корректно линкует релиз- и дебаг-версии библиотек
+MACRO(LINK_WITH_VARIABLES TRGTNAME)
+    FOREACH(varname ${ARGN})
+        IF(${varname}_DEBUG)			
+            TARGET_LINK_LIBRARIES(${TRGTNAME} optimized "${${varname}}" debug "${${varname}_DEBUG}")
+        ELSE(${varname}_DEBUG)
+            TARGET_LINK_LIBRARIES(${TRGTNAME} "${${varname}}" )
+        ENDIF(${varname}_DEBUG)
+    ENDFOREACH(varname)
+ENDMACRO(LINK_WITH_VARIABLES TRGTNAME)
