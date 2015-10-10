@@ -23,6 +23,14 @@
      <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>Справка</string>
+    </property>
+    <addaction name="metadataAction"/>
+    <addaction name="aboutAction"/>
+   </widget>
+   <addaction name="menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
@@ -147,6 +155,16 @@
     </layout>
    </widget>
   </widget>
+  <action name="aboutAction">
+   <property name="text">
+    <string>О программе</string>
+   </property>
+  </action>
+  <action name="metadataAction">
+   <property name="text">
+    <string>Описание метаданных</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections>

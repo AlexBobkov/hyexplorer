@@ -43,6 +43,9 @@ void MainWindow::initUi()
 {
     _ui.setupUi(this);
 
+    connect(_ui.aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
+    connect(_ui.metadataAction, SIGNAL(triggered()), this, SLOT(showMetadataDescription()));
+
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
 }
 
@@ -171,4 +174,38 @@ void MainWindow::updateLayer(const std::string& query)
 
     //int fc = dynamic_cast<osgEarth::Features::FeatureModelSource*>(_oldLayer->getModelSource())->getFeatureSource()->getFeatureCount();
     //std::cout << "Count = " << fc << std::endl;
+}
+
+void MainWindow::showAbout()
+{
+    QDialog dialog(this);
+
+    dialog.setWindowTitle(tr("О программе"));
+
+    QVBoxLayout* vLayout = new QVBoxLayout;
+    dialog.setLayout(vLayout);
+
+    QString text = QString::fromUtf8("<html><head/><body><p align='center'><span style='font-size:12pt;'>Геопортал</span></p><p>Разработчики:<br/>Александр Бобков<br/>Денис Учаев</p></body></html>");
+
+    QLabel* aboutLabel = new QLabel(text);
+    aboutLabel->setTextFormat(Qt::RichText);
+    aboutLabel->setOpenExternalLinks(true);
+    vLayout->addWidget(aboutLabel);
+
+    QHBoxLayout* hLayout = new QHBoxLayout;
+    hLayout->addStretch();
+
+    QPushButton* okButton = new QPushButton("OK");
+    hLayout->addWidget(okButton);
+
+    vLayout->addLayout(hLayout);
+
+    connect(okButton, SIGNAL(clicked()), &dialog, SLOT(accept()));
+
+    dialog.exec();
+}
+
+void MainWindow::showMetadataDescription()
+{
+    QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
 }

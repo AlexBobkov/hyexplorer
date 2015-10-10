@@ -24,6 +24,9 @@ public slots:
     void executeQuery();
     void updateLayer(const std::string& query);
 
+    void showAbout();
+    void showMetadataDescription();
+
 private:
     void initUi();
 
