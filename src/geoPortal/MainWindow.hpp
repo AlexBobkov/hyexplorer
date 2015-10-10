@@ -21,7 +21,8 @@ public:
     void setMapNode(osgEarth::MapNode* mapNode);
 
 public slots:
-    void loadScenes();
+    void executeQuery();
+    void updateLayer(const std::string& query);
 
 private:
     void initUi();
@@ -29,4 +30,7 @@ private:
     Ui::MainWindow _ui;
 
     osg::ref_ptr<osgEarth::MapNode> _mapNode;
+
+    osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
+    std::string _oldQuery;
 };

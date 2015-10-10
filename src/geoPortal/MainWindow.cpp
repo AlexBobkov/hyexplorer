@@ -43,7 +43,7 @@ void MainWindow::initUi()
 {
     _ui.setupUi(this);
 
-    connect(_ui.pushButton, SIGNAL(clicked()), this, SLOT(loadScenes()));
+    connect(_ui.pushButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
 }
 
 void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
@@ -51,23 +51,41 @@ void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
     _mapNode = mapNode;
 }
 
-void MainWindow::loadScenes()
+void MainWindow::executeQuery()
 {
-    std::cout << "Load scenes\n";
+    updateLayer("orbitpath=10");
+}
+
+void MainWindow::updateLayer(const std::string& query)
+{
+    if (_oldLayer.valid() && query == _oldQuery)
+    {
+        return;
+    }
+
+    if (_oldLayer.valid())
+    {
+        _mapNode->getMap()->removeModelLayer(_oldLayer.get());
+        _oldLayer = nullptr;
+    }
 
     OGRFeatureOptions featureOpt;
     featureOpt.ogrDriver() = "PostgreSQL";
-    //featureOpt.connection() = "PG:dbname='GeoPortal' host='178.62.140.44' port='5432' user='portal' password='PortalPass'";
+#if 0
+    featureOpt.connection() = "PG:dbname='GeoPortal' host='178.62.140.44' port='5432' user='portal' password='PortalPass'";
+#else
     featureOpt.connection() = "PG:dbname='GeoPortal' host='localhost' port='5432' user='user' password='user'";
+#endif
     featureOpt.layer() = "scenes";
-    //featureOpt.buildSpatialIndex() = true;
-
-    //PG:"dbname='databasename' host='addr' port='5432' user='x' password='y'"
+    featureOpt.buildSpatialIndex() = true;
 
     Style style;
 
     PolygonSymbol* poly = style.getOrCreate<PolygonSymbol>();
-    poly->fill()->color() = Color::White;
+    poly->fill()->color() = Color::Green;
+
+    LineSymbol* line = style.getOrCreate<LineSymbol>();
+    line->stroke()->color() = Color::Yellow;
         
     AltitudeSymbol* alt = style.getOrCreate<AltitudeSymbol>();
     alt->clamping() = alt->CLAMP_TO_TERRAIN;
@@ -75,6 +93,13 @@ void MainWindow::loadScenes()
 
     StyleSheet* styleSheet = new StyleSheet();
     styleSheet->addStyle(style);
+
+    Query q;
+    q.expression() = query;
+
+    osgEarth::Symbology::StyleSelector selector;
+    selector.query() = q;
+    styleSheet->selectors().push_back(selector);
 
     //FeatureDisplayLayout layout;
     //layout.tileSizeFactor() = 52.0;
@@ -85,7 +110,11 @@ void MainWindow::loadScenes()
     fgmOpt.styles() = styleSheet;
     //fgmOpt.layout() = layout;
 
-    _mapNode->getMap()->addModelLayer(new ModelLayer("scenes", fgmOpt));
+    _oldLayer = new ModelLayer("scenes", fgmOpt);
+    _oldQuery = query;
 
-    _ui.pushButton->setEnabled(false);
+    _mapNode->getMap()->addModelLayer(_oldLayer.get());    
+
+    int fc = dynamic_cast<osgEarth::Features::FeatureModelSource*>(_oldLayer->getModelSource())->getFeatureSource()->getFeatureCount();
+    std::cout << "Count = " << fc << std::endl;
 }
