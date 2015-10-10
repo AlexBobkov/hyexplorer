@@ -43,7 +43,7 @@ void MainWindow::initUi()
 {
     _ui.setupUi(this);
 
-    connect(_ui.pushButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
+    connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
 }
 
 void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
@@ -53,7 +53,51 @@ void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
 
 void MainWindow::executeQuery()
 {
-    updateLayer("orbitpath=10");
+    bool needAnd = false;
+
+    std::ostringstream str;
+    
+    if (_ui.orbitPathCheckBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+        str << "orbitpath=" << _ui.orbitPathSpinBox->value();
+        needAnd = true;
+    }
+
+    if (_ui.orbitRowCheckBox->isChecked())
+    {        
+        if (needAnd)
+        {
+            str << " and ";
+        }
+        str << "orbitrow=" << _ui.orbitRowSpinBox->value();
+        needAnd = true;
+    }
+    
+    if (_ui.targetPathCheckBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+        str << "targetpath=" << _ui.targetPathSpinBox->value();
+        needAnd = true;
+    }
+
+    if (_ui.targetRowCheckBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+        str << "targetrow=" << _ui.targetRowSpinBox->value();
+        needAnd = true;
+    }
+
+    updateLayer(str.str());
 }
 
 void MainWindow::updateLayer(const std::string& query)
@@ -69,9 +113,11 @@ void MainWindow::updateLayer(const std::string& query)
         _oldLayer = nullptr;
     }
 
+    std::cout << "Query " << query << std::endl;
+
     OGRFeatureOptions featureOpt;
     featureOpt.ogrDriver() = "PostgreSQL";
-#if 0
+#if 1
     featureOpt.connection() = "PG:dbname='GeoPortal' host='178.62.140.44' port='5432' user='portal' password='PortalPass'";
 #else
     featureOpt.connection() = "PG:dbname='GeoPortal' host='localhost' port='5432' user='user' password='user'";
@@ -82,7 +128,7 @@ void MainWindow::updateLayer(const std::string& query)
     Style style;
 
     PolygonSymbol* poly = style.getOrCreate<PolygonSymbol>();
-    poly->fill()->color() = Color::Green;
+    poly->fill()->color() = Color::Yellow;
 
     LineSymbol* line = style.getOrCreate<LineSymbol>();
     line->stroke()->color() = Color::Yellow;
@@ -94,12 +140,15 @@ void MainWindow::updateLayer(const std::string& query)
     StyleSheet* styleSheet = new StyleSheet();
     styleSheet->addStyle(style);
 
-    Query q;
-    q.expression() = query;
+    if (!query.empty())
+    {
+        Query q;
+        q.expression() = query;
 
-    osgEarth::Symbology::StyleSelector selector;
-    selector.query() = q;
-    styleSheet->selectors().push_back(selector);
+        osgEarth::Symbology::StyleSelector selector;
+        selector.query() = q;
+        styleSheet->selectors().push_back(selector);
+    }
 
     //FeatureDisplayLayout layout;
     //layout.tileSizeFactor() = 52.0;
@@ -113,8 +162,13 @@ void MainWindow::updateLayer(const std::string& query)
     _oldLayer = new ModelLayer("scenes", fgmOpt);
     _oldQuery = query;
 
+    osg::Timer_t startTick = osg::Timer::instance()->tick();
+
     _mapNode->getMap()->addModelLayer(_oldLayer.get());    
 
-    int fc = dynamic_cast<osgEarth::Features::FeatureModelSource*>(_oldLayer->getModelSource())->getFeatureSource()->getFeatureCount();
-    std::cout << "Count = " << fc << std::endl;
+    osg::Timer_t endTick = osg::Timer::instance()->tick();
+    std::cout << "Loading time " << osg::Timer::instance()->delta_s(startTick, endTick) << std::endl;
+
+    //int fc = dynamic_cast<osgEarth::Features::FeatureModelSource*>(_oldLayer->getModelSource())->getFeatureSource()->getFeatureCount();
+    //std::cout << "Count = " << fc << std::endl;
 }

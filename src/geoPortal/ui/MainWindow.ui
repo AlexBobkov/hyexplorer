@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>GeoPortal</string>
+   <string>Геопортал</string>
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
@@ -27,7 +27,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
    <property name="windowTitle">
-    <string>Settings</string>
+    <string>Настройки</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -35,9 +35,99 @@
    <widget class="QWidget" name="dockWidgetContents">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="orbitPathCheckBox">
+         <property name="text">
+          <string>Orbit Path</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QSpinBox" name="orbitPathSpinBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="maximum">
+          <number>233</number>
+         </property>
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QCheckBox" name="orbitRowCheckBox">
+         <property name="text">
+          <string>Orbit Row</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QSpinBox" name="orbitRowSpinBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="maximum">
+          <number>248</number>
+         </property>
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QCheckBox" name="targetPathCheckBox">
+         <property name="text">
+          <string>Target Path</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QSpinBox" name="targetPathSpinBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>233</number>
+         </property>
+         <property name="value">
+          <number>25</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="targetRowCheckBox">
+         <property name="text">
+          <string>Target Row</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QSpinBox" name="targetRowSpinBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>248</number>
+         </property>
+         <property name="value">
+          <number>38</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="doQueryButton">
        <property name="text">
-        <string>Load</string>
+        <string>Найти</string>
        </property>
       </widget>
      </item>
@@ -59,5 +149,70 @@
   </widget>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>orbitRowCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>orbitRowSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>43</x>
+     <y>86</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>127</x>
+     <y>87</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>orbitPathCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>orbitPathSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>45</x>
+     <y>61</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>129</x>
+     <y>62</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>targetPathCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>targetPathSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>49</x>
+     <y>113</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>129</x>
+     <y>114</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>targetRowCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>targetRowSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>48</x>
+     <y>139</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>129</x>
+     <y>140</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
