@@ -52,11 +52,11 @@ namespace
                 }
 
                 std::string sceneid = feature->getString("sceneid");
-                std::cout << "ID " << sceneid << std::endl;
+                std::cout << "ID " << feature->getFID() << " " << sceneid << std::endl;
 
                 //QMessageBox::information(qApp->activeWindow(), QObject::tr("Сцена"), QObject::tr("Сцена %0 (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0'>смотреть</a>)").arg(sceneid.c_str()));
 
-                mainWindow->setSceneId(sceneid);
+                mainWindow->setScene(feature);
             }
 
             highlightUniform->set(id);

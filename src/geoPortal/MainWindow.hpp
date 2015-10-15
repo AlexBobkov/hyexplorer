@@ -3,6 +3,7 @@
 #include "ui_MainWindow.h"
 
 #include <osgEarth/MapNode>
+#include <osgEarthFeatures/Feature>
 
 #include <QtGui>
 #include <QMainWindow>
@@ -20,7 +21,7 @@ public:
 
     void setMapNode(osgEarth::MapNode* mapNode);
 
-    void setSceneId(const std::string& sceneid);
+    void setScene(osgEarth::Features::Feature* feature);
 
 public slots:
     void executeQuery();
@@ -30,7 +31,7 @@ public slots:
     void showMetadataDescription();
 
 signals:
-    void sceneSelected(const QString& sceneid);
+    void sceneSelected(osgEarth::Features::Feature* feature);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;

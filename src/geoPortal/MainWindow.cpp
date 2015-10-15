@@ -60,7 +60,7 @@ void MainWindow::initUi()
     addDockWidget(Qt::RightDockWidgetArea, _metadataDock);    
 
     MetadataWidget* metadataWidget = new MetadataWidget;
-    connect(this, SIGNAL(sceneSelected(const QString&)), metadataWidget, SLOT(setSceneId(const QString&)));
+    connect(this, SIGNAL(sceneSelected(osgEarth::Features::Feature*)), metadataWidget, SLOT(setScene(osgEarth::Features::Feature*)));
     _metadataDock->setWidget(metadataWidget);
 }
 
@@ -77,16 +77,16 @@ void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
     _mapNode = mapNode;
 }
 
-void MainWindow::setSceneId(const std::string& sceneid)
+void MainWindow::setScene(osgEarth::Features::Feature* feature)
 {
-    if (sceneid.empty())
+    if (!feature)
     {
         return;
     }
 
     _metadataDock->setVisible(true);
 
-    emit sceneSelected(QString::fromUtf8(sceneid.c_str()));
+    emit sceneSelected(feature);
 }
 
 void MainWindow::executeQuery()
