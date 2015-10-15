@@ -20,12 +20,17 @@ public:
 
     void setMapNode(osgEarth::MapNode* mapNode);
 
+    void setSceneId(const std::string& sceneid);
+
 public slots:
     void executeQuery();
     void updateLayer(const std::string& query);
 
     void showAbout();
     void showMetadataDescription();
+
+signals:
+    void sceneSelected(const QString& sceneid);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -39,4 +44,6 @@ private:
 
     osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
     std::string _oldQuery;
+
+    QDockWidget* _metadataDock;
 };

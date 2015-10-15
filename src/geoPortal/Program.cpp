@@ -31,8 +31,12 @@ namespace
     struct MyPickCallback : public RTTPicker::Callback
     {
         osg::ref_ptr<osg::Uniform> highlightUniform;
+        MainWindow* mainWindow;
 
-        MyPickCallback(osg::Uniform* uniform) : highlightUniform(uniform) {}
+        MyPickCallback(osg::Uniform* uniform, MainWindow* mainWindow) :
+            highlightUniform(uniform),
+            mainWindow(mainWindow)
+        {}
 
         void onHit(ObjectID id)
         {
@@ -50,7 +54,9 @@ namespace
                 std::string sceneid = feature->getString("sceneid");
                 std::cout << "ID " << sceneid << std::endl;
 
-                QMessageBox::information(qApp->activeWindow(), QObject::tr("Сцена"), QObject::tr("Сцена %0 (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0'>смотреть</a>)").arg(sceneid.c_str()));
+                //QMessageBox::information(qApp->activeWindow(), QObject::tr("Сцена"), QObject::tr("Сцена %0 (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0'>смотреть</a>)").arg(sceneid.c_str()));
+
+                mainWindow->setSceneId(sceneid);
             }
 
             highlightUniform->set(id);
@@ -136,7 +142,7 @@ int main(int argc, char** argv)
     RTTPicker* picker = new RTTPicker();
     viewer->addEventHandler(picker);
     picker->addChild(mapNode);
-    picker->setDefaultCallback(new MyPickCallback(highlightUniform));
+    picker->setDefaultCallback(new MyPickCallback(highlightUniform, &appWin));
 
     appWin.setCentralWidget(viewerWidget);
     appWin.setMapNode(mapNode);

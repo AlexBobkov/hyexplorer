@@ -35,7 +35,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
    <property name="windowTitle">
-    <string>Настройки</string>
+    <string>Формирование запроса</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>

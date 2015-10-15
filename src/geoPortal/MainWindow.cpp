@@ -1,4 +1,5 @@
 #include "MainWindow.hpp"
+#include "MetadataWidget.hpp"
 
 #include <osgEarthFeatures/FeatureSource>
 #include <osgEarthFeatures/FeatureDisplayLayout>
@@ -31,7 +32,8 @@ using namespace osgEarth::Features;
 using namespace osgEarth::Symbology;
 
 MainWindow::MainWindow() :
-QMainWindow()
+QMainWindow(),
+_metadataDock(0)
 {
     initUi();
 }
@@ -51,6 +53,15 @@ void MainWindow::initUi()
 
     _ui.dateTimeEditFrom->setDateTime(QDateTime::currentDateTime().addYears(-1));
     _ui.dateTimeEditTo->setDateTime(QDateTime::currentDateTime());
+    
+    _metadataDock = new QDockWidget(tr("Метаданные"));
+    _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _metadataDock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _metadataDock);    
+
+    MetadataWidget* metadataWidget = new MetadataWidget;
+    connect(this, SIGNAL(sceneSelected(const QString&)), metadataWidget, SLOT(setSceneId(const QString&)));
+    _metadataDock->setWidget(metadataWidget);
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -64,6 +75,18 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
 {
     _mapNode = mapNode;
+}
+
+void MainWindow::setSceneId(const std::string& sceneid)
+{
+    if (sceneid.empty())
+    {
+        return;
+    }
+
+    _metadataDock->setVisible(true);
+
+    emit sceneSelected(QString::fromUtf8(sceneid.c_str()));
 }
 
 void MainWindow::executeQuery()

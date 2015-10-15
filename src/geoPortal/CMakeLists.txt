@@ -9,10 +9,12 @@ QT5_WRAP_UI(LIB_UI_HDRS ${LIB_QT_UIS})
 SET(HEADER_FILES
 	${LIB_UI_HDRS}
 	MainWindow.hpp
+	MetadataWidget.hpp
 )
 
 SET(SRC_FILES	
 	MainWindow.cpp
+	MetadataWidget.cpp
 	Program.cpp
 )
 
