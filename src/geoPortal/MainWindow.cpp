@@ -48,6 +48,9 @@ void MainWindow::initUi()
     connect(_ui.metadataAction, SIGNAL(triggered()), this, SLOT(showMetadataDescription()));
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
+
+    _ui.dateTimeEditFrom->setDateTime(QDateTime::currentDateTime().addYears(-1));
+    _ui.dateTimeEditTo->setDateTime(QDateTime::currentDateTime());
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -68,6 +71,88 @@ void MainWindow::executeQuery()
     bool needAnd = false;
 
     std::ostringstream str;
+
+    if (_ui.dateGroupBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+
+        str << std::setprecision(7) << "scenetime>='" << _ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate).toUtf8().constData() << "'::timestamp without time zone and " << "scenetime<='" << _ui.dateTimeEditTo->dateTime().toString(Qt::ISODate).toUtf8().constData() << "'::timestamp without time zone";
+        needAnd = true;
+    }
+
+    if (_ui.sunAzimuthGroupBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+
+        str << std::setprecision(7) << "sunazimuth>=" << _ui.sunAzimuthFromSpinBox->value() << " and " << "sunazimuth<=" << _ui.sunAzimuthToSpinBox->value();
+        needAnd = true;
+    }
+
+    if (_ui.sunElevationGroupBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+
+        str << std::setprecision(7) << "sunelevation>=" << _ui.sunElevationFromSpinBox->value() << " and " << "sunelevation<=" << _ui.sunElevationToSpinBox->value();
+        needAnd = true;
+    }
+
+    if (_ui.inclinationGroupBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+
+        str << std::setprecision(7) << "satelliteinclination>=" << _ui.inclinationFromSpinBox->value() << " and " << "satelliteinclination<=" << _ui.inclinationToSpinBox->value();
+        needAnd = true;
+    }
+
+    if (_ui.lookAngleGroupBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+
+        str << std::setprecision(7) << "lookangle>=" << _ui.lookAngleFromSpinBox->value() << " and " << "lookangle<=" << _ui.lookAngleToSpinBox->value();
+        needAnd = true;
+    }
+
+    if (_ui.processingLevelGroupBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+
+        if (_ui.l1RRadioButton->isChecked())
+        {
+            str << "processinglevel='L1R Product Available'";
+        }
+        else if (_ui.l1GstRadioButton->isChecked())
+        {
+            str << "processinglevel='L1Gst Product Available'";
+        }
+        else if (_ui.l1TRadioButton->isChecked())
+        {
+            str << "processinglevel='L1T Product Available'";
+        }
+        else
+        {
+            std::cerr << "Wrong processing level\n";
+            return;
+        }
+        needAnd = true;
+    }
 
     if (_ui.cloudnessCheckBox->isChecked())
     {

@@ -62,7 +62,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDateTimeEdit" name="dateTimeEdit">
+         <widget class="QDateTimeEdit" name="dateTimeEditFrom">
           <property name="calendarPopup">
            <bool>true</bool>
           </property>
@@ -76,7 +76,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDateTimeEdit" name="dateTimeEdit_2">
+         <widget class="QDateTimeEdit" name="dateTimeEditTo">
           <property name="calendarPopup">
            <bool>true</bool>
           </property>
@@ -105,7 +105,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox">
+         <widget class="QDoubleSpinBox" name="sunAzimuthFromSpinBox">
           <property name="decimals">
            <number>6</number>
           </property>
@@ -125,7 +125,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+         <widget class="QDoubleSpinBox" name="sunAzimuthToSpinBox">
           <property name="decimals">
            <number>6</number>
           </property>
@@ -160,7 +160,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+         <widget class="QDoubleSpinBox" name="sunElevationFromSpinBox">
           <property name="decimals">
            <number>6</number>
           </property>
@@ -180,7 +180,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
+         <widget class="QDoubleSpinBox" name="sunElevationToSpinBox">
           <property name="decimals">
            <number>6</number>
           </property>
@@ -215,7 +215,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
+         <widget class="QDoubleSpinBox" name="inclinationFromSpinBox">
           <property name="decimals">
            <number>2</number>
           </property>
@@ -235,7 +235,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
+         <widget class="QDoubleSpinBox" name="inclinationToSpinBox">
           <property name="decimals">
            <number>2</number>
           </property>
@@ -270,7 +270,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_7">
+         <widget class="QDoubleSpinBox" name="lookAngleFromSpinBox">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -290,7 +290,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_8">
+         <widget class="QDoubleSpinBox" name="lookAngleToSpinBox">
           <property name="decimals">
            <number>3</number>
           </property>
@@ -335,6 +335,9 @@
          <widget class="QRadioButton" name="l1TRadioButton">
           <property name="text">
            <string>L1T</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
