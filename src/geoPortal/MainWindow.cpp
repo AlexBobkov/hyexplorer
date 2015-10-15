@@ -59,6 +59,17 @@ void MainWindow::executeQuery()
     bool needAnd = false;
 
     std::ostringstream str;
+
+    if (_ui.cloudnessCheckBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+        
+        str << "cloudmax<=" << _ui.cloudnessComboBox->currentText().toInt();
+        needAnd = true;
+    }
     
     if (_ui.orbitPathCheckBox->isChecked())
     {
@@ -120,7 +131,7 @@ void MainWindow::updateLayer(const std::string& query)
 
     OGRFeatureOptions featureOpt;
     featureOpt.ogrDriver() = "PostgreSQL";
-#if 1
+#if 0
     featureOpt.connection() = "PG:dbname='GeoPortal' host='178.62.140.44' port='5432' user='portal' password='PortalPass'";
 #else
     featureOpt.connection() = "PG:dbname='GeoPortal' host='localhost' port='5432' user='user' password='user'";
