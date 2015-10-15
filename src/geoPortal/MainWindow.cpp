@@ -23,6 +23,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QMessageBox>
+#include <QSettings>
 
 using namespace osgEarth;
 using namespace osgEarth::Drivers;
@@ -47,6 +48,14 @@ void MainWindow::initUi()
     connect(_ui.metadataAction, SIGNAL(triggered()), this, SLOT(showMetadataDescription()));
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QSettings settings;
+    settings.setValue("MainWindow/size", size());
+
+    QMainWindow::resizeEvent(event);
 }
 
 void MainWindow::setMapNode(osgEarth::MapNode* mapNode)

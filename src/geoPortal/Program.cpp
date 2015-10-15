@@ -141,6 +141,10 @@ int main(int argc, char** argv)
     appWin.setCentralWidget(viewerWidget);
     appWin.setMapNode(mapNode);
 
+    QSettings settings;
+    QSize size = settings.value("MainWindow/size", QSize(1500, 900)).toSize();
+
+    appWin.resize(size);
     appWin.show();
 
     int result = app.exec();

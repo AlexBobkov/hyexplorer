@@ -27,6 +27,9 @@ public slots:
     void showAbout();
     void showMetadataDescription();
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
     void initUi();
 
