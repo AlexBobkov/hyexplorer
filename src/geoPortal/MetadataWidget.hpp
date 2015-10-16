@@ -9,6 +9,9 @@
 #include <QtVariantEditorFactory>
 #include <QtTreePropertyBrowser>
 
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 #include <QLabel>
 
 namespace portal
@@ -23,6 +26,9 @@ namespace portal
 
     public slots:
         void setScene(const ScenePtr& scene);
+
+    private slots:
+        void onFileDownloaded(QNetworkReply* reply);
 
     private:
         void initUi();
@@ -46,5 +52,7 @@ namespace portal
 
         QLabel* _overviewDownloadLabel;
         QLabel* _sceneDownloadLabel;
+
+        QNetworkAccessManager _networkManager;
     };
 }

@@ -2,6 +2,7 @@
 
 #include <QVBoxLayout>
 #include <QDateTime>
+#include <QDir>
 
 #include <iostream>
 
@@ -102,6 +103,8 @@ void MetadataWidget::initUi()
     layout->addWidget(_sceneDownloadLabel);
     
     layout->addStretch();
+
+    connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
 }
 
 void MetadataWidget::setScene(const ScenePtr& scene)
@@ -221,4 +224,61 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 
     _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
     _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
+
+    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(scene->sceneid.c_str()));
+    request.setAttribute(QNetworkRequest::User, QString("Metadata"));
+    _networkManager.get(request);
+}
+
+void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
+{
+    std::cout << "Downloaded " << qPrintable(reply->url().url()) << std::endl;;
+
+    QByteArray data = reply->readAll();
+    if (!data.isNull() && !data.isEmpty())
+    {
+        QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
+
+        if (requestType == "Metadata")
+        {
+            int startIndex = data.indexOf("http://earthexplorer.usgs.gov/browse/eo-1/hyp");
+            if (startIndex != -1)
+            {
+                int endIndex = data.indexOf(".jpeg", startIndex);
+                if (endIndex != -1)
+                {
+                    QByteArray overviewUrlName = data.mid(startIndex, endIndex - startIndex + 5);
+
+                    std::cout << "Name " << overviewUrlName.toStdString() << std::endl;
+
+                    QNetworkRequest request(QString(overviewUrlName.constData()));
+                    request.setAttribute(QNetworkRequest::User, QString("Overview"));
+                    _networkManager.get(request);
+                }
+            }
+        }
+        else if (requestType == "Overview")
+        {                
+            QDir dir(QDir::tempPath() + "/portal");
+            if (!dir.exists())
+            {
+                QDir::temp().mkdir("portal");
+            }
+
+            QString filename = QDir::tempPath() + QString("/portal/%1").arg(reply->url().fileName());
+
+            QFile localFile(filename);
+            if (!localFile.open(QIODevice::WriteOnly))
+            {
+                std::cerr << "Failed to open file " << qPrintable(filename) << std::endl;
+                return;
+            }
+
+            localFile.write(data);
+            localFile.close();
+
+        }
+    }    
+
+    reply->deleteLater();
 }
