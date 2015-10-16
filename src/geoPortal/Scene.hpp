@@ -1,6 +1,9 @@
 ﻿#pragma once
 
+#include <osg/Vec3d>
+
 #include <QDateTime>
+#include <QString>
 
 #include <boost/optional.hpp>
 
@@ -30,6 +33,13 @@ namespace portal
         boost::optional<double> sunElevation;
         boost::optional<double> inclination;
         boost::optional<double> lookAngle;
+
+        osg::Vec3d swCorner;
+        osg::Vec3d seCorner;
+        osg::Vec3d neCorner;
+        osg::Vec3d nwCorner;
+
+        QString overviewFilename() const;
     };
 
     typedef std::shared_ptr<Scene> ScenePtr;

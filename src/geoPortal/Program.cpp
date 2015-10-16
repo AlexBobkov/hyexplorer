@@ -24,6 +24,7 @@
 #include <string>
 
 using namespace osgEarth;
+using namespace osgEarth::Symbology;
 using namespace osgEarth::Features;
 using namespace osgEarth::Util;
 using namespace portal;
@@ -114,6 +115,19 @@ namespace
                 if (feature->hasAttr("lookangle"))
                 {
                     scene->lookAngle = feature->getDouble("lookangle");
+                }
+
+                Geometry* geometry = feature->getGeometry();
+                if (geometry->getType() == Geometry::TYPE_POLYGON && geometry->size() >= 4)
+                {
+                    scene->swCorner = geometry->at(3);
+                    scene->seCorner = geometry->at(0);
+                    scene->neCorner = geometry->at(1);
+                    scene->nwCorner = geometry->at(2);
+                }
+                else
+                {
+                    std::cerr << "Geometry is not a polygon\n";
                 }
                 
                 mainWindow->setScene(scene);

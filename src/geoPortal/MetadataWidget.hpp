@@ -37,7 +37,12 @@ namespace portal
     private:
         void initUi();
 
+        void makeOverlay(const QString& filepath);
+
         osg::observer_ptr<osgEarth::MapNode> _mapNode;
+        osg::ref_ptr<osg::Node> _overlayNode;
+
+        ScenePtr _lastScene;
 
         QtAbstractPropertyBrowser* _browser;
         QtVariantPropertyManager* _variantManager;

@@ -115,6 +115,8 @@ void MetadataWidget::initUi()
 
 void MetadataWidget::setScene(const ScenePtr& scene)
 {
+    _lastScene = scene;
+
     _sceneidProp->setValue(scene->sceneid.c_str());
     _datetimeProp->setValue(scene->sceneTime);
 
@@ -230,28 +232,16 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 
     _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
     _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
-
-    QString overviewFilename = QString("%0.jpeg").arg(scene->sceneid.c_str());
-    overviewFilename.replace("EO1H", "EO1"); //Hyperion scecific
-
+            
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
-    QString overviewFilepath = dataPath + QString("/overviews/") + overviewFilename;
+    QString overviewFilepath = dataPath + QString("/overviews/") + scene->overviewFilename();
 
     if (QFile::exists(overviewFilepath))
     {
         std::cout << "Overview exists in the local cache\n";
 
-        if (_mapNode.valid())
-        {
-            osg::Image* image = osgDB::readImageFile(overviewFilepath.toLocal8Bit().constData());
-            if (image)
-            {
-                ImageOverlay* imageOverlay = new ImageOverlay(_mapNode.get(), image);
-                imageOverlay->setBounds(Bounds(-100.0, 35.0, -90.0, 40.0));
-                _mapNode->addChild(imageOverlay);
-            }
-        }
+        makeOverlay(overviewFilepath);
     }
     else
     {
@@ -295,19 +285,50 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
                 dataDir.mkpath("overviews");
             }
 
-            QString filename = dataDir.filePath(QString("overviews/") + reply->url().fileName());
+            QString overviewFilepath = dataDir.filePath(QString("overviews/") + reply->url().fileName());
 
-            QFile localFile(filename);
+            QFile localFile(overviewFilepath);
             if (!localFile.open(QIODevice::WriteOnly))
             {
-                std::cerr << "Failed to open file " << qPrintable(filename) << std::endl;
+                std::cerr << "Failed to open file " << qPrintable(overviewFilepath) << std::endl;
                 return;
             }
 
             localFile.write(data);
             localFile.close();
+
+            if (_lastScene && reply->url().fileName() == _lastScene->overviewFilename())
+            {
+                makeOverlay(overviewFilepath);
+            }
         }
     }
 
     reply->deleteLater();
+}
+
+void MetadataWidget::makeOverlay(const QString& filepath)
+{
+    if (_mapNode.valid() && _lastScene)
+    {
+        if (_overlayNode)
+        {
+            _mapNode->removeChild(_overlayNode);
+            _overlayNode = nullptr;
+        }
+
+        osg::Image* image = osgDB::readImageFile(filepath.toLocal8Bit().constData());
+        if (image)
+        {
+            ImageOverlay* imageOverlay = new ImageOverlay(_mapNode.get(), image);
+            imageOverlay->setLowerLeft(_lastScene->swCorner.x(), _lastScene->swCorner.y());
+            imageOverlay->setLowerRight(_lastScene->seCorner.x(), _lastScene->seCorner.y());
+            imageOverlay->setUpperRight(_lastScene->neCorner.x(), _lastScene->neCorner.y());
+            imageOverlay->setUpperLeft(_lastScene->nwCorner.x(), _lastScene->nwCorner.y());
+            imageOverlay->getOrCreateStateSet()->setRenderBinDetails(20, "RenderBin");
+            _mapNode->addChild(imageOverlay);
+
+            _overlayNode = imageOverlay;
+        }
+    }
 }
