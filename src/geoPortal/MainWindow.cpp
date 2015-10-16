@@ -1,6 +1,7 @@
 #include "MainWindow.hpp"
 #include "MetadataWidget.hpp"
 
+#include <osgEarth/Terrain>
 #include <osgEarthFeatures/FeatureSource>
 #include <osgEarthFeatures/FeatureDisplayLayout>
 #include <osgEarthSymbology/StyleSheet>
@@ -26,11 +27,63 @@
 #include <QMessageBox>
 #include <QSettings>
 
+#include <functional>
+
 using namespace osgEarth;
 using namespace osgEarth::Drivers;
 using namespace osgEarth::Features;
 using namespace osgEarth::Symbology;
 using namespace portal;
+
+namespace
+{
+    struct SelectPointMouseHandler : public osgGA::GUIEventHandler
+    {
+        typedef std::function<void(const osgEarth::GeoPoint& point)> PointCallbackType;
+        typedef std::function<void()> FinishCallbackType;
+
+        SelectPointMouseHandler(osgEarth::MapNode* mapNode, const PointCallbackType &pcb, const FinishCallbackType& fcb) :
+            osgGA::GUIEventHandler(),
+            _mapNode(mapNode),
+            _pointCB(pcb),
+            _finishCB(fcb)
+        {
+        }
+
+        ~SelectPointMouseHandler()
+        {
+        }
+
+        bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+        {
+            osgViewer::View* view = static_cast<osgViewer::View*>(aa.asView());
+
+            if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE ||
+                (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON))
+            {
+                osg::Vec3d world;
+                if (_mapNode->getTerrain()->getWorldCoordsUnderMouse(aa.asView(), ea.getX(), ea.getY(), world))
+                {
+                    osgEarth::GeoPoint mapPoint;
+                    mapPoint.fromWorld(_mapNode->getMapSRS(), world);
+
+                    _pointCB(mapPoint);
+                }
+
+                if (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+                {
+                    _finishCB();
+                }
+            }
+
+            return false;
+        }
+
+        osg::ref_ptr<MapNode>  _mapNode;
+        PointCallbackType _pointCB;
+        FinishCallbackType _finishCB;
+    };
+}
 
 MainWindow::MainWindow() :
 QMainWindow(),
@@ -52,13 +105,15 @@ void MainWindow::initUi()
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
 
+    connect(_ui.selectPointButton, SIGNAL(toggled(bool)), this, SLOT(selectPoint(bool)));
+
     _ui.dateTimeEditFrom->setDateTime(QDateTime::currentDateTime().addYears(-1));
     _ui.dateTimeEditTo->setDateTime(QDateTime::currentDateTime());
-    
+
     _metadataDock = new QDockWidget(tr("Метаданные"));
     _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     _metadataDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _metadataDock);    
+    addDockWidget(Qt::RightDockWidgetArea, _metadataDock);
 
     MetadataWidget* metadataWidget = new MetadataWidget;
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
@@ -76,6 +131,11 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
 {
     _mapNode = mapNode;
+}
+
+void MainWindow::setView(osgViewer::View* view)
+{
+    _view = view;
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -184,11 +244,11 @@ void MainWindow::executeQuery()
         {
             str << " and ";
         }
-        
+
         str << "cloudmax<=" << _ui.cloudnessComboBox->currentText().toInt();
         needAnd = true;
     }
-    
+
     if (_ui.orbitPathCheckBox->isChecked())
     {
         if (needAnd)
@@ -200,7 +260,7 @@ void MainWindow::executeQuery()
     }
 
     if (_ui.orbitRowCheckBox->isChecked())
-    {        
+    {
         if (needAnd)
         {
             str << " and ";
@@ -208,7 +268,7 @@ void MainWindow::executeQuery()
         str << "orbitrow=" << _ui.orbitRowSpinBox->value();
         needAnd = true;
     }
-    
+
     if (_ui.targetPathCheckBox->isChecked())
     {
         if (needAnd)
@@ -264,7 +324,7 @@ void MainWindow::updateLayer(const std::string& query)
 
     LineSymbol* line = style.getOrCreate<LineSymbol>();
     line->stroke()->color() = Color::Yellow;
-        
+
     AltitudeSymbol* alt = style.getOrCreate<AltitudeSymbol>();
     alt->clamping() = alt->CLAMP_TO_TERRAIN;
     alt->technique() = alt->TECHNIQUE_DRAPE;
@@ -296,7 +356,7 @@ void MainWindow::updateLayer(const std::string& query)
 
     osg::Timer_t startTick = osg::Timer::instance()->tick();
 
-    _mapNode->getMap()->addModelLayer(_oldLayer.get());    
+    _mapNode->getMap()->addModelLayer(_oldLayer.get());
 
     osg::Timer_t endTick = osg::Timer::instance()->tick();
     std::cout << "Loading time " << osg::Timer::instance()->delta_s(startTick, endTick) << std::endl;
@@ -337,4 +397,38 @@ void MainWindow::showAbout()
 void MainWindow::showMetadataDescription()
 {
     QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
+}
+
+void MainWindow::selectPoint(bool b)
+{
+    if (b)
+    {
+        if (!_handler)
+        {
+            _handler = new SelectPointMouseHandler(_mapNode.get(),
+                                                   std::bind(&MainWindow::setPoint, this, std::placeholders::_1),
+                                                   std::bind(&MainWindow::selectPoint, this, false));
+
+            _view->addEventHandler(_handler);
+        }
+    }
+    else
+    {
+        if (_handler)
+        {
+            _view->removeEventHandler(_handler);
+            _handler = 0;
+        }
+
+        if (_ui.selectPointButton->isChecked())
+        {
+            _ui.selectPointButton->setChecked(false);
+        }
+    }
+}
+
+void MainWindow::setPoint(const osgEarth::GeoPoint& point)
+{
+    _ui.longitudeSpinBox->setValue(point.x());
+    _ui.latitudeSpinBox->setValue(point.y());
 }

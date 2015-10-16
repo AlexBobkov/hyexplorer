@@ -3,6 +3,9 @@
 #include "ui_MainWindow.h"
 #include "Scene.hpp"
 
+#include <osgGA/GUIEventHandler>
+#include <osgViewer/View>
+#include <osgEarth/GeoData>
 #include <osgEarth/MapNode>
 #include <osgEarthFeatures/Feature>
 
@@ -23,12 +26,15 @@ namespace portal
         virtual ~MainWindow();
 
         void setMapNode(osgEarth::MapNode* mapNode);
+        void setView(osgViewer::View* view);
 
         void setScene(const ScenePtr& scene);
 
     public slots:
         void executeQuery();
         void updateLayer(const std::string& query);
+
+        void selectPoint(bool b);
 
         void showAbout();
         void showMetadataDescription();
@@ -41,14 +47,17 @@ namespace portal
 
     private:
         void initUi();
+        void setPoint(const osgEarth::GeoPoint& point);
 
         Ui::MainWindow _ui;
 
-        osg::ref_ptr<osgEarth::MapNode> _mapNode;
+        osg::observer_ptr<osgEarth::MapNode> _mapNode;
+        osg::observer_ptr<osgViewer::View> _view;
+        osg::ref_ptr<osgGA::GUIEventHandler> _handler;
 
         osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
         std::string _oldQuery;
 
-        QDockWidget* _metadataDock;
+        QDockWidget* _metadataDock;        
     };
 }

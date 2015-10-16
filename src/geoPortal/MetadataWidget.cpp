@@ -219,6 +219,6 @@ void MetadataWidget::setScene(const ScenePtr& scene)
         _lookAngleProp->setEnabled(false);
     }
 
-    _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
-    _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
+    _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
+    _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
 }
