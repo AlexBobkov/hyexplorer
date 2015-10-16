@@ -43,5 +43,8 @@ namespace portal
         QtVariantProperty* _sunElevationProp;
         QtVariantProperty* _inclinationProp;
         QtVariantProperty* _lookAngleProp;
+
+        QLabel* _overviewDownloadLabel;
+        QLabel* _sceneDownloadLabel;
     };
 }

@@ -22,7 +22,9 @@ _processingLevelProp(0),
 _sunAzimuthProp(0),
 _sunElevationProp(0),
 _inclinationProp(0),
-_lookAngleProp(0)
+_lookAngleProp(0),
+_overviewDownloadLabel(0),
+_sceneDownloadLabel(0)
 {
     initUi();
 }
@@ -41,7 +43,7 @@ void MetadataWidget::initUi()
     
     _browser = new QtTreePropertyBrowser(this);
     _browser->setFactoryForManager(_variantManager, new QtVariantEditorFactory(this));    
-    layout->addWidget(_browser, 1);
+    layout->addWidget(_browser);
 
     _sceneidProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Scene Id"));
     _sceneidProp->setAttribute("readOnly", true);
@@ -91,12 +93,15 @@ void MetadataWidget::initUi()
     _lookAngleProp->setAttribute("readOnly", true);
     _browser->addProperty(_lookAngleProp);
 
-#if 0
-    QLabel* label = new QLabel(QString::fromUtf8("Тест"));
-    layout->addWidget(label);
-#endif
+    _overviewDownloadLabel = new QLabel(QString::fromUtf8("Скачать обзор (<a href='http://google.ru'>ссылка</a>)"));
+    _overviewDownloadLabel->setOpenExternalLinks(true);
+    layout->addWidget(_overviewDownloadLabel);
 
-    layout->addStretch(1);
+    _sceneDownloadLabel = new QLabel(QString::fromUtf8("Скачать сцену (<a href='http://google.ru'>ссылка</a>)"));
+    _sceneDownloadLabel->setOpenExternalLinks(true);
+    layout->addWidget(_sceneDownloadLabel);
+    
+    layout->addStretch();
 }
 
 void MetadataWidget::setScene(const ScenePtr& scene)
@@ -213,4 +218,7 @@ void MetadataWidget::setScene(const ScenePtr& scene)
         _lookAngleProp->setValue(0.0);
         _lookAngleProp->setEnabled(false);
     }
+
+    _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
+    _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
 }
