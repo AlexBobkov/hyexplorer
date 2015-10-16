@@ -114,11 +114,7 @@ void MainWindow::initUi()
     _metadataDock = new QDockWidget(tr("Метаданные"));
     _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     _metadataDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _metadataDock);
-
-    MetadataWidget* metadataWidget = new MetadataWidget;
-    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
-    _metadataDock->setWidget(metadataWidget);
+    addDockWidget(Qt::RightDockWidgetArea, _metadataDock);        
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -132,6 +128,11 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
 {
     _mapNode = mapNode;
+
+    MetadataWidget* metadataWidget = new MetadataWidget;
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
+    metadataWidget->setMapNode(_mapNode.get());
+    _metadataDock->setWidget(metadataWidget);
 }
 
 void MainWindow::setView(osgViewer::View* view)

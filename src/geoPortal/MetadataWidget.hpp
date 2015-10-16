@@ -2,6 +2,8 @@
 
 #include "Scene.hpp"
 
+#include <osg/observer_ptr>
+#include <osgEarth/MapNode>
 #include <osgEarthFeatures/Feature>
 
 #define QT_QTPROPERTYBROWSER_IMPORT
@@ -24,6 +26,8 @@ namespace portal
         explicit MetadataWidget();
         virtual ~MetadataWidget();
 
+        void setMapNode(osgEarth::MapNode* mapNode) { _mapNode = mapNode; }
+
     public slots:
         void setScene(const ScenePtr& scene);
 
@@ -32,6 +36,8 @@ namespace portal
 
     private:
         void initUi();
+
+        osg::observer_ptr<osgEarth::MapNode> _mapNode;
 
         QtAbstractPropertyBrowser* _browser;
         QtVariantPropertyManager* _variantManager;

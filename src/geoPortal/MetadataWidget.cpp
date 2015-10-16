@@ -1,11 +1,17 @@
 #include "MetadataWidget.hpp"
 
+#include <osg/Image>
+#include <osgEarthAnnotation/ImageOverlay>
+
+#include <QStandardPaths>
 #include <QVBoxLayout>
 #include <QDateTime>
 #include <QDir>
 
 #include <iostream>
 
+using namespace osgEarth;
+using namespace osgEarth::Annotation;
 using namespace portal;
 
 MetadataWidget::MetadataWidget() :
@@ -41,9 +47,9 @@ void MetadataWidget::initUi()
     setLayout(layout);
 
     _variantManager = new QtVariantPropertyManager(this);
-    
+
     _browser = new QtTreePropertyBrowser(this);
-    _browser->setFactoryForManager(_variantManager, new QtVariantEditorFactory(this));    
+    _browser->setFactoryForManager(_variantManager, new QtVariantEditorFactory(this));
     layout->addWidget(_browser);
 
     _sceneidProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Scene Id"));
@@ -101,7 +107,7 @@ void MetadataWidget::initUi()
     _sceneDownloadLabel = new QLabel(QString::fromUtf8("Скачать сцену (<a href='http://google.ru'>ссылка</a>)"));
     _sceneDownloadLabel->setOpenExternalLinks(true);
     layout->addWidget(_sceneDownloadLabel);
-    
+
     layout->addStretch();
 
     connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
@@ -124,8 +130,8 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     }
 
     if (scene->orbitPath)
-    {        
-        _orbitPathProp->setValue(scene->orbitPath.get());        
+    {
+        _orbitPathProp->setValue(scene->orbitPath.get());
         _orbitPathProp->setEnabled(true);
     }
     else
@@ -225,9 +231,34 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
     _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
 
-    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(scene->sceneid.c_str()));
-    request.setAttribute(QNetworkRequest::User, QString("Metadata"));
-    _networkManager.get(request);
+    QString overviewFilename = QString("%0.jpeg").arg(scene->sceneid.c_str());
+    overviewFilename.replace("EO1H", "EO1"); //Hyperion scecific
+
+    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+
+    QString overviewFilepath = dataPath + QString("/overviews/") + overviewFilename;
+
+    if (QFile::exists(overviewFilepath))
+    {
+        std::cout << "Overview exists in the local cache\n";
+
+        if (_mapNode.valid())
+        {
+            osg::Image* image = osgDB::readImageFile(overviewFilepath.toLocal8Bit().constData());
+            if (image)
+            {
+                ImageOverlay* imageOverlay = new ImageOverlay(_mapNode.get(), image);
+                imageOverlay->setBounds(Bounds(-100.0, 35.0, -90.0, 40.0));
+                _mapNode->addChild(imageOverlay);
+            }
+        }
+    }
+    else
+    {
+        QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(scene->sceneid.c_str()));
+        request.setAttribute(QNetworkRequest::User, QString("Metadata"));
+        _networkManager.get(request);
+    }
 }
 
 void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
@@ -249,8 +280,6 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
                 {
                     QByteArray overviewUrlName = data.mid(startIndex, endIndex - startIndex + 5);
 
-                    std::cout << "Name " << overviewUrlName.toStdString() << std::endl;
-
                     QNetworkRequest request(QString(overviewUrlName.constData()));
                     request.setAttribute(QNetworkRequest::User, QString("Overview"));
                     _networkManager.get(request);
@@ -258,14 +287,15 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
             }
         }
         else if (requestType == "Overview")
-        {                
-            QDir dir(QDir::tempPath() + "/portal");
-            if (!dir.exists())
+        {
+            QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+            QDir dataDir(dataPath);
+            if (!dataDir.exists())
             {
-                QDir::temp().mkdir("portal");
+                dataDir.mkpath("overviews");
             }
 
-            QString filename = QDir::tempPath() + QString("/portal/%1").arg(reply->url().fileName());
+            QString filename = dataDir.filePath(QString("overviews/") + reply->url().fileName());
 
             QFile localFile(filename);
             if (!localFile.open(QIODevice::WriteOnly))
@@ -276,9 +306,8 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
 
             localFile.write(data);
             localFile.close();
-
         }
-    }    
+    }
 
     reply->deleteLater();
 }
