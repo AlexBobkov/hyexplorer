@@ -10,6 +10,7 @@
 #include <osgEarthSymbology/LineSymbol>
 #include <osgEarthDrivers/model_feature_geom/FeatureGeomModelOptions>
 #include <osgEarthDrivers/feature_ogr/OGRFeatureOptions>
+#include <osgEarthAnnotation/CircleNode>
 
 #include <QAction>
 #include <QDockWidget>
@@ -287,6 +288,42 @@ void MainWindow::executeQuery()
         }
         str << "targetrow=" << _ui.targetRowSpinBox->value();
         needAnd = true;
+    }
+
+    if (_ui.distanceGroupBox->isChecked())
+    {
+        if (needAnd)
+        {
+            str << " and ";
+        }
+
+        str << "ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(" << _ui.longitudeSpinBox->value() << " " << _ui.latitudeSpinBox->value() << ")')," << _ui.distanceSpinBox->value() * 1000 << ")";
+        needAnd = true;
+
+        if (_featureNode)
+        {
+            _mapNode->removeChild(_featureNode);
+        }
+
+        Style circleStyle;
+        circleStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color(Color::Red, 1.0);
+        circleStyle.getOrCreate<LineSymbol>()->stroke()->width() = 4.0f;
+        circleStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
+        circleStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_DRAPE;
+        circleStyle.getOrCreate<RenderSymbol>()->lighting() = false;
+
+        _featureNode = new osgEarth::Annotation::CircleNode(_mapNode.get(),
+                                                                                        GeoPoint(_mapNode->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value()),
+                                                                                        Linear(_ui.distanceSpinBox->value() * 1000, Units::METERS),
+                                                                                        circleStyle);
+        _mapNode->addChild(_featureNode);
+    }
+    else
+    {
+        if (_featureNode)
+        {
+            _mapNode->removeChild(_featureNode);
+        }
     }
 
     updateLayer(str.str());

@@ -55,6 +55,8 @@ namespace portal
         osg::observer_ptr<osgViewer::View> _view;
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
 
+        osg::ref_ptr<osg::Node> _featureNode;
+
         osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
         std::string _oldQuery;
 
