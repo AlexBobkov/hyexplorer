@@ -1,4 +1,5 @@
 #include "MainWindow.hpp"
+#include "Scene.hpp"
 
 #include <osg/ArgumentParser>
 #include <osgDB/ReadFile>
@@ -25,6 +26,7 @@
 using namespace osgEarth;
 using namespace osgEarth::Features;
 using namespace osgEarth::Util;
+using namespace portal;
 
 namespace
 {
@@ -54,9 +56,67 @@ namespace
                 std::string sceneid = feature->getString("sceneid");
                 std::cout << "ID " << feature->getFID() << " " << sceneid << std::endl;
 
-                //QMessageBox::information(qApp->activeWindow(), QObject::tr("Сцена"), QObject::tr("Сцена %0 (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0'>смотреть</a>)").arg(sceneid.c_str()));
+                ScenePtr scene = std::make_shared<Scene>();
+                scene->sensor = feature->getString("sensor");
+                scene->sceneid = feature->getString("sceneid");
+                scene->sceneTime = QDateTime::fromString(feature->getString("scenetime").c_str(), Qt::ISODate);
 
-                mainWindow->setScene(feature);
+                if (feature->hasAttr("cloudmin"))
+                {
+                    scene->cloundMin = feature->getInt("cloudmin");
+                }
+
+                if (feature->hasAttr("cloudmax"))
+                {
+                    scene->cloundMax = feature->getInt("cloudmax");
+                }
+
+                if (feature->hasAttr("orbitpath"))
+                {
+                    scene->orbitPath = feature->getInt("orbitpath");
+                }
+
+                if (feature->hasAttr("orbitrow"))
+                {
+                    scene->orbitRow = feature->getInt("orbitrow");
+                }
+
+                if (feature->hasAttr("targetpath"))
+                {
+                    scene->targetPath = feature->getInt("targetpath");
+                }
+
+                if (feature->hasAttr("targetrow"))
+                {
+                    scene->targetRow = feature->getInt("targetrow");
+                }
+
+                if (feature->hasAttr("processinglevel"))
+                {
+                    scene->processingLevel = feature->getString("processinglevel");
+                }
+
+                if (feature->hasAttr("sunazimuth"))
+                {
+                    scene->sunAzimuth = feature->getDouble("sunazimuth");
+                }
+
+                if (feature->hasAttr("sunelevation"))
+                {
+                    scene->sunElevation = feature->getDouble("sunelevation");
+                }
+
+                if (feature->hasAttr("satelliteinclination"))
+                {
+                    scene->inclination = feature->getDouble("satelliteinclination");
+                }
+
+                if (feature->hasAttr("lookangle"))
+                {
+                    scene->lookAngle = feature->getDouble("lookangle");
+                }
+                
+                mainWindow->setScene(scene);
             }
 
             highlightUniform->set(id);

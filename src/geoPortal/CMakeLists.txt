@@ -10,12 +10,14 @@ SET(HEADER_FILES
 	${LIB_UI_HDRS}
 	MainWindow.hpp
 	MetadataWidget.hpp
+	Scene.hpp
 )
 
 SET(SRC_FILES	
 	MainWindow.cpp
 	MetadataWidget.cpp
 	Program.cpp
+	Scene.cpp
 )
 
 INCLUDE_DIRECTORIES(

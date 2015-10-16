@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Scene.hpp"
+
 #include <osgEarthFeatures/Feature>
 
 #define QT_QTPROPERTYBROWSER_IMPORT
@@ -9,34 +11,37 @@
 
 #include <QLabel>
 
-class MetadataWidget : public QWidget
+namespace portal
 {
-    Q_OBJECT
+    class MetadataWidget : public QWidget
+    {
+        Q_OBJECT
 
-public:
-    explicit MetadataWidget();
-    virtual ~MetadataWidget();
+    public:
+        explicit MetadataWidget();
+        virtual ~MetadataWidget();
 
-public slots:
-    void setScene(osgEarth::Features::Feature* feature);
+    public slots:
+        void setScene(const ScenePtr& scene);
 
-private:
-    void initUi();
+    private:
+        void initUi();
 
-    QtAbstractPropertyBrowser* _browser;
-    QtVariantPropertyManager* _variantManager;
+        QtAbstractPropertyBrowser* _browser;
+        QtVariantPropertyManager* _variantManager;
 
-    QtVariantProperty* _sceneidProp;
-    QtVariantProperty* _datetimeProp;
-    QtVariantProperty* _cloudnessProp;
-    QtVariantProperty* _orbitPathProp;
-    QtVariantProperty* _orbitRowProp;
-    QtVariantProperty* _targetPathProp;
-    QtVariantProperty* _targetRowProp;
+        QtVariantProperty* _sceneidProp;
+        QtVariantProperty* _datetimeProp;
+        QtVariantProperty* _cloudnessProp;
+        QtVariantProperty* _orbitPathProp;
+        QtVariantProperty* _orbitRowProp;
+        QtVariantProperty* _targetPathProp;
+        QtVariantProperty* _targetRowProp;
 
-    QtVariantProperty* _processingLevelProp;
-    QtVariantProperty* _sunAzimuthProp;
-    QtVariantProperty* _sunElevationProp;
-    QtVariantProperty* _inclinationProp;
-    QtVariantProperty* _lookAngleProp;
-};
+        QtVariantProperty* _processingLevelProp;
+        QtVariantProperty* _sunAzimuthProp;
+        QtVariantProperty* _sunElevationProp;
+        QtVariantProperty* _inclinationProp;
+        QtVariantProperty* _lookAngleProp;
+    };
+}

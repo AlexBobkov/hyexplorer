@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "ui_MainWindow.h"
+#include "Scene.hpp"
 
 #include <osgEarth/MapNode>
 #include <osgEarthFeatures/Feature>
@@ -11,40 +12,43 @@
 #include <QTabWidget>
 #include <QPushButton>
 
-class MainWindow : public QMainWindow
+namespace portal
 {
-    Q_OBJECT
+    class MainWindow : public QMainWindow
+    {
+        Q_OBJECT
 
-public:
-    explicit MainWindow();
-    virtual ~MainWindow();
+    public:
+        explicit MainWindow();
+        virtual ~MainWindow();
 
-    void setMapNode(osgEarth::MapNode* mapNode);
+        void setMapNode(osgEarth::MapNode* mapNode);
 
-    void setScene(osgEarth::Features::Feature* feature);
+        void setScene(const ScenePtr& scene);
 
-public slots:
-    void executeQuery();
-    void updateLayer(const std::string& query);
+    public slots:
+        void executeQuery();
+        void updateLayer(const std::string& query);
 
-    void showAbout();
-    void showMetadataDescription();
+        void showAbout();
+        void showMetadataDescription();
 
-signals:
-    void sceneSelected(osgEarth::Features::Feature* feature);
+    signals:
+        void sceneSelected(const ScenePtr& scene);
 
-protected:
-    void resizeEvent(QResizeEvent* event) override;
+    protected:
+        void resizeEvent(QResizeEvent* event) override;
 
-private:
-    void initUi();
+    private:
+        void initUi();
 
-    Ui::MainWindow _ui;
+        Ui::MainWindow _ui;
 
-    osg::ref_ptr<osgEarth::MapNode> _mapNode;
+        osg::ref_ptr<osgEarth::MapNode> _mapNode;
 
-    osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
-    std::string _oldQuery;
+        osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
+        std::string _oldQuery;
 
-    QDockWidget* _metadataDock;
-};
+        QDockWidget* _metadataDock;
+    };
+}

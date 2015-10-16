@@ -30,6 +30,7 @@ using namespace osgEarth;
 using namespace osgEarth::Drivers;
 using namespace osgEarth::Features;
 using namespace osgEarth::Symbology;
+using namespace portal;
 
 MainWindow::MainWindow() :
 QMainWindow(),
@@ -60,7 +61,7 @@ void MainWindow::initUi()
     addDockWidget(Qt::RightDockWidgetArea, _metadataDock);    
 
     MetadataWidget* metadataWidget = new MetadataWidget;
-    connect(this, SIGNAL(sceneSelected(osgEarth::Features::Feature*)), metadataWidget, SLOT(setScene(osgEarth::Features::Feature*)));
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
     _metadataDock->setWidget(metadataWidget);
 }
 
@@ -77,16 +78,16 @@ void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
     _mapNode = mapNode;
 }
 
-void MainWindow::setScene(osgEarth::Features::Feature* feature)
+void MainWindow::setScene(const ScenePtr& scene)
 {
-    if (!feature)
+    if (!scene)
     {
         return;
     }
 
     _metadataDock->setVisible(true);
 
-    emit sceneSelected(feature);
+    emit sceneSelected(scene);
 }
 
 void MainWindow::executeQuery()
