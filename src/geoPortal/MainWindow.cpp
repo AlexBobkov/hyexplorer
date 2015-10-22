@@ -314,9 +314,9 @@ void MainWindow::executeQuery()
         circleStyle.getOrCreate<RenderSymbol>()->lighting() = false;
 
         _featureNode = new osgEarth::Annotation::CircleNode(_mapNode.get(),
-                                                                                        GeoPoint(_mapNode->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value()),
-                                                                                        Linear(_ui.distanceSpinBox->value() * 1000, Units::METERS),
-                                                                                        circleStyle);
+                                                            GeoPoint(_mapNode->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value()),
+                                                            Linear(_ui.distanceSpinBox->value() * 1000, Units::METERS),
+                                                            circleStyle);
         _mapNode->addChild(_featureNode);
     }
     else
@@ -361,7 +361,9 @@ void MainWindow::updateLayer(const std::string& query)
     poly->fill()->color() = Color::Yellow;
 
     LineSymbol* line = style.getOrCreate<LineSymbol>();
-    line->stroke()->color() = Color::Yellow;
+    line->stroke()->color() = Color::Black;
+    line->stroke()->width() = 150.0;
+    line->stroke()->widthUnits() = osgEarth::Units::METERS;
 
     AltitudeSymbol* alt = style.getOrCreate<AltitudeSymbol>();
     alt->clamping() = alt->CLAMP_TO_TERRAIN;
