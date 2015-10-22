@@ -80,7 +80,7 @@ namespace
             return false;
         }
 
-        osg::ref_ptr<MapNode>  _mapNode;
+        osg::observer_ptr<MapNode>  _mapNode;
         PointCallbackType _pointCB;
         FinishCallbackType _finishCB;
     };
@@ -445,17 +445,16 @@ void MainWindow::selectPoint(bool b)
         {
             _handler = new SelectPointMouseHandler(_mapNode.get(),
                                                    std::bind(&MainWindow::setPoint, this, std::placeholders::_1),
-                                                   std::bind(&MainWindow::selectPoint, this, false));
-
-            _view->addEventHandler(_handler);
+                                                   std::bind(&MainWindow::selectPoint, this, false));            
         }
+
+        _view->addEventHandler(_handler);
     }
     else
     {
         if (_handler)
         {
             _view->removeEventHandler(_handler);
-            _handler = 0;
         }
 
         if (_ui.selectPointButton->isChecked())
