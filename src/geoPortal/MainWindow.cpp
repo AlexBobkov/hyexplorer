@@ -125,19 +125,14 @@ void MainWindow::resizeEvent(QResizeEvent* event)
     QMainWindow::resizeEvent(event);
 }
 
-void MainWindow::setMapNode(osgEarth::MapNode* mapNode)
+void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 {
-    _mapNode = mapNode;
+    _dataManager = dataManager;
 
     MetadataWidget* metadataWidget = new MetadataWidget;
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
-    metadataWidget->setMapNode(_mapNode.get());
+    metadataWidget->setMapNode(_dataManager->mapNode());
     _metadataDock->setWidget(metadataWidget);
-}
-
-void MainWindow::setView(osgViewer::View* view)
-{
-    _view = view;
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -303,7 +298,7 @@ void MainWindow::executeQuery()
 
         if (_featureNode)
         {
-            _mapNode->removeChild(_featureNode);
+            _dataManager->mapNode()->removeChild(_featureNode);
         }
 
         Style circleStyle;
@@ -313,17 +308,17 @@ void MainWindow::executeQuery()
         circleStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_DRAPE;
         circleStyle.getOrCreate<RenderSymbol>()->lighting() = false;
 
-        _featureNode = new osgEarth::Annotation::CircleNode(_mapNode.get(),
-                                                            GeoPoint(_mapNode->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value()),
+        _featureNode = new osgEarth::Annotation::CircleNode(_dataManager->mapNode(),
+                                                            GeoPoint(_dataManager->mapNode()->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value()),
                                                             Linear(_ui.distanceSpinBox->value() * 1000, Units::METERS),
                                                             circleStyle);
-        _mapNode->addChild(_featureNode);
+        _dataManager->mapNode()->addChild(_featureNode);
     }
     else
     {
         if (_featureNode)
         {
-            _mapNode->removeChild(_featureNode);
+            _dataManager->mapNode()->removeChild(_featureNode);
         }
     }
 
@@ -339,7 +334,7 @@ void MainWindow::updateLayer(const std::string& query)
 
     if (_oldLayer.valid())
     {
-        _mapNode->getMap()->removeModelLayer(_oldLayer.get());
+        _dataManager->mapNode()->getMap()->removeModelLayer(_oldLayer.get());
         _oldLayer = nullptr;
     }
 
@@ -396,7 +391,7 @@ void MainWindow::updateLayer(const std::string& query)
 
     osg::Timer_t startTick = osg::Timer::instance()->tick();
 
-    _mapNode->getMap()->addModelLayer(_oldLayer.get());
+    _dataManager->mapNode()->getMap()->addModelLayer(_oldLayer.get());
 
     osg::Timer_t endTick = osg::Timer::instance()->tick();
     std::cout << "Loading time " << osg::Timer::instance()->delta_s(startTick, endTick) << std::endl;
@@ -445,18 +440,18 @@ void MainWindow::selectPoint(bool b)
     {
         if (!_handler)
         {
-            _handler = new SelectPointMouseHandler(_mapNode.get(),
+            _handler = new SelectPointMouseHandler(_dataManager->mapNode(),
                                                    std::bind(&MainWindow::setPoint, this, std::placeholders::_1),
                                                    std::bind(&MainWindow::selectPoint, this, false));            
         }
 
-        _view->addEventHandler(_handler);
+        _dataManager->view()->addEventHandler(_handler);
     }
     else
     {
         if (_handler)
         {
-            _view->removeEventHandler(_handler);
+            _dataManager->view()->removeEventHandler(_handler);
         }
 
         if (_ui.selectPointButton->isChecked())

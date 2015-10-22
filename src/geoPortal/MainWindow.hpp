@@ -2,6 +2,7 @@
 
 #include "ui_MainWindow.h"
 #include "Scene.hpp"
+#include "DataManager.hpp"
 
 #include <osgGA/GUIEventHandler>
 #include <osgViewer/View>
@@ -25,9 +26,8 @@ namespace portal
         explicit MainWindow();
         virtual ~MainWindow();
 
-        void setMapNode(osgEarth::MapNode* mapNode);
-        void setView(osgViewer::View* view);
-
+        void setDataManager(const DataManagerPtr& dataManager);
+        
         void setScene(const ScenePtr& scene);
 
     public slots:
@@ -51,8 +51,8 @@ namespace portal
 
         Ui::MainWindow _ui;
 
-        osg::observer_ptr<osgEarth::MapNode> _mapNode;
-        osg::observer_ptr<osgViewer::View> _view;
+        DataManagerPtr _dataManager;
+
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
 
         osg::ref_ptr<osg::Node> _featureNode;

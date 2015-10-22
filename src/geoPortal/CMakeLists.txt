@@ -8,12 +8,14 @@ QT5_WRAP_UI(LIB_UI_HDRS ${LIB_QT_UIS})
 
 SET(HEADER_FILES
 	${LIB_UI_HDRS}
+	DataManager.hpp
 	MainWindow.hpp
 	MetadataWidget.hpp
 	Scene.hpp
 )
 
-SET(SRC_FILES	
+SET(SRC_FILES
+	DataManager.cpp
 	MainWindow.cpp
 	MetadataWidget.cpp
 	Program.cpp

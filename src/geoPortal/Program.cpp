@@ -217,11 +217,12 @@ int main(int argc, char** argv)
     viewer->addEventHandler(picker);
     picker->addChild(mapNode);
     picker->setDefaultCallback(new MyPickCallback(highlightUniform, &appWin));
+    
+    DataManagerPtr dataManager = std::make_shared<DataManager>(viewer, mapNode);
 
     appWin.setCentralWidget(viewerWidget);
-    appWin.setMapNode(mapNode);
-    appWin.setView(viewer);
-
+    appWin.setDataManager(dataManager);
+    
     QSettings settings;
     QSize size = settings.value("MainWindow/size", QSize(1500, 900)).toSize();
 
