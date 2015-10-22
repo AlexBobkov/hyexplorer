@@ -31,8 +31,7 @@ namespace portal
         void setScene(const ScenePtr& scene);
 
     public slots:
-        void executeQuery();
-        void updateLayer(const std::string& query);
+        void executeQuery();        
 
         void selectPoint(bool b);
 
@@ -56,10 +55,7 @@ namespace portal
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
 
         osg::ref_ptr<osg::Node> _featureNode;
-
-        osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
-        std::string _oldQuery;
-
+                
         QDockWidget* _metadataDock;        
     };
 }
