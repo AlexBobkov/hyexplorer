@@ -145,7 +145,7 @@ void MainWindow::executeQuery()
 
     std::ostringstream str;
 
-    DataSet* dataset = new DataSet;
+    DataSetPtr dataset = std::make_shared<DataSet>();
 
     if (_ui.dateGroupBox->isChecked())
     {
@@ -189,7 +189,6 @@ void MainWindow::executeQuery()
         else
         {
             std::cerr << "Wrong processing level\n";
-            return;
         }
     }
 
@@ -229,9 +228,9 @@ void MainWindow::executeQuery()
         _dataManager->removeCircleNode();
     }
 
-    _dataManager->updateLayer(dataset->fullCondition().toUtf8().constData());
+    dataset->execute();
 
-    delete dataset;
+    _dataManager->setDataSet(dataset);
 }
 
 void MainWindow::showAbout()

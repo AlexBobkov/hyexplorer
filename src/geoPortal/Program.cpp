@@ -46,93 +46,6 @@ namespace
             FeatureIndex* index = Registry::objectIndex()->get<FeatureIndex>(id);
             Feature* feature = index ? index->getFeature(id) : 0L;
 
-            if (feature)
-            {
-                if (!feature->hasAttr("sceneid"))
-                {
-                    std::cerr << "No sceneid attr " << feature->getFID() << std::endl;
-                    return;
-                }
-
-                std::string sceneid = feature->getString("sceneid");
-                std::cout << "ID " << feature->getFID() << " " << sceneid << std::endl;
-
-                ScenePtr scene = std::make_shared<Scene>();
-                scene->sensor = feature->getString("sensor");
-                scene->sceneid = feature->getString("sceneid");
-                scene->sceneTime = QDateTime::fromString(feature->getString("scenetime").c_str(), Qt::ISODate);
-
-                if (feature->hasAttr("cloudmin"))
-                {
-                    scene->cloundMin = feature->getInt("cloudmin");
-                }
-
-                if (feature->hasAttr("cloudmax"))
-                {
-                    scene->cloundMax = feature->getInt("cloudmax");
-                }
-
-                if (feature->hasAttr("orbitpath"))
-                {
-                    scene->orbitPath = feature->getInt("orbitpath");
-                }
-
-                if (feature->hasAttr("orbitrow"))
-                {
-                    scene->orbitRow = feature->getInt("orbitrow");
-                }
-
-                if (feature->hasAttr("targetpath"))
-                {
-                    scene->targetPath = feature->getInt("targetpath");
-                }
-
-                if (feature->hasAttr("targetrow"))
-                {
-                    scene->targetRow = feature->getInt("targetrow");
-                }
-
-                if (feature->hasAttr("processinglevel"))
-                {
-                    scene->processingLevel = feature->getString("processinglevel");
-                }
-
-                if (feature->hasAttr("sunazimuth"))
-                {
-                    scene->sunAzimuth = feature->getDouble("sunazimuth");
-                }
-
-                if (feature->hasAttr("sunelevation"))
-                {
-                    scene->sunElevation = feature->getDouble("sunelevation");
-                }
-
-                if (feature->hasAttr("satelliteinclination"))
-                {
-                    scene->inclination = feature->getDouble("satelliteinclination");
-                }
-
-                if (feature->hasAttr("lookangle"))
-                {
-                    scene->lookAngle = feature->getDouble("lookangle");
-                }
-
-                Geometry* geometry = feature->getGeometry();
-                if (geometry->getType() == Geometry::TYPE_POLYGON && geometry->size() >= 4)
-                {
-                    scene->swCorner = geometry->at(3);
-                    scene->seCorner = geometry->at(0);
-                    scene->neCorner = geometry->at(1);
-                    scene->nwCorner = geometry->at(2);
-                }
-                else
-                {
-                    std::cerr << "Geometry is not a polygon\n";
-                }
-                
-                mainWindow->setScene(scene);
-            }
-
             highlightUniform->set(id);
         }
 
@@ -191,6 +104,25 @@ int main(int argc, char** argv)
     QCoreApplication::setApplicationName("GeoPortal");
 
     QApplication app(argc, argv);
+
+    QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
+#if 1
+    db.setHostName("localhost");
+    db.setDatabaseName("GeoPortal");
+    db.setUserName("user");
+    db.setPassword("user");
+#else
+    db.setHostName("178.62.140.44");
+    db.setDatabaseName("GeoPortal");
+    db.setUserName("portal");
+    db.setPassword("PortalPass");
+#endif
+
+    if (!db.open())
+    {
+        qDebug() << "Failed to open database:" << db.lastError().text();
+        return 1;
+    }
 
     MainWindow appWin;
 

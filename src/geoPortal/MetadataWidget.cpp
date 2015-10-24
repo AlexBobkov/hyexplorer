@@ -117,7 +117,7 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 {
     _lastScene = scene;
 
-    _sceneidProp->setValue(scene->sceneid.c_str());
+    _sceneidProp->setValue(scene->sceneid);
     _datetimeProp->setValue(scene->sceneTime);
 
     if (scene->cloundMin && scene->cloundMax)
@@ -177,7 +177,7 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 
     if (scene->processingLevel)
     {
-        _processingLevelProp->setValue(scene->processingLevel->c_str());
+        _processingLevelProp->setValue(scene->processingLevel.get());
         _processingLevelProp->setEnabled(true);
     }
     else
@@ -230,8 +230,8 @@ void MetadataWidget::setScene(const ScenePtr& scene)
         _lookAngleProp->setEnabled(false);
     }
 
-    _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
-    _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid.c_str()));
+    _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
+    _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
             
     QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
@@ -245,7 +245,7 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     }
     else
     {
-        QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(scene->sceneid.c_str()));
+        QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(scene->sceneid));
         request.setAttribute(QNetworkRequest::User, QString("Metadata"));
         _networkManager.get(request);
     }

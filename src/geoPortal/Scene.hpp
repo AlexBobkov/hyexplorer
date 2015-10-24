@@ -2,6 +2,8 @@
 
 #include <osg/Vec3d>
 
+#include <osgEarthFeatures/Feature>
+
 #include <QDateTime>
 #include <QString>
 
@@ -13,8 +15,10 @@ namespace portal
 {
     struct Scene
     {
-        std::string sensor;
-        std::string sceneid;
+        std::size_t id;
+
+        QString sensor;
+        QString sceneid;
 
         QDateTime sceneTime;
 
@@ -27,12 +31,14 @@ namespace portal
         boost::optional<int> targetPath;
         boost::optional<int> targetRow;
 
-        boost::optional<std::string> processingLevel;
+        boost::optional<QString> processingLevel;
 
         boost::optional<double> sunAzimuth;
         boost::optional<double> sunElevation;
         boost::optional<double> inclination;
         boost::optional<double> lookAngle;
+
+        osg::ref_ptr<osgEarth::Features::Feature> feature;
 
         osg::Vec3d swCorner;
         osg::Vec3d seCorner;

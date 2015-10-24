@@ -2,6 +2,9 @@
 
 #include <osg/Vec3d>
 
+#include <osgEarth/MapNode>
+#include <osgEarthFeatures/FeatureSource>
+
 #include <QDateTime>
 #include <QString>
 
@@ -14,11 +17,19 @@ namespace portal
     class DataSet
     {
     public:
-        void addCondition(const QString& str);
-
         QString fullCondition() const { return _fullCondition; }
+        void addCondition(const QString& str);
+        
+        void execute();
+
+        osgEarth::ModelLayer* layer() const { return _layer; }
 
     protected:
         QString _fullCondition;
+
+        osg::ref_ptr<osgEarth::Features::FeatureSource> _featureSource;
+        osg::ref_ptr<osgEarth::ModelLayer> _layer;
     };
+
+    typedef std::shared_ptr<DataSet> DataSetPtr;
 }
