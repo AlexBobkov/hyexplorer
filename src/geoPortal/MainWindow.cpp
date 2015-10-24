@@ -287,30 +287,11 @@ void MainWindow::executeQuery()
         str << "ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(" << _ui.longitudeSpinBox->value() << " " << _ui.latitudeSpinBox->value() << ")')," << _ui.distanceSpinBox->value() * 1000 << ")";
         needAnd = true;
 
-        if (_featureNode)
-        {
-            _dataManager->mapNode()->removeChild(_featureNode);
-        }
-
-        Style circleStyle;
-        circleStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color(Color::Red, 1.0);
-        circleStyle.getOrCreate<LineSymbol>()->stroke()->width() = 4.0f;
-        circleStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
-        circleStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_DRAPE;
-        circleStyle.getOrCreate<RenderSymbol>()->lighting() = false;
-
-        _featureNode = new osgEarth::Annotation::CircleNode(_dataManager->mapNode(),
-                                                            GeoPoint(_dataManager->mapNode()->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value()),
-                                                            Linear(_ui.distanceSpinBox->value() * 1000, Units::METERS),
-                                                            circleStyle);
-        _dataManager->mapNode()->addChild(_featureNode);
+        _dataManager->setCircleNode(_ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value(), _ui.distanceSpinBox->value() * 1000);
     }
     else
     {
-        if (_featureNode)
-        {
-            _dataManager->mapNode()->removeChild(_featureNode);
-        }
+        _dataManager->removeCircleNode();
     }
 
     _dataManager->updateLayer(str.str());

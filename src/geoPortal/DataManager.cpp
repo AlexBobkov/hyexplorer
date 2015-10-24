@@ -1,5 +1,6 @@
 #include "DataManager.hpp"
 
+#include <osgEarthAnnotation/CircleNode>
 #include <osgEarthFeatures/FeatureSource>
 #include <osgEarthFeatures/FeatureDisplayLayout>
 #include <osgEarthSymbology/StyleSheet>
@@ -95,4 +96,30 @@ void DataManager::updateLayer(const std::string& query)
 
     //int fc = dynamic_cast<osgEarth::Features::FeatureModelSource*>(_oldLayer->getModelSource())->getFeatureSource()->getFeatureCount();
     //std::cout << "Count = " << fc << std::endl;
+}
+
+void DataManager::setCircleNode(double lon, double lat, double radius)
+{
+    removeCircleNode();
+
+    Style circleStyle;
+    circleStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color(Color::Red, 1.0);
+    circleStyle.getOrCreate<LineSymbol>()->stroke()->width() = 4.0f;
+    circleStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
+    circleStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_DRAPE;
+    circleStyle.getOrCreate<RenderSymbol>()->lighting() = false;
+
+    _circleNode = new osgEarth::Annotation::CircleNode(_mapNode,
+                                                       GeoPoint(_mapNode->getMapSRS(), lon, lat),
+                                                       Linear(radius, Units::METERS),
+                                                       circleStyle);
+    _mapNode->addChild(_circleNode);
+}
+
+void DataManager::removeCircleNode()
+{
+    if (_circleNode)
+    {
+        _mapNode->removeChild(_circleNode);
+    }
 }

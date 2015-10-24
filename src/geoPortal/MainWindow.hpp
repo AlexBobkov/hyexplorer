@@ -53,9 +53,7 @@ namespace portal
         DataManagerPtr _dataManager;
 
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
-
-        osg::ref_ptr<osg::Node> _featureNode;
-                
+              
         QDockWidget* _metadataDock;        
     };
 }
