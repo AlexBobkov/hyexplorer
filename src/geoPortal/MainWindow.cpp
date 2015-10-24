@@ -1,5 +1,6 @@
 #include "MainWindow.hpp"
 #include "MetadataWidget.hpp"
+#include "Dataset.hpp"
 
 #include <osgEarth/Terrain>
 #include <osgEarthAnnotation/CircleNode>
@@ -144,157 +145,93 @@ void MainWindow::executeQuery()
 
     std::ostringstream str;
 
+    DataSet* dataset = new DataSet;
+
     if (_ui.dateGroupBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-
-        str << std::setprecision(7) << "scenetime>='" << _ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate).toUtf8().constData() << "'::timestamp without time zone and " << "scenetime<='" << _ui.dateTimeEditTo->dateTime().toString(Qt::ISODate).toUtf8().constData() << "'::timestamp without time zone";
-        needAnd = true;
+        dataset->addCondition(QString("scenetime>='%0'::timestamp without time zone and scenetime<='%1'::timestamp without time zone").arg(_ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate)).arg(_ui.dateTimeEditTo->dateTime().toString(Qt::ISODate)));
     }
 
     if (_ui.sunAzimuthGroupBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-
-        str << std::setprecision(7) << "sunazimuth>=" << _ui.sunAzimuthFromSpinBox->value() << " and " << "sunazimuth<=" << _ui.sunAzimuthToSpinBox->value();
-        needAnd = true;
+        dataset->addCondition(QString("sunazimuth>=%0 and sunazimuth<=%1").arg(_ui.sunAzimuthFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunAzimuthToSpinBox->value(), 0, 'f', 7));
     }
 
     if (_ui.sunElevationGroupBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-
-        str << std::setprecision(7) << "sunelevation>=" << _ui.sunElevationFromSpinBox->value() << " and " << "sunelevation<=" << _ui.sunElevationToSpinBox->value();
-        needAnd = true;
+        dataset->addCondition(QString("sunelevation>=%0 and sunelevation<=%1").arg(_ui.sunElevationFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunElevationToSpinBox->value(), 0, 'f', 7));
     }
 
     if (_ui.inclinationGroupBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-
-        str << std::setprecision(7) << "satelliteinclination>=" << _ui.inclinationFromSpinBox->value() << " and " << "satelliteinclination<=" << _ui.inclinationToSpinBox->value();
-        needAnd = true;
+        dataset->addCondition(QString("satelliteinclination>=%0 and satelliteinclination<=%1").arg(_ui.inclinationFromSpinBox->value(), 0, 'f', 7).arg(_ui.inclinationToSpinBox->value(), 0, 'f', 7));
     }
 
     if (_ui.lookAngleGroupBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-
-        str << std::setprecision(7) << "lookangle>=" << _ui.lookAngleFromSpinBox->value() << " and " << "lookangle<=" << _ui.lookAngleToSpinBox->value();
-        needAnd = true;
+        dataset->addCondition(QString("lookangle>=%0 and lookangle<=%1").arg(_ui.lookAngleFromSpinBox->value(), 0, 'f', 7).arg(_ui.lookAngleToSpinBox->value(), 0, 'f', 7));
     }
 
     if (_ui.processingLevelGroupBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-
         if (_ui.l1RRadioButton->isChecked())
         {
-            str << "processinglevel='L1R Product Available'";
+            dataset->addCondition("processinglevel='L1R Product Available'");
         }
         else if (_ui.l1GstRadioButton->isChecked())
         {
-            str << "processinglevel='L1Gst Product Available'";
+            dataset->addCondition("processinglevel='L1Gst Product Available'");
         }
         else if (_ui.l1TRadioButton->isChecked())
         {
-            str << "processinglevel='L1T Product Available'";
+            dataset->addCondition("processinglevel='L1T Product Available'");
         }
         else
         {
             std::cerr << "Wrong processing level\n";
             return;
         }
-        needAnd = true;
     }
 
     if (_ui.cloudnessCheckBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-
-        str << "cloudmax<=" << _ui.cloudnessComboBox->currentText().toInt();
-        needAnd = true;
+        dataset->addCondition(QString("cloudmax<=%0").arg(_ui.cloudnessComboBox->currentText().toInt()));
     }
 
     if (_ui.orbitPathCheckBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-        str << "orbitpath=" << _ui.orbitPathSpinBox->value();
-        needAnd = true;
+        dataset->addCondition(QString("orbitpath=%0").arg(_ui.orbitPathSpinBox->value()));
     }
 
     if (_ui.orbitRowCheckBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-        str << "orbitrow=" << _ui.orbitRowSpinBox->value();
-        needAnd = true;
+        dataset->addCondition(QString("orbitrow=%0").arg(_ui.orbitRowSpinBox->value()));
     }
 
     if (_ui.targetPathCheckBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-        str << "targetpath=" << _ui.targetPathSpinBox->value();
-        needAnd = true;
+        dataset->addCondition(QString("targetpath=%0").arg(_ui.targetPathSpinBox->value()));
     }
 
     if (_ui.targetRowCheckBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
-        str << "targetrow=" << _ui.targetRowSpinBox->value();
-        needAnd = true;
+        dataset->addCondition(QString("targetrow=%0").arg(_ui.targetRowSpinBox->value()));
     }
 
     if (_ui.distanceGroupBox->isChecked())
     {
-        if (needAnd)
-        {
-            str << " and ";
-        }
+        dataset->addCondition(QString("ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'),%3)").arg(_ui.longitudeSpinBox->value()).arg(_ui.latitudeSpinBox->value()).arg(_ui.distanceSpinBox->value() * 1000));
 
-        str << "ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(" << _ui.longitudeSpinBox->value() << " " << _ui.latitudeSpinBox->value() << ")')," << _ui.distanceSpinBox->value() * 1000 << ")";
-        needAnd = true;
-
-        _dataManager->setCircleNode(_ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value(), _ui.distanceSpinBox->value() * 1000);
+        _dataManager->setCircleNode(_ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value(), _ui.distanceSpinBox->value() * 1000);        
     }
     else
     {
         _dataManager->removeCircleNode();
     }
 
-    _dataManager->updateLayer(str.str());
+    _dataManager->updateLayer(dataset->fullCondition().toUtf8().constData());
+
+    delete dataset;
 }
 
 void MainWindow::showAbout()
