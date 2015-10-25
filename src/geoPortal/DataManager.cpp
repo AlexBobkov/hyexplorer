@@ -1,5 +1,7 @@
 #include "DataManager.hpp"
 
+#include <osgEarth/Viewpoint>
+#include <osgEarthUtil/EarthManipulator>
 #include <osgEarthAnnotation/CircleNode>
 #include <osgEarthFeatures/FeatureSource>
 #include <osgEarthFeatures/FeatureDisplayLayout>
@@ -14,6 +16,7 @@ using namespace osgEarth;
 using namespace osgEarth::Drivers;
 using namespace osgEarth::Features;
 using namespace osgEarth::Symbology;
+using namespace osgEarth::Util;
 using namespace portal;
 
 DataManager::DataManager(osgViewer::View* view, osgEarth::MapNode* mapNode):
@@ -67,4 +70,29 @@ void DataManager::removeCircleNode()
     {
         _mapNode->removeChild(_circleNode);
     }
+}
+
+void DataManager::zoomToScene(const ScenePtr& scene)
+{
+    if (!scene)
+    {
+        return;
+    }
+
+    osg::Vec3d center = (scene->neCorner + scene->nwCorner + scene->seCorner + scene->swCorner) * 0.25;
+        
+    osgEarth::Viewpoint viewpoint;
+    viewpoint.focalPoint() = GeoPoint(_mapNode->getMapSRS(), center.x(), center.y(), 0.0, osgEarth::ALTMODE_ABSOLUTE);
+    viewpoint.heading() = 0.0;
+    viewpoint.pitch() = 10.0 - 90.0;
+    viewpoint.range() = 150000.0;
+
+    EarthManipulator* em = dynamic_cast<EarthManipulator*>(_view->getCameraManipulator());
+    if (!em)
+    {
+        std::cerr << "Failed to cast to EarthManipulator\n";
+        return;
+    }
+
+    em->setViewpoint(viewpoint, 3.0);
 }

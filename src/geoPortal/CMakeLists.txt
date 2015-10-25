@@ -13,6 +13,7 @@ SET(HEADER_FILES
 	MainWindow.hpp
 	MetadataWidget.hpp
 	Scene.hpp
+	TableModel.hpp
 )
 
 SET(SRC_FILES
@@ -22,6 +23,7 @@ SET(SRC_FILES
 	MetadataWidget.cpp
 	Program.cpp
 	Scene.cpp
+	TableModel.cpp
 )
 
 INCLUDE_DIRECTORIES(

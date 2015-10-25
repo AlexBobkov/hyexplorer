@@ -6,6 +6,7 @@
 
 #include <QDateTime>
 #include <QString>
+#include <QMetaType>
 
 #include <boost/optional.hpp>
 
@@ -48,5 +49,7 @@ namespace portal
         QString overviewFilename() const;
     };
 
-    typedef std::shared_ptr<Scene> ScenePtr;
+    typedef std::shared_ptr<Scene> ScenePtr;    
 }
+
+Q_DECLARE_METATYPE(portal::ScenePtr);

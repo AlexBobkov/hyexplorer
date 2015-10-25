@@ -1,6 +1,7 @@
 #include "MainWindow.hpp"
 #include "MetadataWidget.hpp"
 #include "Dataset.hpp"
+#include "TableModel.hpp"
 
 #include <osgEarth/Terrain>
 #include <osgEarthAnnotation/CircleNode>
@@ -80,7 +81,9 @@ namespace
 
 MainWindow::MainWindow() :
 QMainWindow(),
-_metadataDock(0)
+_metadataDock(0),
+_scenesDock(0),
+_scenesView(0)
 {
     initUi();
 }
@@ -106,7 +109,18 @@ void MainWindow::initUi()
     _metadataDock = new QDockWidget(tr("Метаданные"));
     _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     _metadataDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _metadataDock);        
+    addDockWidget(Qt::RightDockWidgetArea, _metadataDock);
+
+    _scenesDock = new QDockWidget(tr("Найденные сцены"));
+    _scenesDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _scenesDock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _scenesDock, Qt::Horizontal);
+
+    _scenesView = new QTableView(this);
+    _scenesDock->setWidget(_scenesView);
+
+    connect(_scenesView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
+    connect(_scenesView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -231,6 +245,12 @@ void MainWindow::executeQuery()
     dataset->execute();
 
     _dataManager->setDataSet(dataset);
+
+    TableModel* tableModel = new TableModel(dataset, this);
+    _scenesView->setModel(tableModel);
+    _scenesView->resizeColumnsToContents();
+
+    _scenesDock->setVisible(true);
 }
 
 void MainWindow::showAbout()
@@ -282,11 +302,6 @@ void MainWindow::selectPoint(bool b)
     }
     else
     {
-        if (_handler)
-        {
-            _dataManager->view()->removeEventHandler(_handler);
-        }
-
         if (_ui.selectPointButton->isChecked())
         {
             _ui.selectPointButton->setChecked(false);
@@ -296,6 +311,21 @@ void MainWindow::selectPoint(bool b)
 
 void MainWindow::setPoint(const osgEarth::GeoPoint& point)
 {
-    _ui.longitudeSpinBox->setValue(point.x());
-    _ui.latitudeSpinBox->setValue(point.y());
+    if (_ui.selectPointButton->isChecked())
+    {
+        _ui.longitudeSpinBox->setValue(point.x());
+        _ui.latitudeSpinBox->setValue(point.y());
+    }
+}
+
+void MainWindow::selectScene(const QModelIndex& index)
+{
+    ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
+    setScene(scene);
+}
+
+void MainWindow::zoomToScene(const QModelIndex& index)
+{
+    ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
+    _dataManager->zoomToScene(scene);
 }

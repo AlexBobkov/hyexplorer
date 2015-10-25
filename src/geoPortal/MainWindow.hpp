@@ -15,6 +15,8 @@
 #include <QLabel>
 #include <QTabWidget>
 #include <QPushButton>
+#include <QTableView>
+
 
 namespace portal
 {
@@ -30,13 +32,16 @@ namespace portal
         
         void setScene(const ScenePtr& scene);
 
-    public slots:
+    private slots:
         void executeQuery();        
 
         void selectPoint(bool b);
 
         void showAbout();
         void showMetadataDescription();
+
+        void selectScene(const QModelIndex& index);
+        void zoomToScene(const QModelIndex& index);
 
     signals:
         void sceneSelected(const ScenePtr& scene);
@@ -54,6 +59,9 @@ namespace portal
 
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
               
-        QDockWidget* _metadataDock;        
+        QDockWidget* _metadataDock;
+        QDockWidget* _scenesDock;
+
+        QTableView* _scenesView;
     };
 }

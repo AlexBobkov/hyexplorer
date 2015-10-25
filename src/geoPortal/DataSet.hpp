@@ -1,14 +1,11 @@
 ﻿#pragma once
 
-#include <osg/Vec3d>
+#include "Scene.hpp"
 
 #include <osgEarth/MapNode>
 #include <osgEarthFeatures/FeatureSource>
 
-#include <QDateTime>
 #include <QString>
-
-#include <boost/optional.hpp>
 
 #include <memory>
 
@@ -24,8 +21,12 @@ namespace portal
 
         osgEarth::ModelLayer* layer() const { return _layer; }
 
+        const std::vector<ScenePtr>& scenes() const { return _scenes; }
+
     protected:
         QString _fullCondition;
+
+        std::vector<ScenePtr> _scenes;
 
         osg::ref_ptr<osgEarth::Features::FeatureSource> _featureSource;
         osg::ref_ptr<osgEarth::ModelLayer> _layer;

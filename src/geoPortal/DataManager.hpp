@@ -16,13 +16,13 @@ namespace portal
 
         osgViewer::View* view() const { return _view; }
         osgEarth::MapNode* mapNode() const { return _mapNode; }
-
-        //void updateLayer(const std::string& query);
-
+        
         void setDataSet(const DataSetPtr& dataset);
 
         void setCircleNode(double lon, double lat, double radius);
         void removeCircleNode();
+
+        void zoomToScene(const ScenePtr& scene);
 
     protected:
         DataManager(const DataManager&) = delete;

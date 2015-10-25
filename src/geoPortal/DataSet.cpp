@@ -1,5 +1,4 @@
 #include "DataSet.hpp"
-#include "Scene.hpp"
 
 #include <osgEarthSymbology/Geometry>
 #include <osgEarthFeatures/Feature>
@@ -59,9 +58,7 @@ void DataSet::execute()
     osgEarth::SpatialReference* srs = osgEarth::SpatialReference::get("wgs84");
 
     FeatureListSource* featureListSource = new FeatureListSource;
-
-    std::vector<ScenePtr> scenes;
-
+    
     while (query.next())
     {
         ScenePtr scene = std::make_shared<Scene>();
@@ -148,7 +145,7 @@ void DataSet::execute()
 
         scene->feature = new Feature(geometry, srs, Style(), scene->id);
 
-        scenes.push_back(scene);
+        _scenes.push_back(scene);
         featureListSource->getFeatures().push_back(scene->feature);
     }
 
@@ -177,5 +174,5 @@ void DataSet::execute()
     
     _layer = new ModelLayer("scenes", fgmOpt);
 
-    std::cout << "Scenes found " << scenes.size() << std::endl;
+    std::cout << "Scenes found " << _scenes.size() << std::endl;
 }
