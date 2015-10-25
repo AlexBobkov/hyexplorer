@@ -83,7 +83,9 @@ MainWindow::MainWindow() :
 QMainWindow(),
 _metadataDock(0),
 _scenesDock(0),
-_scenesView(0)
+_scenesView(0),
+_scenes2Dock(0),
+_scenes2View(0)
 {
     initUi();
 }
@@ -106,21 +108,38 @@ void MainWindow::initUi()
     _ui.dateTimeEditFrom->setDateTime(QDateTime::currentDateTime().addYears(-1));
     _ui.dateTimeEditTo->setDateTime(QDateTime::currentDateTime());
 
-    _metadataDock = new QDockWidget(tr("Метаданные"));
-    _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    _metadataDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _metadataDock);
-
+    //--------------------------------------------
+        
     _scenesDock = new QDockWidget(tr("Найденные сцены"));
     _scenesDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     _scenesDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _scenesDock, Qt::Horizontal);
+    addDockWidget(Qt::RightDockWidgetArea, _scenesDock);
 
     _scenesView = new QTableView(this);
     _scenesDock->setWidget(_scenesView);
 
     connect(_scenesView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
     connect(_scenesView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
+
+    //--------------------------------------------
+
+    _scenes2Dock = new QDockWidget(tr("Сцены под указателем"));
+    _scenes2Dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _scenes2Dock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _scenes2Dock);
+
+    _scenes2View = new QTableView(this);
+    _scenes2Dock->setWidget(_scenes2View);
+
+    connect(_scenes2View, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
+    connect(_scenes2View, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
+
+    //--------------------------------------------
+
+    _metadataDock = new QDockWidget(tr("Метаданные"));
+    _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _metadataDock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _metadataDock, Qt::Horizontal);
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -251,6 +270,12 @@ void MainWindow::executeQuery()
     _scenesView->resizeColumnsToContents();
 
     _scenesDock->setVisible(true);
+
+    TableModel* tableModel2 = new TableModel(dataset, this);
+    _scenes2View->setModel(tableModel2);
+    _scenes2View->resizeColumnsToContents();
+
+    _scenes2Dock->setVisible(true);    
 }
 
 void MainWindow::showAbout()
