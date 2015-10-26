@@ -98,10 +98,10 @@ namespace
 MainWindow::MainWindow() :
 QMainWindow(),
 _metadataDock(0),
-_scenesDock(0),
-_scenesView(0),
-_scenes2Dock(0),
-_scenes2View(0)
+_scenesMainDock(0),
+_scenesMainView(0),
+_scenesSecondDock(0),
+_scenesSecondView(0)
 {
     initUi();
 }
@@ -124,30 +124,30 @@ void MainWindow::initUi()
 
     //--------------------------------------------
         
-    _scenesDock = new QDockWidget(tr("Найденные сцены"));
-    _scenesDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _scenesMainDock = new QDockWidget(tr("Найденные сцены"));
+    _scenesMainDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     //_scenesDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _scenesDock);
+    addDockWidget(Qt::RightDockWidgetArea, _scenesMainDock);
 
-    _scenesView = new QTableView(this);
-    _scenesDock->setWidget(_scenesView);
+    _scenesMainView = new QTableView(this);
+    _scenesMainDock->setWidget(_scenesMainView);
 
-    connect(_scenesView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
-    connect(_scenesView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
-
+    connect(_scenesMainView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
+    connect(_scenesMainView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
+    
     //--------------------------------------------
 
-    _scenes2Dock = new QDockWidget(tr("Сцены под указателем"));
-    _scenes2Dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _scenesSecondDock = new QDockWidget(tr("Сцены под указателем"));
+    _scenesSecondDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     //_scenes2Dock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _scenes2Dock);
+    addDockWidget(Qt::RightDockWidgetArea, _scenesSecondDock);
 
-    _scenes2View = new QTableView(this);
-    _scenes2Dock->setWidget(_scenes2View);
+    _scenesSecondView = new QTableView(this);
+    _scenesSecondDock->setWidget(_scenesSecondView);
 
-    connect(_scenes2View, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
-    connect(_scenes2View, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
-
+    connect(_scenesSecondView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
+    connect(_scenesSecondView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
+    
     //--------------------------------------------
 
     _metadataDock = new QDockWidget(tr("Метаданные"));
@@ -285,21 +285,14 @@ void MainWindow::executeQuery()
 
     _dataManager->setDataSet(_dataset);
 
-    TableModel* tableModel = new TableModel(_dataset, this);
-    QItemSelectionModel* selectionModel = new QItemSelectionModel(tableModel, this);
+    TableModel* tableModel = new TableModel(_dataset, this);    
+    _scenesMainView->setModel(tableModel);    
+    _scenesMainView->resizeColumnsToContents();
+    _scenesMainDock->setVisible(true);
+    
+    _scenesSecondDock->setVisible(true);    
 
-    _scenesView->setModel(tableModel);
-    //_scenesView->setSelectionModel(selectionModel);
-    _scenesView->resizeColumnsToContents();
-    _scenesDock->setVisible(true);
-
-    //ProxyModel* proxyModel = new ProxyModel(_dataset, this);
-    //proxyModel->setSourceModel(tableModel);
-
-    //_scenes2View->setModel(proxyModel);
-    ////_scenes2View->setSelectionModel(selectionModel);
-    //_scenes2View->resizeColumnsToContents();
-    _scenes2Dock->setVisible(true);    
+    connect(_scenesMainView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onMainTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
 }
 
 void MainWindow::showAbout()
@@ -362,10 +355,12 @@ void MainWindow::onMouseClicked()
             _dataset->selectScenesUnderPointer(_point);
             
             ProxyModel* proxyModel = new ProxyModel(_dataset, this);
-            proxyModel->setSourceModel(_scenesView->model());
+            proxyModel->setSourceModel(_scenesMainView->model());
 
-            _scenes2View->setModel(proxyModel);            
-            _scenes2View->resizeColumnsToContents();
+            _scenesSecondView->setModel(proxyModel);            
+            _scenesSecondView->resizeColumnsToContents();
+
+            connect(_scenesSecondView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSecondTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
         }
     }
 }
@@ -380,4 +375,28 @@ void MainWindow::zoomToScene(const QModelIndex& index)
 {
     ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
     _dataManager->zoomToScene(scene);
+}
+
+void MainWindow::onMainTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+{
+    ProxyModel* proxyModel = dynamic_cast<ProxyModel*>(_scenesSecondView->model());
+    QItemSelection proxySelection = proxyModel->mapSelectionFromSource(selected);
+
+    _scenesSecondView->selectionModel()->select(proxySelection, QItemSelectionModel::ClearAndSelect);
+    if (!proxySelection.empty())
+    {
+        _scenesSecondView->scrollTo(proxySelection.first().indexes()[0]);
+    }
+}
+
+void MainWindow::onSecondTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+{
+    ProxyModel* proxyModel = dynamic_cast<ProxyModel*>(_scenesSecondView->model());
+    QItemSelection sourceSelection = proxyModel->mapSelectionToSource(selected);
+
+    _scenesMainView->selectionModel()->select(sourceSelection, QItemSelectionModel::ClearAndSelect);
+    if (!sourceSelection.empty())
+    {
+        _scenesMainView->scrollTo(sourceSelection.first().indexes()[0]);
+    }
 }

@@ -29,17 +29,20 @@ namespace portal
         virtual ~MainWindow();
 
         void setDataManager(const DataManagerPtr& dataManager);
-        
+
         void setScene(const ScenePtr& scene);
 
     private slots:
-        void executeQuery();        
+        void executeQuery();
 
         void showAbout();
         void showMetadataDescription();
 
         void selectScene(const QModelIndex& index);
         void zoomToScene(const QModelIndex& index);
+
+        void onMainTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+        void onSecondTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
 
     signals:
         void sceneSelected(const ScenePtr& scene);
@@ -57,14 +60,14 @@ namespace portal
         DataManagerPtr _dataManager;
 
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
-              
+
         QDockWidget* _metadataDock;
 
-        QDockWidget* _scenesDock;
-        QTableView* _scenesView;
+        QDockWidget* _scenesMainDock;
+        QTableView* _scenesMainView;
 
-        QDockWidget* _scenes2Dock;
-        QTableView* _scenes2View;
+        QDockWidget* _scenesSecondDock;
+        QTableView* _scenesSecondView;
 
         DataSetPtr _dataset;
 
