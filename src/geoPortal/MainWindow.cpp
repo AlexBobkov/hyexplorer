@@ -194,9 +194,31 @@ void MainWindow::setScene(const ScenePtr& scene)
 
 void MainWindow::executeQuery()
 {
-    bool needAnd = false;
+    //Сначала подчистим старое
 
-    std::ostringstream str;
+    _ui.dockWidget->setEnabled(false);
+
+    _dataManager->setDataSet(DataSetPtr());
+
+    QAbstractItemModel *oldMainModel = _scenesMainView->model();
+    if (oldMainModel)
+    {
+        QItemSelectionModel* selectionModel = _scenesMainView->selectionModel();
+        _scenesMainView->setModel(0);
+        delete selectionModel;
+        delete oldMainModel;
+    }
+
+    QAbstractItemModel *oldSecondModel = _scenesSecondView->model();
+    if (oldSecondModel)
+    {
+        QItemSelectionModel* selectionModel = _scenesSecondView->selectionModel();
+        _scenesSecondView->setModel(0);
+        delete selectionModel;
+        delete oldSecondModel;
+    }
+
+    //-----------------------------------------------------    
 
     _dataset = std::make_shared<DataSet>();
 
@@ -283,16 +305,18 @@ void MainWindow::executeQuery()
 
     _dataset->selectScenes();
 
-    _dataManager->setDataSet(_dataset);
+    _dataManager->setDataSet(_dataset);    
 
     TableModel* tableModel = new TableModel(_dataset, this);    
     _scenesMainView->setModel(tableModel);    
     _scenesMainView->resizeColumnsToContents();
-    _scenesMainDock->setVisible(true);
-    
-    _scenesSecondDock->setVisible(true);    
+
+    _scenesMainDock->setVisible(true);    
+    _scenesSecondDock->setVisible(true);
 
     connect(_scenesMainView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onMainTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
+
+    _ui.dockWidget->setEnabled(true);
 }
 
 void MainWindow::showAbout()
@@ -350,7 +374,7 @@ void MainWindow::onMouseClicked()
     }
     else
     {
-        if (_dataset)
+        if (_dataset && _dataset->isInitialized())
         {
             _dataset->selectScenesUnderPointer(_point);
             

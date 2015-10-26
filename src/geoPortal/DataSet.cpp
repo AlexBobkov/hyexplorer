@@ -24,8 +24,19 @@ using namespace osgEarth::Symbology;
 using namespace osgEarth::Drivers;
 using namespace portal;
 
+DataSet::DataSet():
+_initialized(false)
+{
+
+}
+
 void DataSet::addCondition(const QString& str)
 {
+    if (_initialized)
+    {
+        throw std::runtime_error("DataSet is already initialized");
+    }
+
     if (_fullCondition.isEmpty())
     {
         _fullCondition = str;
@@ -37,6 +48,11 @@ void DataSet::addCondition(const QString& str)
 
 void DataSet::selectScenes()
 {
+    if (_initialized)
+    {
+        throw std::runtime_error("DataSet is already initialized");
+    }
+
     QString queryStr;
 
     if (_fullCondition.isEmpty())
@@ -174,11 +190,18 @@ void DataSet::selectScenes()
     
     _layer = new ModelLayer("scenes", fgmOpt);
 
+    _initialized = true;
+
     std::cout << "Scenes found " << _scenes.size() << std::endl;
 }
 
 void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
 {
+    if (!_initialized)
+    {
+        throw std::runtime_error("DataSet is not initialized");
+    }
+
     QString queryStr;
 
     if (_fullCondition.isEmpty())
@@ -211,6 +234,11 @@ void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
 
 bool DataSet::isSceneUnderPointer(const ScenePtr& scene) const
 {
+    if (!_initialized)
+    {
+        throw std::runtime_error("DataSet is not initialized");
+    }
+
     if (!scene)
     {
         return false;

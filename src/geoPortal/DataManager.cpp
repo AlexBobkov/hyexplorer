@@ -34,11 +34,12 @@ void DataManager::setDataSet(const DataSetPtr& dataset)
         _dataset = nullptr;
     }
 
-    if (dataset)
+    _dataset = dataset;
+
+    if (_dataset)
     {
         osg::Timer_t startTick = osg::Timer::instance()->tick();
 
-        _dataset = dataset;
         _mapNode->getMap()->addModelLayer(_dataset->layer());
 
         osg::Timer_t endTick = osg::Timer::instance()->tick();
