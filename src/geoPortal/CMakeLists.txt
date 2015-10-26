@@ -12,6 +12,7 @@ SET(HEADER_FILES
 	DataSet.hpp
 	MainWindow.hpp
 	MetadataWidget.hpp
+	ProxyModel.hpp
 	Scene.hpp
 	TableModel.hpp
 )
@@ -22,6 +23,7 @@ SET(SRC_FILES
 	MainWindow.cpp
 	MetadataWidget.cpp
 	Program.cpp
+	ProxyModel.cpp
 	Scene.cpp
 	TableModel.cpp
 )

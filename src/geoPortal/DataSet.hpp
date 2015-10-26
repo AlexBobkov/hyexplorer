@@ -25,7 +25,9 @@ namespace portal
         /**
         Выполняет запрос к БД, запрашивает какие сцены содержат данную точку
         */
-        void selectScenesUnderPoint(const osgEarth::GeoPoint& point);
+        void selectScenesUnderPointer(const osgEarth::GeoPoint& point);
+
+        bool isSceneUnderPointer(const ScenePtr& scene) const;
 
         osgEarth::ModelLayer* layer() const { return _layer; }
 
@@ -38,6 +40,8 @@ namespace portal
 
         osg::ref_ptr<osgEarth::Features::FeatureSource> _featureSource;
         osg::ref_ptr<osgEarth::ModelLayer> _layer;
+
+        std::set<std::size_t> _sceneIdsUnderPointer;
     };
 
     typedef std::shared_ptr<DataSet> DataSetPtr;

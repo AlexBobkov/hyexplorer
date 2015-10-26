@@ -4,8 +4,6 @@
 
 #include <QAbstractTableModel>
 
-#include <memory>
-
 namespace portal
 {
     class TableModel : public QAbstractTableModel

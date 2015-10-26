@@ -2,6 +2,7 @@
 #include "MetadataWidget.hpp"
 #include "Dataset.hpp"
 #include "TableModel.hpp"
+#include "ProxyModel.hpp"
 
 #include <osgEarth/Terrain>
 #include <osgEarthAnnotation/CircleNode>
@@ -288,13 +289,16 @@ void MainWindow::executeQuery()
     QItemSelectionModel* selectionModel = new QItemSelectionModel(tableModel, this);
 
     _scenesView->setModel(tableModel);
-    _scenesView->setSelectionModel(selectionModel);
+    //_scenesView->setSelectionModel(selectionModel);
     _scenesView->resizeColumnsToContents();
     _scenesDock->setVisible(true);
 
-    _scenes2View->setModel(tableModel);
-    _scenes2View->setSelectionModel(selectionModel);
-    _scenes2View->resizeColumnsToContents();
+    //ProxyModel* proxyModel = new ProxyModel(_dataset, this);
+    //proxyModel->setSourceModel(tableModel);
+
+    //_scenes2View->setModel(proxyModel);
+    ////_scenes2View->setSelectionModel(selectionModel);
+    //_scenes2View->resizeColumnsToContents();
     _scenes2Dock->setVisible(true);    
 }
 
@@ -355,7 +359,13 @@ void MainWindow::onMouseClicked()
     {
         if (_dataset)
         {
-            _dataset->selectScenesUnderPoint(_point);
+            _dataset->selectScenesUnderPointer(_point);
+            
+            ProxyModel* proxyModel = new ProxyModel(_dataset, this);
+            proxyModel->setSourceModel(_scenesView->model());
+
+            _scenes2View->setModel(proxyModel);            
+            _scenes2View->resizeColumnsToContents();
         }
     }
 }

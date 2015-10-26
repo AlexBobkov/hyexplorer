@@ -177,7 +177,7 @@ void DataSet::selectScenes()
     std::cout << "Scenes found " << _scenes.size() << std::endl;
 }
 
-void DataSet::selectScenesUnderPoint(const osgEarth::GeoPoint& point)
+void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
 {
     QString queryStr;
 
@@ -197,12 +197,29 @@ void DataSet::selectScenesUnderPoint(const osgEarth::GeoPoint& point)
         return;
     }
 
-    std::vector<int> ids;
+    std::set<std::size_t> ids;
 
     while (query.next())
     {
-        ids.push_back(query.value(0).toInt());
+        ids.insert(query.value(0).toInt());
     }
 
+    _sceneIdsUnderPointer = ids;
+
     std::cout << "Scenes under pointer found " << ids.size() << std::endl;
+}
+
+bool DataSet::isSceneUnderPointer(const ScenePtr& scene) const
+{
+    if (!scene)
+    {
+        return false;
+    }
+
+    if (_sceneIdsUnderPointer.find(scene->id) != _sceneIdsUnderPointer.end())
+    {
+        return true;
+    }
+
+    return false;
 }
