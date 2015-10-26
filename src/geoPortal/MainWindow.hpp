@@ -16,7 +16,7 @@
 #include <QTabWidget>
 #include <QPushButton>
 #include <QTableView>
-
+#include <QProgressBar>
 
 namespace portal
 {
@@ -44,6 +44,8 @@ namespace portal
         void onMainTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
         void onSecondTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
 
+        void finishLoadScenes();
+
     signals:
         void sceneSelected(const ScenePtr& scene);
 
@@ -52,10 +54,15 @@ namespace portal
 
     private:
         void initUi();
+
         void onMousePositionChanged(const osgEarth::GeoPoint& point);
         void onMouseClicked();
 
+        void loadScenes();
+        
         Ui::MainWindow _ui;
+
+        QProgressBar* _progressBar;
 
         DataManagerPtr _dataManager;
 

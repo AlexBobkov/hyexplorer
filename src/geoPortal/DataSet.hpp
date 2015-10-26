@@ -7,6 +7,7 @@
 
 #include <QString>
 
+#include <functional>
 #include <memory>
 
 namespace portal
@@ -14,6 +15,8 @@ namespace portal
     class DataSet
     {
     public:
+        typedef std::function<void(int)> ProgressCallbackType;
+
         DataSet();
 
         bool isInitialized() const { return _initialized; }
@@ -31,7 +34,7 @@ namespace portal
         /**
         Выполняет запрос к БД, скачивает все сцены на основе условия _fullCondition
         */
-        void selectScenes();
+        void selectScenes(const ProgressCallbackType& cb = ProgressCallbackType());
 
         /**
         Выполняет запрос к БД, запрашивает какие сцены содержат данную точку

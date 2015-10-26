@@ -46,7 +46,7 @@ void DataSet::addCondition(const QString& str)
     _fullCondition += " and " + str;
 }
 
-void DataSet::selectScenes()
+void DataSet::selectScenes(const ProgressCallbackType& cb)
 {
     if (_initialized)
     {

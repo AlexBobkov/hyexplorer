@@ -22,6 +22,7 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QSettings>
+#include <QtConcurrent/QtConcurrent>
 
 #include <functional>
 
@@ -97,6 +98,7 @@ namespace
 
 MainWindow::MainWindow() :
 QMainWindow(),
+_progressBar(0),
 _metadataDock(0),
 _scenesMainDock(0),
 _scenesMainView(0),
@@ -154,6 +156,15 @@ void MainWindow::initUi()
     _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     _metadataDock->setVisible(false);
     addDockWidget(Qt::RightDockWidgetArea, _metadataDock, Qt::Horizontal);
+
+    //--------------------------------------------
+
+    _progressBar = new QProgressBar(this);
+    _progressBar->setMaximumWidth(200);
+    _progressBar->setMinimum(0);
+    _progressBar->setMaximum(100);
+    _progressBar->setTextVisible(false);
+    statusBar()->addWidget(_progressBar);
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -197,6 +208,7 @@ void MainWindow::executeQuery()
     //Сначала подчистим старое
 
     _ui.dockWidget->setEnabled(false);
+    _progressBar->setMaximum(0);
 
     _dataManager->setDataSet(DataSetPtr());
 
@@ -302,20 +314,31 @@ void MainWindow::executeQuery()
     {
         _dataManager->removeCircleNode();
     }
+    
+    QtConcurrent::run(this, &MainWindow::loadScenes);
+}
 
+void MainWindow::loadScenes()
+{
     _dataset->selectScenes();
 
-    _dataManager->setDataSet(_dataset);    
+    _dataManager->setDataSet(_dataset);
 
-    TableModel* tableModel = new TableModel(_dataset, this);    
-    _scenesMainView->setModel(tableModel);    
+    QMetaObject::invokeMethod(this, "finishLoadScenes", Qt::QueuedConnection);
+}
+
+void MainWindow::finishLoadScenes()
+{
+    TableModel* tableModel = new TableModel(_dataset, this);
+    _scenesMainView->setModel(tableModel);
     _scenesMainView->resizeColumnsToContents();
 
-    _scenesMainDock->setVisible(true);    
+    _scenesMainDock->setVisible(true);
     _scenesSecondDock->setVisible(true);
 
     connect(_scenesMainView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onMainTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
 
+    _progressBar->setMaximum(100);
     _ui.dockWidget->setEnabled(true);
 }
 
