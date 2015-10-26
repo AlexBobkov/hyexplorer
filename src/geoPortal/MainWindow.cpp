@@ -361,6 +361,12 @@ void MainWindow::onMouseClicked()
             _scenesSecondView->resizeColumnsToContents();
 
             connect(_scenesSecondView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSecondTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
+
+            if (proxyModel->rowCount() > 0)
+            {
+                ScenePtr scene = proxyModel->data(proxyModel->index(0, 0), Qt::UserRole).value<ScenePtr>();
+                setScene(scene);
+            }
         }
     }
 }

@@ -115,6 +115,11 @@ void MetadataWidget::initUi()
 
 void MetadataWidget::setScene(const ScenePtr& scene)
 {
+    if (_lastScene == scene)
+    {
+        return;
+    }
+
     _lastScene = scene;
 
     _sceneidProp->setValue(scene->sceneid);
