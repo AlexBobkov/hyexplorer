@@ -183,11 +183,11 @@ void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
 
     if (_fullCondition.isEmpty())
     {
-        queryStr = QString("select ogc_fid from scenes where bounds && ST_GeographyFromText('SRID=4326;POINT(%0 %1)');").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+        queryStr = QString("select ogc_fid from scenes where ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
     }
     else
     {
-        queryStr = QString("select ogc_fid from scenes where " + _fullCondition + " and bounds && ST_GeographyFromText('SRID=4326;POINT(%0 %1)');").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+        queryStr = QString("select ogc_fid from scenes where " + _fullCondition + " and ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
     }
 
     QSqlQuery query;
