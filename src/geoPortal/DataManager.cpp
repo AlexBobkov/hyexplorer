@@ -46,7 +46,7 @@ void DataManager::setDataSet(const DataSetPtr& dataset)
     }
 }
 
-void DataManager::setCircleNode(double lon, double lat, double radius)
+void DataManager::setCircleNode(const osgEarth::GeoPoint& center, double radius)
 {
     removeCircleNode();
 
@@ -58,7 +58,7 @@ void DataManager::setCircleNode(double lon, double lat, double radius)
     circleStyle.getOrCreate<RenderSymbol>()->lighting() = false;
 
     _circleNode = new osgEarth::Annotation::CircleNode(_mapNode,
-                                                       GeoPoint(_mapNode->getMapSRS(), lon, lat),
+                                                       center,
                                                        Linear(radius, Units::METERS),
                                                        circleStyle);
     _mapNode->addChild(_circleNode);

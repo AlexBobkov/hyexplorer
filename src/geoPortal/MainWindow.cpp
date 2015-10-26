@@ -40,7 +40,9 @@ namespace
             osgGA::GUIEventHandler(),
             _mapNode(mapNode),
             _pointCB(pcb),
-            _finishCB(fcb)
+            _finishCB(fcb),
+            _mouseX(0.0),
+            _mouseY(0.0)
         {
         }
 
@@ -53,7 +55,8 @@ namespace
             osgViewer::View* view = static_cast<osgViewer::View*>(aa.asView());
 
             if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE ||
-                (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON))
+                (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON) ||
+                (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON))
             {
                 osg::Vec3d world;
                 if (_mapNode->getTerrain()->getWorldCoordsUnderMouse(aa.asView(), ea.getX(), ea.getY(), world))
@@ -66,7 +69,16 @@ namespace
 
                 if (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
                 {
-                    _finishCB();
+                    _mouseX = ea.getX();
+                    _mouseY = ea.getY();
+                }
+
+                if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+                {
+                    if (fabs(ea.getX() - _mouseX) < 2.0f && fabs(ea.getY() - _mouseY) < 2.0f)
+                    {
+                        _finishCB();
+                    }
                 }
             }
 
@@ -76,6 +88,9 @@ namespace
         osg::observer_ptr<MapNode>  _mapNode;
         PointCallbackType _pointCB;
         FinishCallbackType _finishCB;
+
+        float _mouseX;
+        float _mouseY;
     };
 }
 
@@ -102,9 +117,7 @@ void MainWindow::initUi()
     connect(_ui.metadataAction, SIGNAL(triggered()), this, SLOT(showMetadataDescription()));
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
-
-    connect(_ui.selectPointButton, SIGNAL(toggled(bool)), this, SLOT(selectPoint(bool)));
-
+    
     _ui.dateTimeEditFrom->setDateTime(QDateTime::currentDateTime().addYears(-1));
     _ui.dateTimeEditTo->setDateTime(QDateTime::currentDateTime());
 
@@ -112,7 +125,7 @@ void MainWindow::initUi()
         
     _scenesDock = new QDockWidget(tr("Найденные сцены"));
     _scenesDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    _scenesDock->setVisible(false);
+    //_scenesDock->setVisible(false);
     addDockWidget(Qt::RightDockWidgetArea, _scenesDock);
 
     _scenesView = new QTableView(this);
@@ -125,7 +138,7 @@ void MainWindow::initUi()
 
     _scenes2Dock = new QDockWidget(tr("Сцены под указателем"));
     _scenes2Dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    _scenes2Dock->setVisible(false);
+    //_scenes2Dock->setVisible(false);
     addDockWidget(Qt::RightDockWidgetArea, _scenes2Dock);
 
     _scenes2View = new QTableView(this);
@@ -158,6 +171,12 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
     metadataWidget->setMapNode(_dataManager->mapNode());
     _metadataDock->setWidget(metadataWidget);
+
+    _handler = new SelectPointMouseHandler(_dataManager->mapNode(),
+                                           std::bind(&MainWindow::onMousePositionChanged, this, std::placeholders::_1),
+                                           std::bind(&MainWindow::onMouseClicked, this));
+
+    _dataManager->view()->addEventHandler(_handler);
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -178,46 +197,46 @@ void MainWindow::executeQuery()
 
     std::ostringstream str;
 
-    DataSetPtr dataset = std::make_shared<DataSet>();
+    _dataset = std::make_shared<DataSet>();
 
     if (_ui.dateGroupBox->isChecked())
     {
-        dataset->addCondition(QString("scenetime>='%0'::timestamp without time zone and scenetime<='%1'::timestamp without time zone").arg(_ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate)).arg(_ui.dateTimeEditTo->dateTime().toString(Qt::ISODate)));
+        _dataset->addCondition(QString("scenetime>='%0'::timestamp without time zone and scenetime<='%1'::timestamp without time zone").arg(_ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate)).arg(_ui.dateTimeEditTo->dateTime().toString(Qt::ISODate)));
     }
 
     if (_ui.sunAzimuthGroupBox->isChecked())
     {
-        dataset->addCondition(QString("sunazimuth>=%0 and sunazimuth<=%1").arg(_ui.sunAzimuthFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunAzimuthToSpinBox->value(), 0, 'f', 7));
+        _dataset->addCondition(QString("sunazimuth>=%0 and sunazimuth<=%1").arg(_ui.sunAzimuthFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunAzimuthToSpinBox->value(), 0, 'f', 7));
     }
 
     if (_ui.sunElevationGroupBox->isChecked())
     {
-        dataset->addCondition(QString("sunelevation>=%0 and sunelevation<=%1").arg(_ui.sunElevationFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunElevationToSpinBox->value(), 0, 'f', 7));
+        _dataset->addCondition(QString("sunelevation>=%0 and sunelevation<=%1").arg(_ui.sunElevationFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunElevationToSpinBox->value(), 0, 'f', 7));
     }
 
     if (_ui.inclinationGroupBox->isChecked())
     {
-        dataset->addCondition(QString("satelliteinclination>=%0 and satelliteinclination<=%1").arg(_ui.inclinationFromSpinBox->value(), 0, 'f', 7).arg(_ui.inclinationToSpinBox->value(), 0, 'f', 7));
+        _dataset->addCondition(QString("satelliteinclination>=%0 and satelliteinclination<=%1").arg(_ui.inclinationFromSpinBox->value(), 0, 'f', 7).arg(_ui.inclinationToSpinBox->value(), 0, 'f', 7));
     }
 
     if (_ui.lookAngleGroupBox->isChecked())
     {
-        dataset->addCondition(QString("lookangle>=%0 and lookangle<=%1").arg(_ui.lookAngleFromSpinBox->value(), 0, 'f', 7).arg(_ui.lookAngleToSpinBox->value(), 0, 'f', 7));
+        _dataset->addCondition(QString("lookangle>=%0 and lookangle<=%1").arg(_ui.lookAngleFromSpinBox->value(), 0, 'f', 7).arg(_ui.lookAngleToSpinBox->value(), 0, 'f', 7));
     }
 
     if (_ui.processingLevelGroupBox->isChecked())
     {
         if (_ui.l1RRadioButton->isChecked())
         {
-            dataset->addCondition("processinglevel='L1R Product Available'");
+            _dataset->addCondition("processinglevel='L1R Product Available'");
         }
         else if (_ui.l1GstRadioButton->isChecked())
         {
-            dataset->addCondition("processinglevel='L1Gst Product Available'");
+            _dataset->addCondition("processinglevel='L1Gst Product Available'");
         }
         else if (_ui.l1TRadioButton->isChecked())
         {
-            dataset->addCondition("processinglevel='L1T Product Available'");
+            _dataset->addCondition("processinglevel='L1T Product Available'");
         }
         else
         {
@@ -227,54 +246,55 @@ void MainWindow::executeQuery()
 
     if (_ui.cloudnessCheckBox->isChecked())
     {
-        dataset->addCondition(QString("cloudmax<=%0").arg(_ui.cloudnessComboBox->currentText().toInt()));
+        _dataset->addCondition(QString("cloudmax<=%0").arg(_ui.cloudnessComboBox->currentText().toInt()));
     }
 
     if (_ui.orbitPathCheckBox->isChecked())
     {
-        dataset->addCondition(QString("orbitpath=%0").arg(_ui.orbitPathSpinBox->value()));
+        _dataset->addCondition(QString("orbitpath=%0").arg(_ui.orbitPathSpinBox->value()));
     }
 
     if (_ui.orbitRowCheckBox->isChecked())
     {
-        dataset->addCondition(QString("orbitrow=%0").arg(_ui.orbitRowSpinBox->value()));
+        _dataset->addCondition(QString("orbitrow=%0").arg(_ui.orbitRowSpinBox->value()));
     }
 
     if (_ui.targetPathCheckBox->isChecked())
     {
-        dataset->addCondition(QString("targetpath=%0").arg(_ui.targetPathSpinBox->value()));
+        _dataset->addCondition(QString("targetpath=%0").arg(_ui.targetPathSpinBox->value()));
     }
 
     if (_ui.targetRowCheckBox->isChecked())
     {
-        dataset->addCondition(QString("targetrow=%0").arg(_ui.targetRowSpinBox->value()));
+        _dataset->addCondition(QString("targetrow=%0").arg(_ui.targetRowSpinBox->value()));
     }
 
     if (_ui.distanceGroupBox->isChecked())
     {
-        dataset->addCondition(QString("ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'),%3)").arg(_ui.longitudeSpinBox->value()).arg(_ui.latitudeSpinBox->value()).arg(_ui.distanceSpinBox->value() * 1000));
-
-        _dataManager->setCircleNode(_ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value(), _ui.distanceSpinBox->value() * 1000);        
+        _dataset->addCondition(QString("ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'),%3)").arg(_ui.longitudeSpinBox->value(), 0, 'f', 12).arg(_ui.latitudeSpinBox->value(), 0, 'f', 12).arg(_ui.distanceSpinBox->value() * 1000));
+                
+        _dataManager->setCircleNode(GeoPoint(_dataManager->mapNode()->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value(), 0.0, osgEarth::ALTMODE_ABSOLUTE), _ui.distanceSpinBox->value() * 1000);
     }
     else
     {
         _dataManager->removeCircleNode();
     }
 
-    dataset->execute();
+    _dataset->selectScenes();
 
-    _dataManager->setDataSet(dataset);
+    _dataManager->setDataSet(_dataset);
 
-    TableModel* tableModel = new TableModel(dataset, this);
+    TableModel* tableModel = new TableModel(_dataset, this);
+    QItemSelectionModel* selectionModel = new QItemSelectionModel(tableModel, this);
+
     _scenesView->setModel(tableModel);
+    _scenesView->setSelectionModel(selectionModel);
     _scenesView->resizeColumnsToContents();
-
     _scenesDock->setVisible(true);
 
-    TableModel* tableModel2 = new TableModel(dataset, this);
-    _scenes2View->setModel(tableModel2);
+    _scenes2View->setModel(tableModel);
+    _scenes2View->setSelectionModel(selectionModel);
     _scenes2View->resizeColumnsToContents();
-
     _scenes2Dock->setVisible(true);    
 }
 
@@ -312,34 +332,31 @@ void MainWindow::showMetadataDescription()
     QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
 }
 
-void MainWindow::selectPoint(bool b)
-{
-    if (b)
-    {
-        if (!_handler)
-        {
-            _handler = new SelectPointMouseHandler(_dataManager->mapNode(),
-                                                   std::bind(&MainWindow::setPoint, this, std::placeholders::_1),
-                                                   std::bind(&MainWindow::selectPoint, this, false));            
-        }
-
-        _dataManager->view()->addEventHandler(_handler);
-    }
-    else
-    {
-        if (_ui.selectPointButton->isChecked())
-        {
-            _ui.selectPointButton->setChecked(false);
-        }
-    }
-}
-
-void MainWindow::setPoint(const osgEarth::GeoPoint& point)
+void MainWindow::onMousePositionChanged(const osgEarth::GeoPoint& point)
 {
     if (_ui.selectPointButton->isChecked())
     {
         _ui.longitudeSpinBox->setValue(point.x());
         _ui.latitudeSpinBox->setValue(point.y());
+    }
+    else
+    {
+        _point = point;
+    }
+}
+
+void MainWindow::onMouseClicked()
+{
+    if (_ui.selectPointButton->isChecked())
+    {
+        _ui.selectPointButton->setChecked(false);
+    }
+    else
+    {
+        if (_dataset)
+        {
+            _dataset->selectScenesUnderPoint(_point);
+        }
     }
 }
 

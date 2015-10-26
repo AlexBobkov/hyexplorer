@@ -35,7 +35,7 @@ void DataSet::addCondition(const QString& str)
     _fullCondition += " and " + str;
 }
 
-void DataSet::execute()
+void DataSet::selectScenes()
 {
     QString queryStr;
 
@@ -175,4 +175,34 @@ void DataSet::execute()
     _layer = new ModelLayer("scenes", fgmOpt);
 
     std::cout << "Scenes found " << _scenes.size() << std::endl;
+}
+
+void DataSet::selectScenesUnderPoint(const osgEarth::GeoPoint& point)
+{
+    QString queryStr;
+
+    if (_fullCondition.isEmpty())
+    {
+        queryStr = QString("select ogc_fid from scenes where bounds && ST_GeographyFromText('SRID=4326;POINT(%0 %1)');").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+    }
+    else
+    {
+        queryStr = QString("select ogc_fid from scenes where " + _fullCondition + " and bounds && ST_GeographyFromText('SRID=4326;POINT(%0 %1)');").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+    }
+
+    QSqlQuery query;
+    if (!query.exec(queryStr))
+    {
+        std::cerr << "Failed to exececute query " << qPrintable(queryStr) << " error " << qPrintable(query.lastError().text());
+        return;
+    }
+
+    std::vector<int> ids;
+
+    while (query.next())
+    {
+        ids.push_back(query.value(0).toInt());
+    }
+
+    std::cout << "Scenes under pointer found " << ids.size() << std::endl;
 }

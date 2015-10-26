@@ -35,8 +35,6 @@ namespace portal
     private slots:
         void executeQuery();        
 
-        void selectPoint(bool b);
-
         void showAbout();
         void showMetadataDescription();
 
@@ -51,7 +49,8 @@ namespace portal
 
     private:
         void initUi();
-        void setPoint(const osgEarth::GeoPoint& point);
+        void onMousePositionChanged(const osgEarth::GeoPoint& point);
+        void onMouseClicked();
 
         Ui::MainWindow _ui;
 
@@ -66,5 +65,9 @@ namespace portal
 
         QDockWidget* _scenes2Dock;
         QTableView* _scenes2View;
+
+        DataSetPtr _dataset;
+
+        osgEarth::GeoPoint _point; //координаты клика мышкой
     };
 }

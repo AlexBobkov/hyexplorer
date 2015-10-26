@@ -19,7 +19,7 @@ namespace portal
         
         void setDataSet(const DataSetPtr& dataset);
 
-        void setCircleNode(double lon, double lat, double radius);
+        void setCircleNode(const osgEarth::GeoPoint& center, double radius);
         void removeCircleNode();
 
         void zoomToScene(const ScenePtr& scene);
