@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include <QDateTime>
 #include <QDir>
+#include <QSettings>
 
 #include <iostream>
 
@@ -238,7 +239,8 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
     _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
             
-    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
 
     QString overviewFilepath = dataPath + QString("/overviews/") + scene->overviewFilename();
 
@@ -283,9 +285,10 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
         }
         else if (requestType == "Overview")
         {
-            QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+            QSettings settings;
+            QString dataPath = settings.value("StoragePath").toString();
             QDir dataDir(dataPath);
-            if (!dataDir.exists())
+            if (!dataDir.exists("overviews"))
             {
                 dataDir.mkpath("overviews");
             }

@@ -88,7 +88,12 @@ int main(int argc, char** argv)
     appWin.setCentralWidget(viewerWidget);
     appWin.setDataManager(dataManager);
     
-    QSettings settings;
+    QSettings settings;    
+    if (!settings.contains("StoragePath"))
+    {
+        settings.setValue("StoragePath", QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    }
+
     QSize size = settings.value("MainWindow/size", QSize(1500, 900)).toSize();
     QPoint pos = settings.value("MainWindow/pos", QPoint(0, 0)).toPoint();
 

@@ -1,5 +1,9 @@
 #include "SettingsWidget.hpp"
 
+#include <QFileDialog>
+#include <QSettings>
+#include <QMessageBox>
+
 using namespace portal;
 
 SettingsWidget::SettingsWidget(const DataManagerPtr& dataManager, QWidget* parent) :
@@ -24,6 +28,9 @@ void SettingsWidget::initUi()
         _ui.coverageComboBox->addItem(QString::fromUtf8(cn.c_str()));
     }
 
+    QSettings settings;
+    _ui.storagePathLineEdit->setText(settings.value("StoragePath").toString());
+
     connect(_ui.atmoCheckBox, SIGNAL(stateChanged(int)), this, SLOT(changeAtmoVisibility(int)));
     connect(_ui.coverageComboBox, SIGNAL(currentTextChanged(const QString&)), this, SLOT(changeCoverage(const QString&)));
 
@@ -37,12 +44,19 @@ void SettingsWidget::changeAtmoVisibility(int value)
 
 void SettingsWidget::changeCoverage(const QString& text)
 {
-    std::cout << "Change coverage " << qPrintable(text) << std::endl;;
-
     _dataManager->setCoverage(text.toUtf8().constData());
 }
 
 void SettingsWidget::browsePath()
-{
-    std::cout << "Browser path\n";
+{    
+    QString dirname = QFileDialog::getExistingDirectory(this, tr("Выберите папку для хранилища"), _ui.storagePathLineEdit->text());
+    if (!dirname.isNull())
+    {
+        _ui.storagePathLineEdit->setText(dirname);
+
+        QSettings settings;
+        settings.setValue("StoragePath", dirname);
+
+        QMessageBox::information(this, tr("Изменение хранилища"), tr("Новые данные будут размещаться в новой папке. Старые данные останутся в старой. Если вы хотите использовать старые данные, то перенесите их вручную в новую папку."));
+    }
 }
