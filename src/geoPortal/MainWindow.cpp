@@ -433,6 +433,11 @@ void MainWindow::zoomToScene(const QModelIndex& index)
 void MainWindow::onMainTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
 {
     ProxyModel* proxyModel = dynamic_cast<ProxyModel*>(_scenesSecondView->model());
+    if (!proxyModel)
+    {
+        return;
+    }
+
     QItemSelection proxySelection = proxyModel->mapSelectionFromSource(selected);
 
     _scenesSecondView->selectionModel()->select(proxySelection, QItemSelectionModel::ClearAndSelect);
