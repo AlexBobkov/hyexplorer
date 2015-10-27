@@ -11,6 +11,9 @@
 #include <osgEarthSymbology/LineSymbol>
 #include <osgEarthDrivers/model_feature_geom/FeatureGeomModelOptions>
 #include <osgEarthDrivers/feature_ogr/OGRFeatureOptions>
+#include <osgEarthDrivers/gdal/GDALOptions>
+#include <osgEarthDrivers/xyz/XYZOptions>
+#include <osgEarthDrivers/arcgis/ArcGISOptions>
 
 using namespace osgEarth;
 using namespace osgEarth::Drivers;
@@ -63,7 +66,29 @@ DataManager::DataManager(osgViewer::View* view, osgEarth::MapNode* mapNode):
 _view(view),
 _mapNode(mapNode)
 {
+    {
+        GDALOptions sourceOpt;
+        sourceOpt.url() = "data/world.tif";
 
+        ImageLayerOptions imageOpt;
+        imageOpt.driver() = sourceOpt;
+
+        _coverageMap["Low res"] = imageOpt;
+        _coverageNames.push_back("Low res");
+    }
+
+    {
+        XYZOptions sourceOpt;
+        sourceOpt.url() = "http://[abc].tile.openstreetmap.org/{z}/{x}/{y}.png";
+        sourceOpt.profile() = ProfileOptions("spherical-mercator");
+
+        ImageLayerOptions imageOpt;
+        imageOpt.driver() = sourceOpt;
+        imageOpt.cachePolicy() = CachePolicy::NO_CACHE;
+
+        _coverageMap["OpenStreetMap"] = imageOpt;
+        _coverageNames.push_back("OpenStreetMap");
+    }
 }
 
 void DataManager::setDataSet(const DataSetPtr& dataset)
@@ -172,4 +197,22 @@ void DataManager::setAtmosphereVisibility(bool b)
             _sky->setUpdateCallback(new AnimateSkyUpdateCallback());
         }
     }
+}
+
+void DataManager::setCoverage(const std::string& coverageName)
+{
+    if (_coverageMap.find(coverageName) == _coverageMap.end())
+    {
+        std::cerr << "Failed to find coverage " << coverageName << std::endl;
+        return;
+    }
+
+    while (_mapNode->getMap()->getNumImageLayers() > 0)
+    {
+        _mapNode->getMap()->removeImageLayer(_mapNode->getMap()->getImageLayerAt(0));
+    }    
+
+    ImageLayerOptions opt = _coverageMap[coverageName];
+    ImageLayer* layer = new ImageLayer(coverageName, opt);
+    _mapNode->getMap()->addImageLayer(layer);
 }

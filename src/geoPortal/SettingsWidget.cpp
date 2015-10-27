@@ -19,6 +19,11 @@ void SettingsWidget::initUi()
 
     _ui.atmoCheckBox->setChecked(_dataManager->atmosphereVisibility());
 
+    for (const auto& cn : _dataManager->coverageNames())
+    {
+        _ui.coverageComboBox->addItem(QString::fromUtf8(cn.c_str()));
+    }
+
     connect(_ui.atmoCheckBox, SIGNAL(stateChanged(int)), this, SLOT(changeAtmoVisibility(int)));
     connect(_ui.coverageComboBox, SIGNAL(currentTextChanged(const QString&)), this, SLOT(changeCoverage(const QString&)));
 
@@ -32,7 +37,9 @@ void SettingsWidget::changeAtmoVisibility(int value)
 
 void SettingsWidget::changeCoverage(const QString& text)
 {
-    std::cout << "Change coverage\n";
+    std::cout << "Change coverage " << qPrintable(text) << std::endl;;
+
+    _dataManager->setCoverage(text.toUtf8().constData());
 }
 
 void SettingsWidget::browsePath()

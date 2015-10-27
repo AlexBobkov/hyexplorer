@@ -8,6 +8,7 @@
 #include <osgEarth/MapNode>
 #include <osgEarth/ObjectIndex>
 #include <osgEarth/Registry>
+#include <osgEarth/Capabilities>
 #include <osgEarthFeatures/FeatureIndex>
 #include <osgEarthQt/ViewerWidget>
 #include <osgEarthUtil/RTTPicker>
@@ -55,6 +56,10 @@ int main(int argc, char** argv)
         qDebug() << "Failed to open database:" << db.lastError().text();
         return 1;
     }
+
+    int cores = osgEarth::Registry::capabilities().getNumProcessors();
+    osg::DisplaySettings::instance()->setNumOfDatabaseThreadsHint(osg::clampAbove(cores, 2));
+    osg::DisplaySettings::instance()->setNumOfHttpDatabaseThreadsHint(osg::clampAbove(cores / 2, 1));
 
     MainWindow appWin;
 

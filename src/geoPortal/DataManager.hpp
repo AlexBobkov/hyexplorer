@@ -7,6 +7,8 @@
 #include <osgEarthUtil/Sky>
 
 #include <memory>
+#include <vector>
+#include <map>
 
 namespace portal
 {
@@ -28,6 +30,9 @@ namespace portal
 
         void zoomToScene(const ScenePtr& scene);
 
+        const std::vector<std::string>& coverageNames() const { return _coverageNames; }
+        void setCoverage(const std::string& coverageName);
+
     protected:
         DataManager(const DataManager&) = delete;
         DataManager& operator=(const DataManager&) = delete;
@@ -36,13 +41,13 @@ namespace portal
         osg::ref_ptr<osgEarth::MapNode> _mapNode;
 
         osg::ref_ptr<osgEarth::Util::SkyNode> _sky;
-
-        osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
-        std::string _oldQuery;
-
+        
         DataSetPtr _dataset;
 
         osg::ref_ptr<osg::Node> _circleNode;
+
+        std::vector<std::string> _coverageNames;
+        std::map<std::string, osgEarth::ImageLayerOptions> _coverageMap;
     };
 
     typedef std::shared_ptr<DataManager> DataManagerPtr;
