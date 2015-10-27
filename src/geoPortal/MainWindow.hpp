@@ -17,6 +17,7 @@
 #include <QPushButton>
 #include <QTableView>
 #include <QProgressBar>
+#include <QMoveEvent>
 
 namespace portal
 {
@@ -37,6 +38,7 @@ namespace portal
 
         void showAbout();
         void showMetadataDescription();
+        void showSettings();
 
         void selectScene(const QModelIndex& index);
         void zoomToScene(const QModelIndex& index);
@@ -50,6 +52,7 @@ namespace portal
         void sceneSelected(const ScenePtr& scene);
 
     protected:
+        void moveEvent(QMoveEvent* event) override;
         void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -59,7 +62,7 @@ namespace portal
         void onMouseClicked();
 
         void loadScenes();
-        
+
         Ui::MainWindow _ui;
 
         QProgressBar* _progressBar;

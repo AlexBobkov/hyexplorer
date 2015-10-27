@@ -30,6 +30,13 @@
     <addaction name="metadataAction"/>
     <addaction name="aboutAction"/>
    </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>Инструменты</string>
+    </property>
+    <addaction name="settingsAction"/>
+   </widget>
+   <addaction name="menu_2"/>
    <addaction name="menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -70,7 +77,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>268</width>
+          <width>258</width>
           <height>903</height>
          </rect>
         </property>
@@ -657,6 +664,11 @@
   <action name="metadataAction">
    <property name="text">
     <string>Описание метаданных</string>
+   </property>
+  </action>
+  <action name="settingsAction">
+   <property name="text">
+    <string>Настройки</string>
    </property>
   </action>
  </widget>

@@ -19,6 +19,46 @@ using namespace osgEarth::Symbology;
 using namespace osgEarth::Util;
 using namespace portal;
 
+namespace
+{
+    class FixedEphemeris : public Ephemeris
+    {
+    public:
+        FixedEphemeris(osg::Camera* camera) :
+            _camera(camera) { }
+
+        osg::Vec3d getSunPositionECEF(const DateTime& dt) const override
+        {
+            if (!_camera.valid())
+            {
+                return Ephemeris::getSunPositionECEF(dt);
+            }
+
+            osg::Vec3 camPos = osg::Matrix::inverse(_camera->getViewMatrix()).getTrans();
+            camPos.normalize();
+
+            return camPos * 149600000;
+        }
+
+    protected:
+        osg::observer_ptr<osg::Camera> _camera;
+    };
+
+    struct AnimateSkyUpdateCallback : public osg::NodeCallback
+    {
+        void operator()(osg::Node* node, osg::NodeVisitor* nv) override
+        {
+            SkyNode* sky = dynamic_cast<SkyNode*>(node);
+            if (sky)
+            {                
+                sky->setDateTime(sky->getDateTime());
+            }
+
+            traverse(node, nv);
+        }
+    };
+}
+
 DataManager::DataManager(osgViewer::View* view, osgEarth::MapNode* mapNode):
 _view(view),
 _mapNode(mapNode)
@@ -96,4 +136,40 @@ void DataManager::zoomToScene(const ScenePtr& scene)
     }
 
     em->setViewpoint(viewpoint, 3.0);
+}
+
+bool DataManager::atmosphereVisibility() const
+{
+    return _sky.valid();
+}
+
+void DataManager::setAtmosphereVisibility(bool b)
+{
+    if (_sky)
+    {
+        osg::Group* parent = _sky->getParent(0);
+        parent->addChild(_mapNode);
+        _sky->removeChild(_mapNode);
+        parent->removeChild(_sky);
+        _sky = 0;
+    }
+    else
+    {
+        SkyOptions options;
+        options.setDriver("simple");
+
+        _sky = SkyNode::create(options, _mapNode);
+        if (_sky)
+        {
+            _sky->attach(_view, 0);
+            _sky->setEphemeris(new FixedEphemeris(_view->getCamera()));
+            
+            osg::Group* parent = _mapNode->getParent(0);
+            parent->addChild(_sky);
+            _sky->addChild(_mapNode);
+            parent->removeChild(_mapNode);
+
+            _sky->setUpdateCallback(new AnimateSkyUpdateCallback());
+        }
+    }
 }

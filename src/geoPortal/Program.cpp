@@ -61,7 +61,10 @@ int main(int argc, char** argv)
     osg::ref_ptr<osg::Node> node = osgDB::readNodeFile("data/globe.earth");
     osg::ref_ptr<osgEarth::MapNode> mapNode = osgEarth::MapNode::findMapNode(node);
 
-    osgEarth::QtGui::ViewerWidget* viewerWidget = new osgEarth::QtGui::ViewerWidget(node);
+    osg::ref_ptr<osg::Group> root = new osg::Group;
+    root->addChild(node);
+
+    osgEarth::QtGui::ViewerWidget* viewerWidget = new osgEarth::QtGui::ViewerWidget(root);
 
     osgViewer::Viewer* viewer = dynamic_cast<osgViewer::Viewer*>(viewerWidget->getViewer());
     if (!viewer)
@@ -82,7 +85,9 @@ int main(int argc, char** argv)
     
     QSettings settings;
     QSize size = settings.value("MainWindow/size", QSize(1500, 900)).toSize();
+    QPoint pos = settings.value("MainWindow/pos", QPoint(0, 0)).toPoint();
 
+    appWin.move(pos);
     appWin.resize(size);
     appWin.show();
 

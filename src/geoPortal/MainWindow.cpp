@@ -3,6 +3,7 @@
 #include "Dataset.hpp"
 #include "TableModel.hpp"
 #include "ProxyModel.hpp"
+#include "SettingsWidget.hpp"
 
 #include <osgEarth/Terrain>
 #include <osgEarthAnnotation/CircleNode>
@@ -118,6 +119,7 @@ void MainWindow::initUi()
 
     connect(_ui.aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
     connect(_ui.metadataAction, SIGNAL(triggered()), this, SLOT(showMetadataDescription()));
+    connect(_ui.settingsAction, SIGNAL(triggered()), this, SLOT(showSettings()));
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
     
@@ -165,6 +167,14 @@ void MainWindow::initUi()
     _progressBar->setMaximum(100);
     _progressBar->setTextVisible(false);
     statusBar()->addWidget(_progressBar);
+}
+
+void MainWindow::moveEvent(QMoveEvent* event)
+{
+    QSettings settings;
+    settings.setValue("MainWindow/pos", pos());
+
+    QMainWindow::moveEvent(event);
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -374,6 +384,14 @@ void MainWindow::showAbout()
 void MainWindow::showMetadataDescription()
 {
     QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
+}
+
+void MainWindow::showSettings()
+{
+    SettingsWidget* widget = new SettingsWidget(_dataManager, this);
+    widget->setWindowFlags(Qt::Window);
+    widget->setAttribute(Qt::WA_DeleteOnClose);
+    widget->show();
 }
 
 void MainWindow::onMousePositionChanged(const osgEarth::GeoPoint& point)

@@ -4,6 +4,7 @@
 
 #include <osgViewer/View>
 #include <osgEarth/MapNode>
+#include <osgEarthUtil/Sky>
 
 #include <memory>
 
@@ -16,6 +17,9 @@ namespace portal
 
         osgViewer::View* view() const { return _view; }
         osgEarth::MapNode* mapNode() const { return _mapNode; }
+
+        bool atmosphereVisibility() const;
+        void setAtmosphereVisibility(bool b);
         
         void setDataSet(const DataSetPtr& dataset);
 
@@ -30,6 +34,8 @@ namespace portal
 
         osg::ref_ptr<osgViewer::View> _view;
         osg::ref_ptr<osgEarth::MapNode> _mapNode;
+
+        osg::ref_ptr<osgEarth::Util::SkyNode> _sky;
 
         osg::observer_ptr<osgEarth::ModelLayer> _oldLayer;
         std::string _oldQuery;

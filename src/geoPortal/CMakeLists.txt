@@ -2,6 +2,7 @@ SET(APP_NAME GeoPortal)
 
 set(LIB_QT_UIS
 	ui/MainWindow.ui
+	ui/SettingsWidget.ui
 )
 
 QT5_WRAP_UI(LIB_UI_HDRS ${LIB_QT_UIS})
@@ -14,6 +15,7 @@ SET(HEADER_FILES
 	MetadataWidget.hpp
 	ProxyModel.hpp
 	Scene.hpp
+	SettingsWidget.hpp
 	TableModel.hpp
 )
 
@@ -25,6 +27,7 @@ SET(SRC_FILES
 	Program.cpp
 	ProxyModel.cpp
 	Scene.cpp
+	SettingsWidget.cpp
 	TableModel.cpp
 )
 
