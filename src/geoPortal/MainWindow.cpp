@@ -122,10 +122,66 @@ void MainWindow::initUi()
     connect(_ui.settingsAction, SIGNAL(triggered()), this, SLOT(showSettings()));
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
-    
-    _ui.dateTimeEditFrom->setDateTime(QDateTime::currentDateTime().addYears(-1));
-    _ui.dateTimeEditTo->setDateTime(QDateTime::currentDateTime());
 
+    //--------------------------------------------
+
+    QSettings settings;
+
+    _ui.dateGroupBox->setChecked(settings.value("Query/dateEnabled", false).toBool());
+    _ui.dateTimeEditFrom->setDateTime(settings.value("Query/dateFrom", QDateTime::currentDateTime().addYears(-1)).toDateTime());
+    _ui.dateTimeEditTo->setDateTime(settings.value("Query/dateTo", QDateTime::currentDateTime()).toDateTime());
+
+    _ui.sunAzimuthGroupBox->setChecked(settings.value("Query/sunAzimuthEnabled", false).toBool());
+    _ui.sunAzimuthFromSpinBox->setValue(settings.value("Query/sunAzimuthFrom").toDouble());
+    _ui.sunAzimuthToSpinBox->setValue(settings.value("Query/sunAzimuthTo").toDouble());
+
+    _ui.sunElevationGroupBox->setChecked(settings.value("Query/sunElevationEnabled", false).toBool());
+    _ui.sunElevationFromSpinBox->setValue(settings.value("Query/sunElevationFrom").toDouble());
+    _ui.sunElevationToSpinBox->setValue(settings.value("Query/sunElevationTo").toDouble());
+
+    _ui.inclinationGroupBox->setChecked(settings.value("Query/inclinationEnabled", false).toBool());
+    _ui.inclinationFromSpinBox->setValue(settings.value("Query/inclinationFrom").toDouble());
+    _ui.inclinationToSpinBox->setValue(settings.value("Query/inclinationTo").toDouble());
+
+    _ui.lookAngleGroupBox->setChecked(settings.value("Query/lookAngleEnabled", false).toBool());
+    _ui.lookAngleFromSpinBox->setValue(settings.value("Query/lookAngleFrom").toDouble());
+    _ui.lookAngleToSpinBox->setValue(settings.value("Query/lookAngleTo").toDouble());
+
+    _ui.processingLevelGroupBox->setChecked(settings.value("Query/processingLevelEnabled", false).toBool());
+    int processingLevelValue = settings.value("Query/processingLevelValue", 2).toInt();
+    if (processingLevelValue == 0)
+    {
+        _ui.l1RRadioButton->setChecked(true);
+    }
+    else if(processingLevelValue == 1)
+    {
+        _ui.l1GstRadioButton->setChecked(true);
+    }
+    else if (processingLevelValue == 2)
+    {
+        _ui.l1TRadioButton->setChecked(true);
+    }
+
+    _ui.cloudnessCheckBox->setChecked(settings.value("Query/cloudnessEnabled", false).toBool());
+    _ui.cloudnessComboBox->setCurrentText(QString::number(settings.value("Query/cloudnessValue").toInt()));
+
+    _ui.orbitPathCheckBox->setChecked(settings.value("Query/orbitPathEnabled", false).toBool());
+    _ui.orbitPathSpinBox->setValue(settings.value("Query/orbitPathValue").toInt());
+
+    _ui.orbitRowCheckBox->setChecked(settings.value("Query/orbitRowEnabled", false).toBool());
+    _ui.orbitRowSpinBox->setValue(settings.value("Query/orbitRowValue").toInt());
+
+    _ui.targetPathCheckBox->setChecked(settings.value("Query/targetPathEnabled", false).toBool());
+    _ui.targetPathSpinBox->setValue(settings.value("Query/targetPathValue").toInt());
+
+    _ui.targetRowCheckBox->setChecked(settings.value("Query/targetRowEnabled", false).toBool());
+    _ui.targetRowSpinBox->setValue(settings.value("Query/targetRowValue").toInt());
+
+    _ui.distanceGroupBox->setChecked(settings.value("Query/distanceEnabled", false).toBool());
+    _ui.longitudeSpinBox->setValue(settings.value("Query/centerLongitude").toDouble());
+    _ui.latitudeSpinBox->setValue(settings.value("Query/centerLatitude").toDouble());
+    _ui.distanceSpinBox->setValue(settings.value("Query/distanceValue", 1000.0).toDouble());
+    
     //--------------------------------------------
         
     _scenesMainDock = new QDockWidget(tr("Найденные сцены"));
@@ -239,6 +295,68 @@ void MainWindow::executeQuery()
         delete selectionModel;
         delete oldSecondModel;
     }
+
+    //-----------------------------------------------------
+
+    QSettings settings;
+
+    settings.setValue("Query/dateEnabled", _ui.dateGroupBox->isChecked());
+    settings.setValue("Query/dateFrom", _ui.dateTimeEditFrom->dateTime());
+    settings.setValue("Query/dateTo", _ui.dateTimeEditTo->dateTime());
+
+    settings.setValue("Query/sunAzimuthEnabled", _ui.sunAzimuthGroupBox->isChecked());
+    settings.setValue("Query/sunAzimuthFrom", _ui.sunAzimuthFromSpinBox->value());
+    settings.setValue("Query/sunAzimuthTo", _ui.sunAzimuthToSpinBox->value());
+
+    settings.setValue("Query/sunElevationEnabled", _ui.sunElevationGroupBox->isChecked());
+    settings.setValue("Query/sunElevationFrom", _ui.sunElevationFromSpinBox->value());
+    settings.setValue("Query/sunElevationTo", _ui.sunElevationFromSpinBox->value());
+
+    settings.setValue("Query/inclinationEnabled", _ui.inclinationGroupBox->isChecked());
+    settings.setValue("Query/inclinationFrom", _ui.inclinationFromSpinBox->value());
+    settings.setValue("Query/inclinationTo", _ui.inclinationToSpinBox->value());
+
+    settings.setValue("Query/lookAngleEnabled", _ui.lookAngleGroupBox->isChecked());
+    settings.setValue("Query/lookAngleFrom", _ui.lookAngleFromSpinBox->value());
+    settings.setValue("Query/lookAngleTo", _ui.lookAngleToSpinBox->value());
+
+    settings.setValue("Query/processingLevelEnabled", _ui.processingLevelGroupBox->isChecked());
+    if (_ui.l1RRadioButton->isChecked())
+    {
+        settings.setValue("Query/processingLevelValue", 0);
+    }
+    else if (_ui.l1GstRadioButton->isChecked())
+    {
+        settings.setValue("Query/processingLevelValue", 1);
+    }
+    else if (_ui.l1TRadioButton->isChecked())
+    {
+        settings.setValue("Query/processingLevelValue", 2);
+    }
+    else
+    {
+        std::cerr << "Wrong processing level\n";
+    }
+
+    settings.setValue("Query/cloudnessEnabled", _ui.cloudnessCheckBox->isChecked());
+    settings.setValue("Query/cloudnessValue", _ui.cloudnessComboBox->currentText().toInt());
+
+    settings.setValue("Query/orbitPathEnabled", _ui.orbitPathCheckBox->isChecked());
+    settings.setValue("Query/orbitPathValue", _ui.orbitPathSpinBox->value());
+
+    settings.setValue("Query/orbitRowEnabled", _ui.orbitRowCheckBox->isChecked());
+    settings.setValue("Query/orbitRowValue", _ui.orbitRowSpinBox->value());
+
+    settings.setValue("Query/targetPathEnabled", _ui.targetPathCheckBox->isChecked());
+    settings.setValue("Query/targetPathValue", _ui.targetPathSpinBox->value());
+
+    settings.setValue("Query/targetRowEnabled", _ui.targetRowCheckBox->isChecked());
+    settings.setValue("Query/targetRowValue", _ui.targetRowSpinBox->value());
+
+    settings.setValue("Query/distanceEnabled", _ui.distanceGroupBox->isChecked());
+    settings.setValue("Query/centerLongitude", _ui.longitudeSpinBox->value());
+    settings.setValue("Query/centerLatitude", _ui.latitudeSpinBox->value());
+    settings.setValue("Query/distanceValue", _ui.distanceSpinBox->value());
 
     //-----------------------------------------------------    
 
