@@ -14,9 +14,10 @@ public:
     virtual ~Downloader();
 
     void downloadFile(const QString& url);
+    void uploadFile(const QString& url, const QString& filepath);
 
 private slots:
-    void onFileDownloaded(QNetworkReply* reply);
+    void onReplyReceived(QNetworkReply* reply);
 
 private:
     QNetworkAccessManager _networkManager;

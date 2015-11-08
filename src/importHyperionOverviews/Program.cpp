@@ -49,7 +49,8 @@ int main(int argc, char** argv)
     QString storagePath = settings.value("StoragePath", QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).toString();    
     
     Downloader downloader;
-    downloader.downloadFile("http://alexander-bobkov.ru/index.html");
+    //downloader.downloadFile("http://localhost:5000/overview/123");
+    downloader.uploadFile("http://localhost:5000/overview/123", "log.txt");
 
     int result = app.exec();
     return result;
