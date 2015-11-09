@@ -15,7 +15,9 @@ CREATE TABLE public.scenes
   scenetime timestamp without time zone,
   cloudmin integer,
   cloudmax integer,
-  bounds geography(Polygon,4326),  
+  bounds geography(Polygon,4326),
+  hasoverview boolean,
+  hasscene boolean,
   CONSTRAINT scenes_pk PRIMARY KEY (ogc_fid)
 )
 WITH (

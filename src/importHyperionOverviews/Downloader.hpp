@@ -13,8 +13,10 @@ public:
     explicit Downloader(QObject* parent = 0);
     virtual ~Downloader();
 
-    void downloadFile(const QString& url);
-    void uploadFile(const QString& url, const QString& filepath);
+    void processScene(const QString& sceneid);
+    void processMetadata(const QString& sceneid, const QByteArray& data);
+    void processOverview(const QString& sceneid, const QString& filename, const QByteArray& data);
+    void uploadOverview(const QString& sceneid, const QString& filepath);
 
 private slots:
     void onReplyReceived(QNetworkReply* reply);

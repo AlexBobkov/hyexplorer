@@ -26,35 +26,77 @@ Downloader::~Downloader()
 {
 }
 
-void Downloader::downloadFile(const QString& url)
+void Downloader::processScene(const QString& sceneid)
 {
-    QNetworkRequest request(url);
-    request.setAttribute(QNetworkRequest::User, QString("Download"));
+    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(sceneid));
+    request.setAttribute(QNetworkRequest::User, QString("Metadata"));
+    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), sceneid);    
     _networkManager.get(request);
 }
 
-void Downloader::uploadFile(const QString& url, const QString& filepath)
+void Downloader::processMetadata(const QString& sceneid, const QByteArray& data)
 {
+    int startIndex = data.indexOf("http://earthexplorer.usgs.gov/browse/eo-1/hyp");
+    if (startIndex != -1)
+    {
+        int endIndex = data.indexOf(".jpeg", startIndex);
+        if (endIndex != -1)
+        {
+            QByteArray overviewUrlName = data.mid(startIndex, endIndex - startIndex + 5);
+            QUrl url(overviewUrlName.constData());
+
+            QNetworkRequest request(url);
+            request.setAttribute(QNetworkRequest::User, QString("Download"));
+            request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), sceneid);
+            _networkManager.get(request);
+
+            return;
+        }
+    }
+
+    qDebug() << "Failed to process metadata for scene " << sceneid;
+}
+
+void Downloader::processOverview(const QString& sceneid, const QString& filename, const QByteArray& data)
+{
+    QString filepath = _dataDir.filePath(downdloadFolder + QString("/") + filename);
+
+    QFile localFile(filepath);
+    if (!localFile.open(QIODevice::WriteOnly))
+    {
+        qDebug() << "Failed to open file " << qPrintable(filepath);
+        return;
+    }
+
+    localFile.write(data);
+    localFile.close();
+
+    uploadOverview(sceneid, filepath);
+}
+
+void Downloader::uploadOverview(const QString& sceneid, const QString& filepath)
+{
+    QFileInfo info(filepath);
+    if (!info.exists())
+    {
+        qDebug() << "File does not exit " << filepath;
+        return;
+    }
+
     QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
     QHttpPart imagePart;
     imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/octet-stream"));
-    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"%0\";filename=\"%0\"").arg(filepath));
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"%0\";filename=\"%0\"").arg(info.fileName()));
 
     QFile* file = new QFile(filepath);
-    if (!file->open(QIODevice::ReadOnly))
-    {
-        qDebug() << "Failed to read file " << filepath;
-        delete file;
-        return;
-    }
-
+    file->open(QIODevice::ReadOnly);
     imagePart.setBodyDevice(file);
     file->setParent(multiPart); // we cannot delete the file now, so delete it with the multiPart
         
     multiPart->append(imagePart);
 
-    QNetworkRequest request(url);
+    QNetworkRequest request(QString("http://localhost:5000/overview/%0").arg(sceneid));
     request.setAttribute(QNetworkRequest::User, QString("Upload"));
     QNetworkReply* reply = _networkManager.post(request, multiPart);
     multiPart->setParent(reply); // delete the multiPart with the reply
@@ -62,34 +104,29 @@ void Downloader::uploadFile(const QString& url, const QString& filepath)
 
 void Downloader::onReplyReceived(QNetworkReply* reply)
 {
-    qDebug() << "File is downloaded " << reply->url().toString();
+    qDebug() << "Request is completed " << reply->url().toString();
 
     QByteArray data = reply->readAll();
     if (!data.isNull() && !data.isEmpty())
     {
         QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
+        QString sceneid = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1)).toString();
 
-        if (requestType == "Download")
+        if (requestType == "Metadata")
         {
-            QString overviewFilepath = _dataDir.filePath(downdloadFolder + QString("/") + reply->url().fileName());
-
-            QFile localFile(overviewFilepath);
-            if (!localFile.open(QIODevice::WriteOnly))
-            {
-                qDebug() << "Failed to open file " << qPrintable(overviewFilepath);
-                return;
-            }
-
-            localFile.write(data);
-            localFile.close();
+            processMetadata(sceneid, data);
+        }
+        else if (requestType == "Download")
+        {
+            processOverview(sceneid, reply->url().fileName(), data);
         }
         else if (requestType == "Upload")
         {
-            qDebug() << "Uploaded finished" << data;
+            qDebug() << "Upload finished" << data;
+
+            //start new request here
         }
     }
 
     reply->deleteLater();
-
-    qApp->quit();
 }

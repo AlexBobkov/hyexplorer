@@ -26,6 +26,13 @@ int main(int argc, char** argv)
 
     QApplication app(argc, argv);
 
+    QSettings settings;
+    QString storagePath = settings.value("StoragePath", QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).toString();
+
+    Downloader downloader;
+
+    //------------------------------------------
+
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
 #if 0
     db.setHostName("localhost");
@@ -45,12 +52,25 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    QSettings settings;    
-    QString storagePath = settings.value("StoragePath", QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).toString();    
+    //------------------------------------------
     
-    Downloader downloader;
-    //downloader.downloadFile("http://localhost:5000/overview/123");
-    downloader.uploadFile("http://localhost:5000/overview/123", "log.txt");
+    QString queryStr = "select sceneid from scenes where sensor='Hyperion' and not hasoverview limit 1;";
+
+    QSqlQuery query;
+    if (!query.exec(queryStr))
+    {
+        std::cerr << "Failed to exececute query " << qPrintable(queryStr) << " error " << qPrintable(query.lastError().text());
+        return 1;
+    }
+    
+    while (query.next())
+    {
+        QString sceneid = query.value(0).toString();
+                
+        qDebug() << sceneid;
+
+        downloader.processScene(sceneid);
+    }    
 
     int result = app.exec();
     return result;

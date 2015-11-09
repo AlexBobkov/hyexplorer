@@ -250,7 +250,7 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        queryStream << "INSERT INTO public.scenes (sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, lookangle, scenetime, bounds";
+        queryStream << "INSERT INTO public.scenes (sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, lookangle, scenetime, bounds, hasoverview, hasscene";
         if (cloudMin && cloudMax)
         {
             queryStream << ", cloudMin, cloudMax";
@@ -261,7 +261,7 @@ int main(int argc, char** argv)
         }
         queryStream << ") ";
 
-        queryStream << "VALUES('Hyperion','" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'," << polygonStream.str();
+        queryStream << "VALUES('Hyperion','" << sceneId << "'," << orbitPath << "," << orbitRow << "," << targetPath << "," << targetRow << ",'" << processingLevel << "'," << sunAzimuth << "," << sunElevation << "," << lookAngle << ",'" << sceneTime.toString(Qt::ISODate).toUtf8().constData() << "'," << polygonStream.str() << ",FALSE,FALSE";
         if (cloudMin && cloudMax)
         {
             queryStream << "," << *cloudMin << "," << *cloudMax;
