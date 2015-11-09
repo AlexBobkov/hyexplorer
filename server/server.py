@@ -1,4 +1,5 @@
 import os.path
+import psycopg2
 from flask import Flask, request
 from werkzeug import secure_filename
 
@@ -26,6 +27,15 @@ def overview(sceneid):
                 if testfilename == file.filename:
                     filename = secure_filename(file.filename)
                     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+                    conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
+
+                    cur = conn.cursor()
+                    cur.execute("update scenes set hasoverview=TRUE where sceneid=%s;", (sceneid,))
+                    conn.commit()
+
+                    cur.close()
+                    conn.close()
                 else:
                     print("Wrong file " + sceneid + " " + file.filename)
         return 'Success POST'
