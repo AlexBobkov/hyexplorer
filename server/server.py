@@ -1,9 +1,10 @@
+import os
 import os.path
 import psycopg2
 from flask import Flask, request
 from werkzeug import secure_filename
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.environ['GEOPORTAL_UPLOAD_FOLDER']
 ALLOWED_EXTENSIONS = set(['jpeg'])
 
 app = Flask(__name__)
