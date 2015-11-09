@@ -5,6 +5,8 @@
 #include <QNetworkReply>
 #include <QDir>
 
+#include <queue>
+
 class Downloader : public QObject
 {
     Q_OBJECT
@@ -12,6 +14,8 @@ class Downloader : public QObject
 public:
     explicit Downloader(QObject* parent = 0);
     virtual ~Downloader();
+
+    void process(const std::queue<QString>& queue);
 
     void processScene(const QString& sceneid);
     void processMetadata(const QString& sceneid, const QByteArray& data);
@@ -24,4 +28,6 @@ private slots:
 private:
     QNetworkAccessManager _networkManager;
     QDir _dataDir;
+
+    std::queue<QString> _queue;
 };

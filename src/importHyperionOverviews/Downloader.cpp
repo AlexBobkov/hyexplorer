@@ -26,6 +26,18 @@ Downloader::~Downloader()
 {
 }
 
+void Downloader::process(const std::queue<QString>& queue)
+{
+    _queue = queue;
+
+    if (!_queue.empty())
+    {
+        QString sceneid = _queue.front();
+        _queue.pop();
+        processScene(sceneid);
+    }
+}
+
 void Downloader::processScene(const QString& sceneid)
 {
     QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(sceneid));
@@ -122,9 +134,16 @@ void Downloader::onReplyReceived(QNetworkReply* reply)
         }
         else if (requestType == "Upload")
         {
-            qDebug() << "Upload finished" << data;
-
-            //start new request here
+            if (!_queue.empty())
+            {
+                QString sceneid = _queue.front();
+                _queue.pop();
+                processScene(sceneid);
+            }
+            else
+            {
+                qDebug() << "Finish!";
+            }
         }
     }
 

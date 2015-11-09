@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <queue>
 
 int main(int argc, char** argv)
 {
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
 
     //------------------------------------------
     
-    QString queryStr = "select sceneid from scenes where sensor='Hyperion' and not hasoverview limit 1;";
+    QString queryStr = "select sceneid from scenes where sensor='Hyperion' and not hasoverview limit 5;";
 
     QSqlQuery query;
     if (!query.exec(queryStr))
@@ -63,14 +64,21 @@ int main(int argc, char** argv)
         return 1;
     }
     
+    std::queue<QString> scenes;
+    
     while (query.next())
     {
         QString sceneid = query.value(0).toString();
+        scenes.push(sceneid);        
+    }
                 
-        qDebug() << sceneid;
+    if (scenes.empty())
+    {
+        std::cerr << "No scenes found\n";
+        return 1;
+    }
 
-        downloader.processScene(sceneid);
-    }    
+    downloader.process(scenes);
 
     int result = app.exec();
     return result;
