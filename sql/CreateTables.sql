@@ -18,6 +18,7 @@ CREATE TABLE public.scenes
   bounds geography(Polygon,4326),
   hasoverview boolean,
   hasscene boolean,
+  overviewname character varying,
   CONSTRAINT scenes_pk PRIMARY KEY (ogc_fid)
 )
 WITH (

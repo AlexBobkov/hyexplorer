@@ -79,6 +79,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    std::cout << "Scenes found: " << scenes.size() << std::endl;
+
     downloader.process(scenes);
 
     int result = app.exec();

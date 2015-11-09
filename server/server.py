@@ -24,22 +24,18 @@ def overview(sceneid):
     if request.method == 'POST':
         for name, file in request.files.items():
             if allowed_file(file.filename):
-                testfilename = sceneid[:3] + sceneid[4:] + '.jpeg'
-                if testfilename == file.filename:
-                    filename = secure_filename(file.filename)
-                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-                    #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
-                    conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
+                #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
+                conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
 
-                    cur = conn.cursor()
-                    cur.execute("update scenes set hasoverview=TRUE where sceneid=%s;", (sceneid,))
-                    conn.commit()
+                cur = conn.cursor()
+                cur.execute("update scenes set hasoverview=TRUE, overviewname=%s where sceneid=%s;", (filename, sceneid))
+                conn.commit()
 
-                    cur.close()
-                    conn.close()
-                else:
-                    print("Wrong file " + sceneid + " " + file.filename)
+                cur.close()
+                conn.close()
         return 'Success POST'
     else:
         return 'Success GET'
