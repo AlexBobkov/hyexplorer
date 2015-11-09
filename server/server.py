@@ -29,7 +29,8 @@ def overview(sceneid):
                     filename = secure_filename(file.filename)
                     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-                    conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
+                    #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
+                    conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
 
                     cur = conn.cursor()
                     cur.execute("update scenes set hasoverview=TRUE where sceneid=%s;", (sceneid,))
@@ -45,4 +46,4 @@ def overview(sceneid):
 
 if __name__ == '__main__':
     #app.debug = True
-    app.run()
+    app.run(host='0.0.0.0')
