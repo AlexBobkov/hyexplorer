@@ -54,8 +54,9 @@ int main(int argc, char** argv)
     }
 
     //------------------------------------------
-    
-    QString queryStr = "select sceneid from scenes where sensor='Hyperion' and not hasoverview limit 5;";
+
+    //QString queryStr = "select sceneid from scenes where sensor='Hyperion' and targetpath=25 and targetrow=38 and not hasoverview limit 50;";
+    QString queryStr = "select sceneid from scenes where sensor='Hyperion' and not hasoverview limit 20;";
 
     QSqlQuery query;
     if (!query.exec(queryStr))
@@ -63,15 +64,15 @@ int main(int argc, char** argv)
         std::cerr << "Failed to exececute query " << qPrintable(queryStr) << " error " << qPrintable(query.lastError().text());
         return 1;
     }
-    
+
     std::queue<QString> scenes;
-    
+
     while (query.next())
     {
         QString sceneid = query.value(0).toString();
-        scenes.push(sceneid);        
+        scenes.push(sceneid);
     }
-                
+
     if (scenes.empty())
     {
         std::cerr << "No scenes found\n";

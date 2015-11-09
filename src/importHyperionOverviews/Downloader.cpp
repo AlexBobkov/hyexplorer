@@ -108,7 +108,11 @@ void Downloader::uploadOverview(const QString& sceneid, const QString& filepath)
         
     multiPart->append(imagePart);
 
+#if 0
     QNetworkRequest request(QString("http://localhost:5000/overview/%0").arg(sceneid));
+#else
+    QNetworkRequest request(QString("http://178.62.140.44:5000/overview/%0").arg(sceneid));
+#endif
     request.setAttribute(QNetworkRequest::User, QString("Upload"));
     QNetworkReply* reply = _networkManager.post(request, multiPart);
     multiPart->setParent(reply); // delete the multiPart with the reply
