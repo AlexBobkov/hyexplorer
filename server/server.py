@@ -22,8 +22,12 @@ def overview(sceneid):
     if request.method == 'POST':
         for name, file in request.files.items():
             if allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                testfilename = sceneid[:3] + sceneid[4:] + '.jpeg'
+                if testfilename == file.filename:
+                    filename = secure_filename(file.filename)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                else:
+                    print("Wrong file " + sceneid + " " + file.filename)
         return 'Success POST'
     else:
         return 'Success GET'
