@@ -57,11 +57,11 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
 
     if (_fullCondition.isEmpty())
     {
-        queryStr = "select ogc_fid, sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudmin, cloudmax, ST_AsText(bounds) from scenes;";
+        queryStr = "select ogc_fid, sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudmin, cloudmax, ST_AsText(bounds), hasoverview, hasscene, overviewname from scenes;";
     }
     else
     {
-        queryStr = "select ogc_fid, sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudmin, cloudmax, ST_AsText(bounds) from scenes where " + _fullCondition + ";";
+        queryStr = "select ogc_fid, sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudmin, cloudmax, ST_AsText(bounds), hasoverview, hasscene, overviewname from scenes where " + _fullCondition + ";";
     }
 
     QSqlQuery query;
@@ -142,7 +142,7 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
         {
             scene->cloundMax = query.value(14).toInt();
         }
-
+        
         QString boundsStr = query.value(15).toString();
                 
         osg::ref_ptr<Geometry> geometry = GeometryUtils::geometryFromWKT(boundsStr.toUtf8().constData());
@@ -160,6 +160,14 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
         }
 
         scene->feature = new Feature(geometry, srs, Style(), scene->id);
+
+        scene->hasOverview = query.value(16).toBool();
+        scene->hasScene = query.value(17).toBool();
+
+        if (query.value(18).isValid())
+        {
+            scene->overviewName = query.value(18).toString();
+        }
 
         _scenes.push_back(scene);
         featureListSource->getFeatures().push_back(scene->feature);

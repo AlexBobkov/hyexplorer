@@ -46,7 +46,10 @@ namespace portal
         osg::Vec3d neCorner;
         osg::Vec3d nwCorner;
 
-        QString overviewFilename() const;
+        bool hasOverview;
+        bool hasScene;
+
+        boost::optional<QString> overviewName;
     };
 
     typedef std::shared_ptr<Scene> ScenePtr;    

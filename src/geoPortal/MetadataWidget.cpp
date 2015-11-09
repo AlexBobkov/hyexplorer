@@ -238,24 +238,31 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 
     _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
     _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
-            
-    QSettings settings;
-    QString dataPath = settings.value("StoragePath").toString();
 
-    QString overviewFilepath = dataPath + QString("/overviews/") + scene->overviewFilename();
-
-    if (QFile::exists(overviewFilepath))
+    if (scene->hasOverview)
     {
-        std::cout << "Overview exists in the local cache\n";
+        QSettings settings;
+        QString dataPath = settings.value("StoragePath").toString();
 
-        makeOverlay(overviewFilepath);
+        QString overviewFilepath = dataPath + QString("/overviews/") + *scene->overviewName;
+
+        if (QFile::exists(overviewFilepath))
+        {
+            std::cout << "Overview exists in the local cache\n";
+
+            makeOverlay(overviewFilepath);
+        }
+        else
+        {
+            QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportal/hyperion/overviews/%0").arg(*scene->overviewName));
+            request.setAttribute(QNetworkRequest::User, QString("Overview"));
+            _networkManager.get(request);
+        }
     }
-    else
-    {
-        QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(scene->sceneid));
-        request.setAttribute(QNetworkRequest::User, QString("Metadata"));
-        _networkManager.get(request);
-    }
+
+    //QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(scene->sceneid));
+    //request.setAttribute(QNetworkRequest::User, QString("Metadata"));
+    //_networkManager.get(request);
 }
 
 void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
@@ -267,6 +274,7 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
     {
         QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
 
+#if 0
         if (requestType == "Metadata")
         {
             int startIndex = data.indexOf("http://earthexplorer.usgs.gov/browse/eo-1/hyp");
@@ -284,6 +292,9 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
             }
         }
         else if (requestType == "Overview")
+#else
+        if (requestType == "Overview")
+#endif
         {
             QSettings settings;
             QString dataPath = settings.value("StoragePath").toString();
@@ -305,7 +316,7 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
             localFile.write(data);
             localFile.close();
 
-            if (_lastScene && reply->url().fileName() == _lastScene->overviewFilename())
+            if (_lastScene && reply->url().fileName() == _lastScene->overviewName)
             {
                 makeOverlay(overviewFilepath);
             }
