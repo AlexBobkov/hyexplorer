@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "Scene.hpp"
+#include "DataManager.hpp"
+#include "DownloadWidget.hpp"
 
 #include <osg/observer_ptr>
 #include <osgEarth/MapNode>
@@ -23,7 +25,7 @@ namespace portal
         Q_OBJECT
 
     public:
-        explicit MetadataWidget();
+        explicit MetadataWidget(const DataManagerPtr& dataManager, QWidget* parent = 0);
         virtual ~MetadataWidget();
 
         void setMapNode(osgEarth::MapNode* mapNode) { _mapNode = mapNode; }
@@ -33,6 +35,7 @@ namespace portal
 
     private slots:
         void onFileDownloaded(QNetworkReply* reply);
+        void downloadScene();
 
     private:
         void initUi();
@@ -63,7 +66,12 @@ namespace portal
 
         QLabel* _overviewDownloadLabel;
         QLabel* _sceneDownloadLabel;
+        QLabel* _sceneInfoLabel;
+
+        DownloadWidget* _downloadWidget;
 
         QNetworkAccessManager _networkManager;
+
+        DataManagerPtr _dataManager;
     };
 }

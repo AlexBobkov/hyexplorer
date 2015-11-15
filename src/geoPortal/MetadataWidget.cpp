@@ -15,8 +15,9 @@ using namespace osgEarth;
 using namespace osgEarth::Annotation;
 using namespace portal;
 
-MetadataWidget::MetadataWidget() :
+MetadataWidget::MetadataWidget(const DataManagerPtr& dataManager, QWidget* parent) :
 QWidget(),
+_dataManager(dataManager),
 _browser(0),
 _variantManager(0),
 _sceneidProp(0),
@@ -32,7 +33,9 @@ _sunElevationProp(0),
 _inclinationProp(0),
 _lookAngleProp(0),
 _overviewDownloadLabel(0),
-_sceneDownloadLabel(0)
+_sceneDownloadLabel(0),
+_sceneInfoLabel(0),
+_downloadWidget(0)
 {
     initUi();
 }
@@ -109,9 +112,16 @@ void MetadataWidget::initUi()
     _sceneDownloadLabel->setOpenExternalLinks(true);
     layout->addWidget(_sceneDownloadLabel);
 
+    _sceneInfoLabel = new QLabel(tr("Сцена отсутствует на нашем сервере"));
+    layout->addWidget(_sceneInfoLabel);
+
+    _downloadWidget = new DownloadWidget(_dataManager, this);
+    layout->addWidget(_downloadWidget);
+
     layout->addStretch();
 
     connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
+    connect(_downloadWidget, SIGNAL(downloadRequested()), SLOT(downloadScene()));
 }
 
 void MetadataWidget::setScene(const ScenePtr& scene)
@@ -239,6 +249,23 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
     _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
 
+    if (scene->hasScene)
+    {
+        _overviewDownloadLabel->setVisible(false);
+        _sceneDownloadLabel->setVisible(false);
+        _sceneInfoLabel->setText(tr("Сцена присутствует на нашем сервере\nи доступна для скачивания"));
+
+        _downloadWidget->setVisible(true);
+    }
+    else
+    {
+        _overviewDownloadLabel->setVisible(false);
+        _sceneDownloadLabel->setVisible(true);
+        _sceneInfoLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
+
+        //_downloadWidget->setVisible(false);
+    }
+
     if (scene->hasOverview)
     {
         QSettings settings;
@@ -321,6 +348,19 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
                 makeOverlay(overviewFilepath);
             }
         }
+        else if (requestType == "Scene")
+        {
+            qDebug() << "SCENE debug\n";
+
+
+            QFile localFile("test.txt");
+            localFile.open(QIODevice::WriteOnly);
+            localFile.write(data);
+            localFile.close();
+
+
+            setEnabled(true);
+        }
     }
 
     reply->deleteLater();
@@ -350,4 +390,15 @@ void MetadataWidget::makeOverlay(const QString& filepath)
             _overlayNode = imageOverlay;
         }
     }
+}
+
+void MetadataWidget::downloadScene()
+{
+    qDebug() << "Download " << _lastScene->sceneid;
+
+    QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0").arg(_lastScene->sceneid));
+    request.setAttribute(QNetworkRequest::User, QString("Scene"));
+    _networkManager.get(request);
+
+    setEnabled(false);
 }

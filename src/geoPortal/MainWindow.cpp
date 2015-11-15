@@ -245,7 +245,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 {
     _dataManager = dataManager;
 
-    MetadataWidget* metadataWidget = new MetadataWidget;
+    MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
     metadataWidget->setMapNode(_dataManager->mapNode());
     _metadataDock->setWidget(metadataWidget);

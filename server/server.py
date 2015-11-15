@@ -1,7 +1,7 @@
 import os
 import os.path
 import psycopg2
-from flask import Flask, request
+from flask import Flask, request, redirect, url_for
 from werkzeug import secure_filename
 
 UPLOAD_FOLDER = os.environ['GEOPORTAL_UPLOAD_FOLDER']
@@ -22,7 +22,7 @@ def hello_world():
 
 @app.route('/overview/<sceneid>', methods=['GET', 'POST'])
 def overview(sceneid):
-    app.logger.info('Sceneid %s %s', sceneid, request.method)
+    app.logger.info('Overview %s %s', sceneid, request.method)
     if request.method == 'POST':
         for name, file in request.files.items():
             app.logger.info('File %s ', file.filename)
@@ -44,6 +44,12 @@ def overview(sceneid):
         return 'Success POST'
     else:
         return 'Success GET'
+
+@app.route('/scene/<sceneid>')
+def scene(sceneid):
+    app.logger.info('Scene %s', sceneid)
+    #return redirect('http://google.ru')
+    return 'http://virtualglobe.ru/geoportal/hyperion/EO1H123'    
 
 if __name__ == '__main__':
     #app.debug = True
