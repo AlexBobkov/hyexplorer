@@ -17,12 +17,15 @@ def allowed_file(filename):
 
 @app.route('/')
 def hello_world():
+    app.logger.info('Hello World!')
     return 'Hello World!'
 
 @app.route('/overview/<sceneid>', methods=['GET', 'POST'])
 def overview(sceneid):
+    app.logger.info('Sceneid %s %s', sceneid, request.method)
     if request.method == 'POST':
         for name, file in request.files.items():
+            app.logger.info('File %s ', file.filename)
             if allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -36,10 +39,22 @@ def overview(sceneid):
 
                 cur.close()
                 conn.close()
+
+                app.logger.info('Scene is ready %s', sceneid)
         return 'Success POST'
     else:
         return 'Success GET'
 
 if __name__ == '__main__':
     #app.debug = True
+
+    if not app.debug:
+        import logging
+        app.logger.setLevel(logging.INFO)
+
+        from logging import FileHandler
+        file_handler = FileHandler('pylog.txt')
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+
     app.run(host='0.0.0.0')

@@ -140,6 +140,8 @@ void Downloader::onReplyReceived(QNetworkReply* reply)
         {
             if (!_queue.empty())
             {
+                qDebug() << "Remains " << _queue.size();
+
                 QString sceneid = _queue.front();
                 _queue.pop();
                 processScene(sceneid);
@@ -149,6 +151,10 @@ void Downloader::onReplyReceived(QNetworkReply* reply)
                 qDebug() << "Finish!";
             }
         }
+    }
+    else
+    {
+        qDebug() << "Reply is empty";
     }
 
     reply->deleteLater();
