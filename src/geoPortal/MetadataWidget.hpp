@@ -35,6 +35,7 @@ namespace portal
 
     private slots:
         void onFileDownloaded(QNetworkReply* reply);
+        void onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator);
         void downloadScene();
 
     private:

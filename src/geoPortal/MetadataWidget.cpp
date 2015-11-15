@@ -121,6 +121,7 @@ void MetadataWidget::initUi()
     layout->addStretch();
 
     connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
+    connect(&_networkManager, SIGNAL(authenticationRequired(QNetworkReply*, QAuthenticator*)), SLOT(onAuthenticationRequired(QNetworkReply*, QAuthenticator*)));
     connect(_downloadWidget, SIGNAL(downloadRequested()), SLOT(downloadScene()));
 }
 
@@ -364,6 +365,11 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
     }
 
     reply->deleteLater();
+}
+
+void MetadataWidget::onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator)
+{
+    qDebug() << "authenticationRequired";
 }
 
 void MetadataWidget::makeOverlay(const QString& filepath)
