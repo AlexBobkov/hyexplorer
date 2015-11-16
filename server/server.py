@@ -1,6 +1,7 @@
 import os
 import os.path
 import psycopg2
+from osgeo import gdal
 from zipfile import ZipFile
 from flask import Flask, request, redirect, url_for
 from werkzeug import secure_filename
@@ -51,21 +52,16 @@ def overview(sceneid):
     else:
         return 'Success GET'
 
-@app.route('/scene/<sceneid>/<int:minband>/<int:maxband>')
-def scene(sceneid, minband, maxband):
-    app.logger.info('Scene %s %d %d', sceneid, minband, maxband)
-
+def extract_bands(sceneid, minband, maxband):
     zipfilepath = SCENES_FOLDER + "/" + sceneid[:23] + "1T.ZIP"
 
     if not os.path.isfile(zipfilepath):
         app.logger.warning('Filepath %s is not found!', zipfilepath)
-        return 'NO FILE'
+        return False
 
     app.logger.info('Filepath %s is found', zipfilepath)
 
     extractfolder = SCENES_EXTRACT_FOLDER + "/" + sceneid
-
-    output = 'SUCCESS\n'
 
     with ZipFile(zipfilepath) as zip:
         for i in range(minband, maxband + 1):
@@ -74,7 +70,33 @@ def scene(sceneid, minband, maxband):
             if not os.path.isfile(extractfolder + "/" + filename):
                 zip.extract(filename, extractfolder)
 
-            output += 'http://virtualglobe.ru/geoportal/hyperion/scenes/' + sceneid + '/' + filename + '\n'
+    return True
+
+@app.route('/scene/<sceneid>/<int:minband>/<int:maxband>')
+def scene(sceneid, minband, maxband):
+    app.logger.info('Scene %s %d %d', sceneid, minband, maxband)
+
+    if not extract_bands(sceneid, minband, maxband):
+        return 'NO FILE'
+
+    output = 'SUCCESS\n'
+    for i in range(minband, maxband + 1):
+        filename = sceneid[:23] + "B{0:0>3}_L1T.TIF".format(i)
+        output += 'http://virtualglobe.ru/geoportal/hyperion/scenes/' + sceneid + '/' + filename + '\n'
+
+    return output
+
+@app.route('/sceneclip/<sceneid>/<int:minband>/<int:maxband>')
+def sceneclip(sceneid, minband, maxband):
+    app.logger.info('Scene clip %s %d %d', sceneid, minband, maxband)
+
+    if not extract_bands(sceneid, minband, maxband):
+        return 'NO FILE'
+
+    output = 'SUCCESS\n'
+    for i in range(minband, maxband + 1):
+        filename = sceneid[:23] + "B{0:0>3}_L1T.TIF".format(i)
+        output += 'http://virtualglobe.ru/geoportal/hyperion/scenes/' + sceneid + '/' + filename + '\n'
 
     return output
 
