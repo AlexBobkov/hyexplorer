@@ -65,7 +65,7 @@ def scene(sceneid, minband, maxband):
 
     extractfolder = SCENES_EXTRACT_FOLDER + "/" + sceneid
 
-    output = ''
+    output = 'SUCCESS'
 
     with ZipFile(zipfilepath) as zip:
         for i in range(minband, maxband + 1):
