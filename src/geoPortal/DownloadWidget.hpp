@@ -16,7 +16,7 @@ namespace portal
         virtual ~DownloadWidget();
 
     signals:
-        void downloadRequested();
+        void downloadRequested(int minBand, int maxBand);
         //void selectFragmentRequested();
         
     private slots:

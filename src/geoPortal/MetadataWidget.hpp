@@ -36,7 +36,8 @@ namespace portal
     private slots:
         void onFileDownloaded(QNetworkReply* reply);
         void onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator);
-        void downloadScene();
+        void downloadScene(int minBand, int maxBand);
+        void downloadSceneBand();
 
     private:
         void initUi();
@@ -74,5 +75,8 @@ namespace portal
         QNetworkAccessManager _networkManager;
 
         DataManagerPtr _dataManager;
+
+        QStringList _downloadPaths;
+        int _downloadPathIndex;
     };
 }

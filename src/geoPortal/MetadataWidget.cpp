@@ -8,6 +8,8 @@
 #include <QDateTime>
 #include <QDir>
 #include <QSettings>
+#include <QMessageBox>
+#include <QTextStream>
 
 #include <iostream>
 
@@ -35,7 +37,8 @@ _lookAngleProp(0),
 _overviewDownloadLabel(0),
 _sceneDownloadLabel(0),
 _sceneInfoLabel(0),
-_downloadWidget(0)
+_downloadWidget(0),
+_downloadPathIndex(0)
 {
     initUi();
 }
@@ -122,7 +125,7 @@ void MetadataWidget::initUi()
 
     connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
     connect(&_networkManager, SIGNAL(authenticationRequired(QNetworkReply*, QAuthenticator*)), SLOT(onAuthenticationRequired(QNetworkReply*, QAuthenticator*)));
-    connect(_downloadWidget, SIGNAL(downloadRequested()), SLOT(downloadScene()));
+    connect(_downloadWidget, SIGNAL(downloadRequested(int, int)), SLOT(downloadScene(int, int)));
 }
 
 void MetadataWidget::setScene(const ScenePtr& scene)
@@ -351,16 +354,71 @@ void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
         }
         else if (requestType == "Scene")
         {
-            qDebug() << "SCENE debug\n";
+            if (data.startsWith("SUCCESS"))
+            {
+                qDebug() << "Success " << _lastScene->sceneid;
 
+                _downloadPaths.clear();
 
-            QFile localFile("test.txt");
-            localFile.open(QIODevice::WriteOnly);
+                QTextStream stream(data);
+                QString line = stream.readLine(); //SUCCESS
+                while (!line.isNull())
+                {
+                    line = stream.readLine();                    
+                    if (!line.isNull() && !line.isEmpty())
+                    {
+                        _downloadPaths.push_back(line);
+                    }
+                }
+
+                _downloadPathIndex = 0;
+
+                downloadSceneBand();
+            }
+            else
+            {
+                QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), tr("Сцена %0 не найдена на сервере").arg(_lastScene->sceneid));
+                setEnabled(true);
+            }
+            
+            QFile file("debug.txt");
+            file.open(QIODevice::WriteOnly);
+            file.write(data);
+            file.close();            
+        }
+        else if (requestType == "SceneBand")
+        {
+            qDebug() << "SceneBand " << _downloadPathIndex;
+
+            QSettings settings;
+            QString dataPath = settings.value("StoragePath").toString();
+            QDir dataDir(dataPath);
+            QString folderName = QString("hyperion/scenes/%0/").arg(_lastScene->sceneid);
+            if (!dataDir.exists(folderName))
+            {
+                dataDir.mkpath(folderName);
+            }
+
+            QString bandFilepath = dataDir.filePath(folderName + reply->url().fileName());
+
+            QFile localFile(bandFilepath);
+            if (!localFile.open(QIODevice::WriteOnly))
+            {
+                std::cerr << "Failed to open file " << qPrintable(bandFilepath) << std::endl;
+                return;
+            }
+
             localFile.write(data);
             localFile.close();
 
+            _downloadPathIndex++;
+            if (_downloadPathIndex >= _downloadPaths.size())
+            {
+                setEnabled(true);
+                return;
+            }
 
-            setEnabled(true);
+            downloadSceneBand();
         }
     }
 
@@ -398,13 +456,50 @@ void MetadataWidget::makeOverlay(const QString& filepath)
     }
 }
 
-void MetadataWidget::downloadScene()
+void MetadataWidget::downloadScene(int minBand, int maxBand)
 {
     qDebug() << "Download " << _lastScene->sceneid;
 
-    QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0").arg(_lastScene->sceneid));
+    //QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0/%1/%2").arg(_lastScene->sceneid).arg(minBand).arg(maxBand));
+    QNetworkRequest request(QString::fromUtf8("http://178.62.140.44:5000/scene/%0/%1/%2").arg(_lastScene->sceneid).arg(minBand).arg(maxBand));
     request.setAttribute(QNetworkRequest::User, QString("Scene"));
     _networkManager.get(request);
 
     setEnabled(false);
+}
+
+void MetadataWidget::downloadSceneBand()
+{
+    if (_downloadPaths.size() == 0 || _downloadPathIndex >= _downloadPaths.size())
+    {
+        return;
+    }
+
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
+    QDir dataDir(dataPath);
+    QString folderName = QString("hyperion/scenes/%0/").arg(_lastScene->sceneid);
+    if (!dataDir.exists(folderName))
+    {
+        dataDir.mkpath(folderName);
+    }
+    
+    QNetworkRequest request(_downloadPaths[_downloadPathIndex]);        
+    if (dataDir.exists(folderName + request.url().fileName()))
+    {
+        _downloadPathIndex++;
+
+        if (_downloadPathIndex >= _downloadPaths.size())
+        {
+            setEnabled(true);
+            return;
+        }
+
+        downloadSceneBand();        
+    }
+    else
+    {
+        request.setAttribute(QNetworkRequest::User, QString("SceneBand"));
+        _networkManager.get(request);
+    }
 }

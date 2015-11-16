@@ -57,5 +57,5 @@ void DownloadWidget::selectFragment()
 
 void DownloadWidget::download()
 {
-    emit downloadRequested();
+    emit downloadRequested(_ui.fromSpinBox->value(), _ui.toSpinBox->value());
 }
