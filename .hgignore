@@ -1,3 +1,4 @@
 syntax: glob
 server/pylog.txt
 server/run.cmd
+server/test.txt

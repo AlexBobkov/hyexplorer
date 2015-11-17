@@ -10,6 +10,7 @@ from werkzeug import secure_filename
 
 SCENES_FOLDER = os.environ['GEOPORTAL_SCENES_FOLDER']
 SCENES_EXTRACT_FOLDER = os.environ['GEOPORTAL_SCENES_EXTRACT_FOLDER']
+SCENES_CLIPS_FOLDER = os.environ['GEOPORTAL_SCENES_CLIPS_FOLDER']
 
 UPLOAD_FOLDER = os.environ['GEOPORTAL_UPLOAD_FOLDER']
 ALLOWED_EXTENSIONS = set(['jpeg'])
@@ -58,7 +59,7 @@ def extract_bands(sceneid, minband, maxband):
     zipfilepath = SCENES_FOLDER + "/" + sceneid[:23] + "1T.ZIP"
 
     if not os.path.isfile(zipfilepath):
-        app.logger.warning('Filepath %s is not found!', zipfilepath)
+        app.logger.error('Filepath %s is not found!', zipfilepath)
         return False
 
     app.logger.info('Filepath %s is found', zipfilepath)
@@ -78,7 +79,12 @@ def extract_bands(sceneid, minband, maxband):
 def scene(sceneid, minband, maxband):
     app.logger.info('Scene %s %d %d', sceneid, minband, maxband)
 
+    if minband < 1 or maxband > 242:
+        app.logger.error('Wrong band')
+        return 'WRONG BAND'
+
     if not extract_bands(sceneid, minband, maxband):
+        app.logger.error('ZIP is not found')
         return 'NO FILE'
 
     output = 'SUCCESS\n'
@@ -92,48 +98,90 @@ def scene(sceneid, minband, maxband):
 def sceneclip(sceneid, minband, maxband):
     app.logger.info('Scene clip %s %d %d', sceneid, minband, maxband)
 
+    if minband < 1 or maxband > 242:
+        app.logger.error('Wrong band')
+        return 'WRONG BAND'
+
+    if not 'leftgeo' in request.args or \
+        not 'upgeo' in request.args or \
+        not 'rightgeo' in request.args or \
+        not 'downgeo' in request.args:
+        app.logger.error('Bad request')
+        return 'BAD REQUEST'
+
+    leftgeo = request.args.get('leftgeo', None, float)
+    upgeo = request.args.get('upgeo', None, float)
+    rightgeo = request.args.get('rightgeo', None, float)
+    downgeo = request.args.get('downgeo', None, float)
+
+    if leftgeo == None or upgeo == None or rightgeo == None or downgeo == None:
+        app.logger.error('Wrong bounds')
+        return 'WRONG BOUNDS'
+
+    #######################################
+
     if not extract_bands(sceneid, minband, maxband):
+        app.logger.error('ZIP is not found')
         return 'NO FILE'
 
     extractfolder = SCENES_EXTRACT_FOLDER + "/" + sceneid
+    clipsfolder = SCENES_CLIPS_FOLDER + "/" + sceneid
 
-    output = 'SUCCESS_CLIP\n'
+    if not os.path.exists(clipsfolder):
+        os.makedirs(clipsfolder)
 
-    filename = sceneid[:23] + "B{0:0>3}_L1T.TIF".format(minband)
+    clipNum = len(os.listdir(clipsfolder)) #Количество клипов для этой сцены
+    clipsfolder += "/clip%d" % clipNum
 
-    dataset = gdal.Open(extractfolder + "/" + filename, gdal.GA_ReadOnly)
+    if not os.path.exists(clipsfolder):
+        os.makedirs(clipsfolder)
+
+    app.logger.info("Create clips folder %s", clipsfolder)
+
+    #######################################
+    #Открываем первый из файлов с помощью GDAL
+    #Читаем оттуда описание КСО
+    #Преобразуем координаты фрагмента из WGS84 в КСО сцены
+
+    firstFilename = sceneid[:23] + "B{0:0>3}_L1T.TIF".format(minband)
+
+    dataset = gdal.Open(extractfolder + "/" + firstFilename, gdal.GA_ReadOnly)
     if dataset is None:
+        app.logger.error('Failed to open file %s', firstFilename)
         return 'FAILED OPEN FILE'
 
     projection = dataset.GetProjectionRef()
     if projection is None:
+        app.logger.error('Projection is null for file %s', firstFilename)
         return 'PROJECTION IS NULL'
 
     srsOut = osr.SpatialReference()
     if srsOut.ImportFromWkt(projection) != gdal.CE_None:
+        app.logger.error('Failed to import srs from file %s', firstFilename)
         return 'FAILED IMPORT SRS'
 
     srsIn = osr.SpatialReference()
     srsIn.ImportFromEPSG(4326)
 
-    left = -94.857154026968
-    right = -94.806204078584
-    up = 31.588149083258
-    down = 31.519174227538
-
     ct = osr.CoordinateTransformation(srsIn, srsOut)
-    (xLeft, yUp, h) = ct.TransformPoint(left, up)
-    (xRight, yDown, h) = ct.TransformPoint(right, down)
+    (left, up, h) = ct.TransformPoint(leftgeo, upgeo)
+    (right, down, h) = ct.TransformPoint(rightgeo, downgeo)
 
-    #print("XL = %d YU = %d XR = %d YD = %d" % (xLeft, yUp, xRight, yDown))
+    app.logger.info("ClipGeo L = %.10f U = %.10f R = %.10f D = %.10f", leftgeo, upgeo, rightgeo, downgeo)
+    app.logger.info("Clip L = %f U = %f R = %f D = %f", left, up, right, down)
 
+    #######################################
+
+    output = 'SUCCESS_CLIP\n'
     for i in range(minband, maxband + 1):
-        inFilename = extractfolder + "/" + sceneid[:23] + "B{0:0>3}_L1T.TIF".format(i)
-        outFilename = extractfolder + "/" + sceneid[:23] + "B{0:0>3}_L1T_out.TIF".format(i)
+        inFilepath = extractfolder + "/" + sceneid[:23] + "B{0:0>3}_L1T.TIF".format(i)
 
-        subprocess.call(["gdal_translate", "-projwin", '{0}'.format(xLeft), '{0}'.format(yUp), '{0}'.format(xRight), '{0}'.format(yDown), inFilename, outFilename])
+        outFilename = sceneid[:23] + "B{0:0>3}_L1T_clip.TIF".format(i)
+        outFilepath = clipsfolder + "/" + outFilename
 
-        #output += 'http://virtualglobe.ru/geoportal/hyperion/scenes/' + sceneid + '/' + filename + '\n'
+        subprocess.call(["gdal_translate", "-projwin", '{0}'.format(left), '{0}'.format(up), '{0}'.format(right), '{0}'.format(down), inFilepath, outFilepath])
+
+        output += 'http://virtualglobe.ru/geoportal/hyperion/scenes/clips/{0}/clip{1}/{2}\n'.format(sceneid, clipNum, outFilename)
 
     return output
 
