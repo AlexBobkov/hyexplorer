@@ -1,8 +1,8 @@
 SET(APP_NAME GeoPortal)
 
-set(LIB_QT_UIS
-	ui/DownloadWidget.ui
+set(LIB_QT_UIS	
 	ui/MainWindow.ui
+	ui/SceneOperationsWidget.ui
 	ui/SettingsWidget.ui
 )
 
@@ -12,12 +12,12 @@ SET(HEADER_FILES
 	${LIB_UI_HDRS}
 	DataManager.hpp
 	DataSet.hpp
-	DownloadManager.hpp
-	DownloadWidget.hpp
+	DownloadManager.hpp	
 	MainWindow.hpp
 	MetadataWidget.hpp
 	ProxyModel.hpp
 	Scene.hpp
+	SceneOperationsWidget.hpp
 	SettingsWidget.hpp
 	TableModel.hpp
 )
@@ -25,13 +25,13 @@ SET(HEADER_FILES
 SET(SRC_FILES
 	DataManager.cpp
 	DataSet.cpp
-	DownloadManager.cpp
-	DownloadWidget.cpp
+	DownloadManager.cpp	
 	MainWindow.cpp
 	MetadataWidget.cpp
 	Program.cpp
 	ProxyModel.cpp
 	Scene.cpp
+	SceneOperationsWidget.cpp
 	SettingsWidget.cpp
 	TableModel.cpp
 )

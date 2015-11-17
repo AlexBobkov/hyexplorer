@@ -2,7 +2,6 @@
 
 #include "Scene.hpp"
 #include "DataManager.hpp"
-#include "DownloadWidget.hpp"
 
 #include <osg/observer_ptr>
 #include <osgEarth/MapNode>
@@ -55,10 +54,7 @@ namespace portal
 
         QLabel* _overviewDownloadLabel;
         QLabel* _sceneDownloadLabel;
-        QLabel* _sceneInfoLabel;
-
-        DownloadWidget* _downloadWidget;
-                
+                                
         DataManagerPtr _dataManager; //Возможно он здесь не нужен
     };
 }

@@ -4,6 +4,7 @@
 #include "TableModel.hpp"
 #include "ProxyModel.hpp"
 #include "SettingsWidget.hpp"
+#include "SceneOperationsWidget.hpp"
 
 #include <osgEarth/Terrain>
 #include <osgEarthAnnotation/CircleNode>
@@ -100,7 +101,7 @@ namespace
 MainWindow::MainWindow() :
 QMainWindow(),
 _progressBar(0),
-_metadataDock(0),
+_sceneWidgetDock(0),
 _scenesMainDock(0),
 _scenesMainView(0),
 _scenesSecondDock(0),
@@ -211,10 +212,10 @@ void MainWindow::initUi()
     
     //--------------------------------------------
 
-    _metadataDock = new QDockWidget(tr("Метаданные"));
-    _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    _metadataDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _metadataDock, Qt::Horizontal);
+    _sceneWidgetDock = new QDockWidget(tr("Выбранная сцена"));
+    _sceneWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _sceneWidgetDock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _sceneWidgetDock, Qt::Horizontal);
 
     //--------------------------------------------
 
@@ -246,15 +247,29 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 {
     _dataManager = dataManager;
 
-    MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
-    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));    
-    _metadataDock->setWidget(metadataWidget);
-
     _handler = new SelectPointMouseHandler(_dataManager->mapNode(),
                                            std::bind(&MainWindow::onMousePositionChanged, this, std::placeholders::_1),
                                            std::bind(&MainWindow::onMouseClicked, this));
 
     _dataManager->view()->addEventHandler(_handler);
+
+    //--------------------------------------------
+
+    QWidget* sceneWidget = new QWidget(this);
+    QVBoxLayout* layout = new QVBoxLayout(sceneWidget);
+    sceneWidget->setLayout(layout);
+
+    MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));    
+    layout->addWidget(metadataWidget);    
+            
+    SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);    
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
+    layout->addWidget(sceneOperationsWidget);
+
+    layout->addStretch();
+    
+    _sceneWidgetDock->setWidget(sceneWidget);
 
     //--------------------------------------------
 
@@ -269,7 +284,7 @@ void MainWindow::setScene(const ScenePtr& scene)
         return;
     }
 
-    _metadataDock->setVisible(true);
+    _sceneWidgetDock->setVisible(true);
 
     emit sceneSelected(scene);
 }

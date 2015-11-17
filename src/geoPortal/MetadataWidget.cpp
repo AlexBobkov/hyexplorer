@@ -28,9 +28,7 @@ _sunElevationProp(0),
 _inclinationProp(0),
 _lookAngleProp(0),
 _overviewDownloadLabel(0),
-_sceneDownloadLabel(0),
-_sceneInfoLabel(0),
-_downloadWidget(0)
+_sceneDownloadLabel(0)
 {
     initUi();
 }
@@ -106,16 +104,6 @@ void MetadataWidget::initUi()
     _sceneDownloadLabel = new QLabel(QString::fromUtf8("Скачать сцену (<a href='http://google.ru'>ссылка</a>)"));
     _sceneDownloadLabel->setOpenExternalLinks(true);
     layout->addWidget(_sceneDownloadLabel);
-
-    _sceneInfoLabel = new QLabel(tr("Сцена отсутствует на нашем сервере"));
-    layout->addWidget(_sceneInfoLabel);
-
-    _downloadWidget = new DownloadWidget(_dataManager, this);
-    layout->addWidget(_downloadWidget);
-
-    layout->addStretch();
-
-    //connect(_downloadWidget, SIGNAL(downloadRequested(int, int)), SLOT(downloadScene(int, int)));
 }
 
 void MetadataWidget::setScene(const ScenePtr& scene)
@@ -247,16 +235,10 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     {
         _overviewDownloadLabel->setVisible(true);
         _sceneDownloadLabel->setVisible(false);
-        _sceneInfoLabel->setText(tr("Сцена присутствует на нашем сервере\nи доступна для скачивания"));
-
-        _downloadWidget->setVisible(true);
     }
     else
     {
         _overviewDownloadLabel->setVisible(true);
         _sceneDownloadLabel->setVisible(true);
-        _sceneInfoLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
-
-        //_downloadWidget->setVisible(false);
     }
 }

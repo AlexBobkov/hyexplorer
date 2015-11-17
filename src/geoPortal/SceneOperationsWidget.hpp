@@ -1,23 +1,26 @@
 ﻿#pragma once
 
-#include "ui_DownloadWidget.h"
+#include "ui_SceneOperationsWidget.h"
 #include "DataManager.hpp"
 
 #include <QWidget>
 
 namespace portal
 {
-    class DownloadWidget : public QWidget
+    class SceneOperationsWidget : public QWidget
     {
         Q_OBJECT
 
     public:
-        explicit DownloadWidget(const DataManagerPtr& dataManager, QWidget* parent = 0);        
-        virtual ~DownloadWidget();
+        explicit SceneOperationsWidget(const DataManagerPtr& dataManager, QWidget* parent = 0);        
+        virtual ~SceneOperationsWidget();
 
     signals:
         void downloadRequested(int minBand, int maxBand);
         //void selectFragmentRequested();
+
+    public slots:
+        void setScene(const ScenePtr& scene);
         
     private slots:
         void onMinimumBandChanged(int i);
@@ -28,7 +31,7 @@ namespace portal
     private:
         void initUi();
 
-        Ui::DownloadWidget _ui;
+        Ui::SceneOperationsWidget _ui;
 
         DataManagerPtr _dataManager;
     };

@@ -72,7 +72,7 @@ namespace portal
 
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
 
-        QDockWidget* _metadataDock;
+        QDockWidget* _sceneWidgetDock;
 
         QDockWidget* _scenesMainDock;
         QTableView* _scenesMainView;
