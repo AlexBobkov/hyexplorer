@@ -33,6 +33,8 @@ namespace portal
         const std::vector<std::string>& coverageNames() const { return _coverageNames; }
         void setCoverage(const std::string& coverageName);
 
+        void showOverview(const ScenePtr& scene, const QString& filepath);
+
     protected:
         DataManager(const DataManager&) = delete;
         DataManager& operator=(const DataManager&) = delete;
@@ -45,6 +47,7 @@ namespace portal
         DataSetPtr _dataset;
 
         osg::ref_ptr<osg::Node> _circleNode;
+        osg::ref_ptr<osg::Node> _overlayNode;
 
         std::vector<std::string> _coverageNames;
         std::map<std::string, osgEarth::ImageLayerOptions> _coverageMap;

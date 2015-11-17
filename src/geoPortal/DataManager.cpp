@@ -1,5 +1,7 @@
 #include "DataManager.hpp"
 
+#include <osg/Image>
+#include <osgEarthAnnotation/ImageOverlay>
 #include <osgEarth/Viewpoint>
 #include <osgEarthUtil/EarthManipulator>
 #include <osgEarthAnnotation/CircleNode>
@@ -16,6 +18,7 @@
 #include <osgEarthDrivers/arcgis/ArcGISOptions>
 
 using namespace osgEarth;
+using namespace osgEarth::Annotation;
 using namespace osgEarth::Drivers;
 using namespace osgEarth::Features;
 using namespace osgEarth::Symbology;
@@ -53,7 +56,7 @@ namespace
         {
             SkyNode* sky = dynamic_cast<SkyNode*>(node);
             if (sky)
-            {                
+            {
                 sky->setDateTime(sky->getDateTime());
             }
 
@@ -62,7 +65,7 @@ namespace
     };
 }
 
-DataManager::DataManager(osgViewer::View* view, osgEarth::MapNode* mapNode):
+DataManager::DataManager(osgViewer::View* view, osgEarth::MapNode* mapNode) :
 _view(view),
 _mapNode(mapNode)
 {
@@ -146,7 +149,7 @@ void DataManager::zoomToScene(const ScenePtr& scene)
     }
 
     osg::Vec3d center = (scene->neCorner + scene->nwCorner + scene->seCorner + scene->swCorner) * 0.25;
-        
+
     osgEarth::Viewpoint viewpoint;
     viewpoint.focalPoint() = GeoPoint(_mapNode->getMapSRS(), center.x(), center.y(), 0.0, osgEarth::ALTMODE_ABSOLUTE);
     viewpoint.heading() = 0.0;
@@ -188,7 +191,7 @@ void DataManager::setAtmosphereVisibility(bool b)
         {
             _sky->attach(_view, 0);
             _sky->setEphemeris(new FixedEphemeris(_view->getCamera()));
-            
+
             osg::Group* parent = _mapNode->getParent(0);
             parent->addChild(_sky);
             _sky->addChild(_mapNode);
@@ -210,9 +213,32 @@ void DataManager::setCoverage(const std::string& coverageName)
     while (_mapNode->getMap()->getNumImageLayers() > 0)
     {
         _mapNode->getMap()->removeImageLayer(_mapNode->getMap()->getImageLayerAt(0));
-    }    
+    }
 
     ImageLayerOptions opt = _coverageMap[coverageName];
     ImageLayer* layer = new ImageLayer(coverageName, opt);
     _mapNode->getMap()->addImageLayer(layer);
+}
+
+void DataManager::showOverview(const ScenePtr& scene, const QString& filepath)
+{
+    if (_overlayNode)
+    {
+        _mapNode->removeChild(_overlayNode);
+        _overlayNode = nullptr;
+    }
+
+    osg::Image* image = osgDB::readImageFile(filepath.toLocal8Bit().constData());
+    if (image)
+    {
+        ImageOverlay* imageOverlay = new ImageOverlay(_mapNode, image);
+        imageOverlay->setLowerLeft(scene->swCorner.x(), scene->swCorner.y());
+        imageOverlay->setLowerRight(scene->seCorner.x(), scene->seCorner.y());
+        imageOverlay->setUpperRight(scene->neCorner.x(), scene->neCorner.y());
+        imageOverlay->setUpperLeft(scene->nwCorner.x(), scene->nwCorner.y());
+        imageOverlay->getOrCreateStateSet()->setRenderBinDetails(20, "RenderBin");
+        _mapNode->addChild(imageOverlay);
+
+        _overlayNode = imageOverlay;
+    }
 }

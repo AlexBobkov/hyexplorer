@@ -12,6 +12,7 @@ SET(HEADER_FILES
 	${LIB_UI_HDRS}
 	DataManager.hpp
 	DataSet.hpp
+	DownloadManager.hpp
 	DownloadWidget.hpp
 	MainWindow.hpp
 	MetadataWidget.hpp
@@ -24,6 +25,7 @@ SET(HEADER_FILES
 SET(SRC_FILES
 	DataManager.cpp
 	DataSet.cpp
+	DownloadManager.cpp
 	DownloadWidget.cpp
 	MainWindow.cpp
 	MetadataWidget.cpp

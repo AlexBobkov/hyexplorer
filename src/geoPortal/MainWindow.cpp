@@ -104,7 +104,8 @@ _metadataDock(0),
 _scenesMainDock(0),
 _scenesMainView(0),
 _scenesSecondDock(0),
-_scenesSecondView(0)
+_scenesSecondView(0),
+_downloadManager(0)
 {
     initUi();
 }
@@ -222,7 +223,7 @@ void MainWindow::initUi()
     _progressBar->setMinimum(0);
     _progressBar->setMaximum(100);
     _progressBar->setTextVisible(false);
-    statusBar()->addWidget(_progressBar);
+    statusBar()->addWidget(_progressBar);    
 }
 
 void MainWindow::moveEvent(QMoveEvent* event)
@@ -246,8 +247,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     _dataManager = dataManager;
 
     MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
-    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
-    metadataWidget->setMapNode(_dataManager->mapNode());
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));    
     _metadataDock->setWidget(metadataWidget);
 
     _handler = new SelectPointMouseHandler(_dataManager->mapNode(),
@@ -255,6 +255,11 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
                                            std::bind(&MainWindow::onMouseClicked, this));
 
     _dataManager->view()->addEventHandler(_handler);
+
+    //--------------------------------------------
+
+    _downloadManager = new DownloadManager(_dataManager, this);
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
 }
 
 void MainWindow::setScene(const ScenePtr& scene)

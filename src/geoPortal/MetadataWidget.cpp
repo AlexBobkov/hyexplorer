@@ -1,8 +1,5 @@
 #include "MetadataWidget.hpp"
 
-#include <osg/Image>
-#include <osgEarthAnnotation/ImageOverlay>
-
 #include <QStandardPaths>
 #include <QVBoxLayout>
 #include <QDateTime>
@@ -11,10 +8,6 @@
 #include <QMessageBox>
 #include <QTextStream>
 
-#include <iostream>
-
-using namespace osgEarth;
-using namespace osgEarth::Annotation;
 using namespace portal;
 
 MetadataWidget::MetadataWidget(const DataManagerPtr& dataManager, QWidget* parent) :
@@ -37,8 +30,7 @@ _lookAngleProp(0),
 _overviewDownloadLabel(0),
 _sceneDownloadLabel(0),
 _sceneInfoLabel(0),
-_downloadWidget(0),
-_downloadPathIndex(0)
+_downloadWidget(0)
 {
     initUi();
 }
@@ -123,19 +115,17 @@ void MetadataWidget::initUi()
 
     layout->addStretch();
 
-    connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
-    connect(&_networkManager, SIGNAL(authenticationRequired(QNetworkReply*, QAuthenticator*)), SLOT(onAuthenticationRequired(QNetworkReply*, QAuthenticator*)));
-    connect(_downloadWidget, SIGNAL(downloadRequested(int, int)), SLOT(downloadScene(int, int)));
+    //connect(_downloadWidget, SIGNAL(downloadRequested(int, int)), SLOT(downloadScene(int, int)));
 }
 
 void MetadataWidget::setScene(const ScenePtr& scene)
 {
-    if (_lastScene == scene)
+    if (_scene == scene)
     {
         return;
     }
 
-    _lastScene = scene;
+    _scene = scene;
 
     _sceneidProp->setValue(scene->sceneid);
     _datetimeProp->setValue(scene->sceneTime);
@@ -255,7 +245,7 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 
     if (scene->hasScene)
     {
-        _overviewDownloadLabel->setVisible(false);
+        _overviewDownloadLabel->setVisible(true);
         _sceneDownloadLabel->setVisible(false);
         _sceneInfoLabel->setText(tr("Сцена присутствует на нашем сервере\nи доступна для скачивания"));
 
@@ -263,243 +253,10 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     }
     else
     {
-        _overviewDownloadLabel->setVisible(false);
+        _overviewDownloadLabel->setVisible(true);
         _sceneDownloadLabel->setVisible(true);
         _sceneInfoLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
 
         //_downloadWidget->setVisible(false);
-    }
-
-    if (scene->hasOverview)
-    {
-        QSettings settings;
-        QString dataPath = settings.value("StoragePath").toString();
-
-        QString overviewFilepath = dataPath + QString("/overviews/") + *scene->overviewName;
-
-        if (QFile::exists(overviewFilepath))
-        {
-            std::cout << "Overview exists in the local cache\n";
-
-            makeOverlay(overviewFilepath);
-        }
-        else
-        {
-            QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportal/hyperion/overviews/%0").arg(*scene->overviewName));
-            request.setAttribute(QNetworkRequest::User, QString("Overview"));
-            _networkManager.get(request);
-        }
-    }
-
-    //QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(scene->sceneid));
-    //request.setAttribute(QNetworkRequest::User, QString("Metadata"));
-    //_networkManager.get(request);
-}
-
-void MetadataWidget::onFileDownloaded(QNetworkReply* reply)
-{
-    std::cout << "Downloaded " << qPrintable(reply->url().url()) << std::endl;;
-
-    QByteArray data = reply->readAll();
-    if (!data.isNull() && !data.isEmpty())
-    {
-        QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
-
-#if 0
-        if (requestType == "Metadata")
-        {
-            int startIndex = data.indexOf("http://earthexplorer.usgs.gov/browse/eo-1/hyp");
-            if (startIndex != -1)
-            {
-                int endIndex = data.indexOf(".jpeg", startIndex);
-                if (endIndex != -1)
-                {
-                    QByteArray overviewUrlName = data.mid(startIndex, endIndex - startIndex + 5);
-
-                    QNetworkRequest request(QString(overviewUrlName.constData()));
-                    request.setAttribute(QNetworkRequest::User, QString("Overview"));
-                    _networkManager.get(request);
-                }
-            }
-        }
-        else if (requestType == "Overview")
-#else
-        if (requestType == "Overview")
-#endif
-        {
-            QSettings settings;
-            QString dataPath = settings.value("StoragePath").toString();
-            QDir dataDir(dataPath);
-            if (!dataDir.exists("overviews"))
-            {
-                dataDir.mkpath("overviews");
-            }
-
-            QString overviewFilepath = dataDir.filePath(QString("overviews/") + reply->url().fileName());
-
-            QFile localFile(overviewFilepath);
-            if (!localFile.open(QIODevice::WriteOnly))
-            {
-                std::cerr << "Failed to open file " << qPrintable(overviewFilepath) << std::endl;
-                return;
-            }
-
-            localFile.write(data);
-            localFile.close();
-
-            if (_lastScene && reply->url().fileName() == _lastScene->overviewName)
-            {
-                makeOverlay(overviewFilepath);
-            }
-        }
-        else if (requestType == "Scene")
-        {
-            if (data.startsWith("SUCCESS"))
-            {
-                qDebug() << "Success " << _lastScene->sceneid;
-
-                _downloadPaths.clear();
-
-                QTextStream stream(data);
-                QString line = stream.readLine(); //SUCCESS
-                while (!line.isNull())
-                {
-                    line = stream.readLine();                    
-                    if (!line.isNull() && !line.isEmpty())
-                    {
-                        _downloadPaths.push_back(line);
-                    }
-                }
-
-                _downloadPathIndex = 0;
-
-                downloadSceneBand();
-            }
-            else
-            {
-                QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), tr("Сцена %0 не найдена на сервере").arg(_lastScene->sceneid));
-                setEnabled(true);
-            }
-            
-            QFile file("debug.txt");
-            file.open(QIODevice::WriteOnly);
-            file.write(data);
-            file.close();            
-        }
-        else if (requestType == "SceneBand")
-        {
-            qDebug() << "SceneBand " << _downloadPathIndex;
-
-            QSettings settings;
-            QString dataPath = settings.value("StoragePath").toString();
-            QDir dataDir(dataPath);
-            QString folderName = QString("hyperion/scenes/%0/").arg(_lastScene->sceneid);
-            if (!dataDir.exists(folderName))
-            {
-                dataDir.mkpath(folderName);
-            }
-
-            QString bandFilepath = dataDir.filePath(folderName + reply->url().fileName());
-
-            QFile localFile(bandFilepath);
-            if (!localFile.open(QIODevice::WriteOnly))
-            {
-                std::cerr << "Failed to open file " << qPrintable(bandFilepath) << std::endl;
-                return;
-            }
-
-            localFile.write(data);
-            localFile.close();
-
-            _downloadPathIndex++;
-            if (_downloadPathIndex >= _downloadPaths.size())
-            {
-                setEnabled(true);
-                return;
-            }
-
-            downloadSceneBand();
-        }
-    }
-
-    reply->deleteLater();
-}
-
-void MetadataWidget::onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator)
-{
-    qDebug() << "authenticationRequired";
-}
-
-void MetadataWidget::makeOverlay(const QString& filepath)
-{
-    if (_mapNode.valid() && _lastScene)
-    {
-        if (_overlayNode)
-        {
-            _mapNode->removeChild(_overlayNode);
-            _overlayNode = nullptr;
-        }
-
-        osg::Image* image = osgDB::readImageFile(filepath.toLocal8Bit().constData());
-        if (image)
-        {
-            ImageOverlay* imageOverlay = new ImageOverlay(_mapNode.get(), image);
-            imageOverlay->setLowerLeft(_lastScene->swCorner.x(), _lastScene->swCorner.y());
-            imageOverlay->setLowerRight(_lastScene->seCorner.x(), _lastScene->seCorner.y());
-            imageOverlay->setUpperRight(_lastScene->neCorner.x(), _lastScene->neCorner.y());
-            imageOverlay->setUpperLeft(_lastScene->nwCorner.x(), _lastScene->nwCorner.y());
-            imageOverlay->getOrCreateStateSet()->setRenderBinDetails(20, "RenderBin");
-            _mapNode->addChild(imageOverlay);
-
-            _overlayNode = imageOverlay;
-        }
-    }
-}
-
-void MetadataWidget::downloadScene(int minBand, int maxBand)
-{
-    qDebug() << "Download " << _lastScene->sceneid;
-
-    //QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0/%1/%2").arg(_lastScene->sceneid).arg(minBand).arg(maxBand));
-    QNetworkRequest request(QString::fromUtf8("http://178.62.140.44:5000/scene/%0/%1/%2").arg(_lastScene->sceneid).arg(minBand).arg(maxBand));
-    request.setAttribute(QNetworkRequest::User, QString("Scene"));
-    _networkManager.get(request);
-
-    setEnabled(false);
-}
-
-void MetadataWidget::downloadSceneBand()
-{
-    if (_downloadPaths.size() == 0 || _downloadPathIndex >= _downloadPaths.size())
-    {
-        return;
-    }
-
-    QSettings settings;
-    QString dataPath = settings.value("StoragePath").toString();
-    QDir dataDir(dataPath);
-    QString folderName = QString("hyperion/scenes/%0/").arg(_lastScene->sceneid);
-    if (!dataDir.exists(folderName))
-    {
-        dataDir.mkpath(folderName);
-    }
-    
-    QNetworkRequest request(_downloadPaths[_downloadPathIndex]);        
-    if (dataDir.exists(folderName + request.url().fileName()))
-    {
-        _downloadPathIndex++;
-
-        if (_downloadPathIndex >= _downloadPaths.size())
-        {
-            setEnabled(true);
-            return;
-        }
-
-        downloadSceneBand();        
-    }
-    else
-    {
-        request.setAttribute(QNetworkRequest::User, QString("SceneBand"));
-        _networkManager.get(request);
     }
 }

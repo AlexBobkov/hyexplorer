@@ -27,27 +27,14 @@ namespace portal
     public:
         explicit MetadataWidget(const DataManagerPtr& dataManager, QWidget* parent = 0);
         virtual ~MetadataWidget();
-
-        void setMapNode(osgEarth::MapNode* mapNode) { _mapNode = mapNode; }
-
+        
     public slots:
-        void setScene(const ScenePtr& scene);
-
-    private slots:
-        void onFileDownloaded(QNetworkReply* reply);
-        void onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator);
-        void downloadScene(int minBand, int maxBand);
-        void downloadSceneBand();
+        void setScene(const ScenePtr& scene);                    
 
     private:
         void initUi();
 
-        void makeOverlay(const QString& filepath);
-
-        osg::observer_ptr<osgEarth::MapNode> _mapNode;
-        osg::ref_ptr<osg::Node> _overlayNode;
-
-        ScenePtr _lastScene;
+        ScenePtr _scene;
 
         QtAbstractPropertyBrowser* _browser;
         QtVariantPropertyManager* _variantManager;
@@ -71,12 +58,7 @@ namespace portal
         QLabel* _sceneInfoLabel;
 
         DownloadWidget* _downloadWidget;
-
-        QNetworkAccessManager _networkManager;
-
-        DataManagerPtr _dataManager;
-
-        QStringList _downloadPaths;
-        int _downloadPathIndex;
+                
+        DataManagerPtr _dataManager; //Возможно он здесь не нужен
     };
 }
