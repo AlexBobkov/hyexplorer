@@ -264,7 +264,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     layout->addWidget(metadataWidget);    
             
     SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);    
-    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));    
     layout->addWidget(sceneOperationsWidget);
 
     layout->addStretch();
@@ -275,6 +275,9 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     _downloadManager = new DownloadManager(_dataManager, this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
+    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int)));
+    connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
+    connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -488,6 +491,18 @@ void MainWindow::finishLoadScenes()
 
     _progressBar->setMaximum(100);
     _ui.dockWidget->setEnabled(true);
+}
+
+void MainWindow::finishLoadBands(const ScenePtr& scene, bool result, const QString& message)
+{
+    if (result)
+    {
+        QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
+    }
+    else
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), message);
+    }
 }
 
 void MainWindow::showAbout()

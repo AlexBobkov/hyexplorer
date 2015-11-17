@@ -16,8 +16,8 @@ namespace portal
         virtual ~SceneOperationsWidget();
 
     signals:
-        void downloadRequested(int minBand, int maxBand);
-        //void selectFragmentRequested();
+        void downloadSceneRequested(const ScenePtr& scene, int minBand, int maxBand);
+        void selectFragmentRequested();
 
     public slots:
         void setScene(const ScenePtr& scene);
@@ -32,6 +32,8 @@ namespace portal
         void initUi();
 
         Ui::SceneOperationsWidget _ui;
+
+        ScenePtr _scene;
 
         DataManagerPtr _dataManager;
     };

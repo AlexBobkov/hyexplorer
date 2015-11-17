@@ -53,15 +53,18 @@ void SceneOperationsWidget::onMaximumBandChanged(int i)
 
 void SceneOperationsWidget::selectFragment()
 {
+    emit selectFragmentRequested();
 }
 
 void SceneOperationsWidget::download()
 {
-    emit downloadRequested(_ui.fromSpinBox->value(), _ui.toSpinBox->value());
+    emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
 }
 
 void SceneOperationsWidget::setScene(const ScenePtr& scene)
 {
+    _scene = scene;
+
     if (scene->hasScene)
     {
         _ui.statusLabel->setText(tr("Сцена присутствует на нашем сервере\nи доступна для скачивания"));
