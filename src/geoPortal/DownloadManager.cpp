@@ -75,7 +75,7 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
             QFile localFile(overviewFilepath);
             if (!localFile.open(QIODevice::WriteOnly))
             {
-                std::cerr << "Failed to open file " << qPrintable(overviewFilepath) << std::endl;
+                qDebug() << "Failed to open file " << qPrintable(overviewFilepath);
                 return;
             }
 
@@ -135,7 +135,7 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
             QFile localFile(bandFilepath);
             if (!localFile.open(QIODevice::WriteOnly))
             {
-                std::cerr << "Failed to open file " << qPrintable(bandFilepath) << std::endl;
+                qDebug() << "Failed to open file " << qPrintable(bandFilepath);
                 return;
             }
 

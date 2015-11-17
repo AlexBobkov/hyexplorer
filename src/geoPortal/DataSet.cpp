@@ -14,8 +14,8 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QVariant>
+#include <QDebug>
 
-#include <iostream>
 #include <vector>
 
 using namespace osgEarth;
@@ -67,7 +67,7 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
     QSqlQuery query;
     if (!query.exec(queryStr))
     {
-        std::cerr << "Failed to exececute query " << qPrintable(queryStr) << " error " << qPrintable(query.lastError().text());
+        qDebug() << "Failed to exececute query " << qPrintable(queryStr) << " error " << qPrintable(query.lastError().text());
         return;
     }
 
@@ -155,7 +155,7 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
         }
         else
         {
-            std::cerr << "Geometry is not a polygon\n";
+            qDebug() << "Geometry is not a polygon";
             continue;
         }
 
@@ -200,7 +200,7 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
 
     _initialized = true;
 
-    std::cout << "Scenes found " << _scenes.size() << std::endl;
+    qDebug() << "Scenes found " << _scenes.size();
 }
 
 void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
@@ -224,7 +224,7 @@ void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
     QSqlQuery query;
     if (!query.exec(queryStr))
     {
-        std::cerr << "Failed to exececute query " << qPrintable(queryStr) << " error " << qPrintable(query.lastError().text());
+        qDebug() << "Failed to exececute query " << qPrintable(queryStr) << " error " << qPrintable(query.lastError().text());
         return;
     }
 
@@ -237,7 +237,7 @@ void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
 
     _sceneIdsUnderPointer = ids;
 
-    std::cout << "Scenes under pointer found " << ids.size() << std::endl;
+    qDebug() << "Scenes under pointer found " << ids.size();
 }
 
 bool DataSet::isSceneUnderPointer(const ScenePtr& scene) const

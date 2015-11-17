@@ -1,8 +1,8 @@
 #include "ProxyModel.hpp"
 
 #include <QVariant>
+#include <QDebug>
 
-#include <iostream>
 #include <vector>
 
 using namespace portal;
@@ -20,7 +20,7 @@ bool ProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent
     ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
     if (!scene)
     {
-        std::cerr << "Failed to find scene for row " << sourceRow << std::endl;
+        qDebug() << "Failed to find scene for row " << sourceRow;
         return false;
     }
 

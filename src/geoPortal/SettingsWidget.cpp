@@ -25,7 +25,7 @@ void SettingsWidget::initUi()
 
     for (const auto& cn : _dataManager->coverageNames())
     {
-        _ui.coverageComboBox->addItem(QString::fromUtf8(cn.c_str()));
+        _ui.coverageComboBox->addItem(cn);
     }
 
     QSettings settings;

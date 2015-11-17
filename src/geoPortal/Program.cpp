@@ -21,7 +21,6 @@
 #include <QDebug>
 #include <QMessageBox>
 
-#include <iostream>
 #include <string>
 
 using namespace osgEarth;
@@ -74,7 +73,7 @@ int main(int argc, char** argv)
     osgViewer::Viewer* viewer = dynamic_cast<osgViewer::Viewer*>(viewerWidget->getViewer());
     if (!viewer)
     {
-        std::cerr << "Wrong viewer\n";
+        qDebug() << "Wrong viewer";
         return 1;
     }
 

@@ -6,6 +6,8 @@
 #include <osgEarth/MapNode>
 #include <osgEarthUtil/Sky>
 
+#include <QStringList>
+
 #include <memory>
 #include <vector>
 #include <map>
@@ -30,8 +32,8 @@ namespace portal
 
         void zoomToScene(const ScenePtr& scene);
 
-        const std::vector<std::string>& coverageNames() const { return _coverageNames; }
-        void setCoverage(const std::string& coverageName);
+        const QStringList& coverageNames() const { return _coverageNames; }
+        void setCoverage(const QString& coverageName);
 
         void showOverview(const ScenePtr& scene, const QString& filepath);
 
@@ -49,8 +51,8 @@ namespace portal
         osg::ref_ptr<osg::Node> _circleNode;
         osg::ref_ptr<osg::Node> _overlayNode;
 
-        std::vector<std::string> _coverageNames;
-        std::map<std::string, osgEarth::ImageLayerOptions> _coverageMap;
+        QStringList _coverageNames;
+        std::map<QString, osgEarth::ImageLayerOptions> _coverageMap;
     };
 
     typedef std::shared_ptr<DataManager> DataManagerPtr;

@@ -340,7 +340,7 @@ void MainWindow::executeQuery()
     }
     else
     {
-        std::cerr << "Wrong processing level\n";
+        qDebug() << "Wrong processing level";
     }
 
     settings.setValue("Query/cloudnessEnabled", _ui.cloudnessCheckBox->isChecked());
@@ -408,7 +408,7 @@ void MainWindow::executeQuery()
         }
         else
         {
-            std::cerr << "Wrong processing level\n";
+            qDebug() << "Wrong processing level";
         }
     }
 

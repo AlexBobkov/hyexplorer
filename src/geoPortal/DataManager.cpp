@@ -17,6 +17,8 @@
 #include <osgEarthDrivers/xyz/XYZOptions>
 #include <osgEarthDrivers/arcgis/ArcGISOptions>
 
+#include <QDebug>
+
 using namespace osgEarth;
 using namespace osgEarth::Annotation;
 using namespace osgEarth::Drivers;
@@ -111,7 +113,7 @@ void DataManager::setDataSet(const DataSetPtr& dataset)
         _mapNode->getMap()->addModelLayer(_dataset->layer());
 
         osg::Timer_t endTick = osg::Timer::instance()->tick();
-        std::cout << "Loading time " << osg::Timer::instance()->delta_s(startTick, endTick) << std::endl;
+        qDebug() << "Loading time " << osg::Timer::instance()->delta_s(startTick, endTick);
     }
 }
 
@@ -159,7 +161,7 @@ void DataManager::zoomToScene(const ScenePtr& scene)
     EarthManipulator* em = dynamic_cast<EarthManipulator*>(_view->getCameraManipulator());
     if (!em)
     {
-        std::cerr << "Failed to cast to EarthManipulator\n";
+        qDebug() << "Failed to cast to EarthManipulator";
         return;
     }
 
@@ -202,11 +204,11 @@ void DataManager::setAtmosphereVisibility(bool b)
     }
 }
 
-void DataManager::setCoverage(const std::string& coverageName)
+void DataManager::setCoverage(const QString& coverageName)
 {
     if (_coverageMap.find(coverageName) == _coverageMap.end())
     {
-        std::cerr << "Failed to find coverage " << coverageName << std::endl;
+        qDebug() << "Failed to find coverage " << coverageName;
         return;
     }
 
@@ -216,7 +218,7 @@ void DataManager::setCoverage(const std::string& coverageName)
     }
 
     ImageLayerOptions opt = _coverageMap[coverageName];
-    ImageLayer* layer = new ImageLayer(coverageName, opt);
+    ImageLayer* layer = new ImageLayer(coverageName.toUtf8().constData(), opt);
     _mapNode->getMap()->addImageLayer(layer);
 }
 
