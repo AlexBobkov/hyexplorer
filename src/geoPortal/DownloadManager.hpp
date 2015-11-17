@@ -24,6 +24,7 @@ namespace portal
     public slots:
         void downloadOverview(const ScenePtr& scene);
         void downloadScene(const ScenePtr& scene, int minBand, int maxBand);
+        void downloadSceneClip(const ScenePtr& scene, int minBand, int maxBand);
         
     private slots:        
         void onFileDownloaded(QNetworkReply* reply);
@@ -45,5 +46,7 @@ namespace portal
                 
         QStringList _downloadPaths;
         int _downloadPathIndex;
+        bool _isClip;
+        int _clipNumber;
     };
 }

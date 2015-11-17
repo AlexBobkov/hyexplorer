@@ -29,9 +29,8 @@ void SceneOperationsWidget::initUi()
 
     connect(_ui.fromSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMinimumBandChanged(int)));
     connect(_ui.toSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMaximumBandChanged(int)));
-    
-    //connect(_ui.selectFragmentButton, SIGNAL(clicked()), this, SIGNAL(selectFragmentRequested()));
-    connect(_ui.selectFragmentButton, SIGNAL(clicked()), this, SLOT(selectFragment()));
+        
+    connect(_ui.selectFragmentButton, SIGNAL(clicked()), this, SLOT(selectBoundingBox()));
     connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
 }
 
@@ -51,14 +50,21 @@ void SceneOperationsWidget::onMaximumBandChanged(int i)
     _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
 }
 
-void SceneOperationsWidget::selectFragment()
+void SceneOperationsWidget::selectBoundingBox()
 {
-    emit selectFragmentRequested();
+    emit selectBoundingBoxRequested();
 }
 
 void SceneOperationsWidget::download()
 {
-    emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+    if (_ui.fullSizeRadioButton->isChecked())
+    {
+        emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+    }
+    else
+    {
+        emit downloadSceneClipRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+    }
 }
 
 void SceneOperationsWidget::setScene(const ScenePtr& scene)

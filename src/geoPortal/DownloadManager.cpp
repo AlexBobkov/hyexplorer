@@ -11,7 +11,9 @@ using namespace portal;
 DownloadManager::DownloadManager(const DataManagerPtr& dataManager, QObject* parent) :
 QObject(parent),
 _dataManager(dataManager),
-_downloadPathIndex(0)
+_downloadPathIndex(0),
+_isClip(false),
+_clipNumber(0)
 {
     connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
     connect(&_networkManager, SIGNAL(authenticationRequired(QNetworkReply*, QAuthenticator*)), SLOT(onAuthenticationRequired(QNetworkReply*, QAuthenticator*)));
@@ -57,8 +59,47 @@ void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxB
         return;
     }
 
+    _isClip = false;
+
     //QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0/%1/%2").arg(scene->sceneid).arg(minBand).arg(maxBand));
     QNetworkRequest request(QString::fromUtf8("http://178.62.140.44:5000/scene/%0/%1/%2").arg(scene->sceneid).arg(minBand).arg(maxBand));
+    request.setAttribute(QNetworkRequest::User, QString("Scene"));
+
+    QVariant v;
+    v.setValue(scene);
+    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+
+    _networkManager.get(request);
+}
+
+void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int maxBand)
+{
+    //Нельзя скачивать одновременно 2 сцены
+    if (_downloadPaths.size() > 0)
+    {
+        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не может быть получена, пока происходит получение другой сцены").arg(scene->sceneid));
+        return;
+    }
+
+    _isClip = true;
+
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
+    QDir clipsDir(dataPath + QString("/hyperion/clips/%0/").arg(scene->sceneid));
+    QStringList entries = clipsDir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+    
+    _clipNumber = entries.size();
+
+    qDebug() << "Clip number " << entries << _clipNumber;
+        
+    QNetworkRequest request(QString::fromUtf8("http://178.62.140.44:5000/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
+                            .arg(scene->sceneid)
+                            .arg(minBand)
+                            .arg(maxBand)
+                            .arg(-94.857154026968, 0, 'f', 10)
+                            .arg(31.588149083258, 0, 'f', 10)
+                            .arg(-94.806204078584, 0, 'f', 10)
+                            .arg(31.519174227538, 0, 'f', 10));
     request.setAttribute(QNetworkRequest::User, QString("Scene"));
 
     QVariant v;
@@ -90,6 +131,10 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
         {
             processSceneBandReply(scene, data, reply->url().fileName());
         }
+    }
+    else
+    {
+        qDebug() << "Reply is null or empty";
     }
 
     reply->deleteLater();
@@ -233,7 +278,17 @@ QString DownloadManager::makeSceneBandPath(const ScenePtr& scene, const QString&
     QString dataPath = settings.value("StoragePath").toString();
 
     QDir dataDir(dataPath);
-    QString folderName = QString("hyperion/scenes/%0/").arg(scene->sceneid);
+    
+    QString folderName;
+    if (_isClip)
+    {
+        folderName = QString("hyperion/clips/%0/clip%1/").arg(scene->sceneid).arg(_clipNumber);
+    }
+    else
+    {
+        folderName = QString("hyperion/scenes/%0/").arg(scene->sceneid);
+    }
+
     if (!dataDir.exists(folderName))
     {
         dataDir.mkpath(folderName);

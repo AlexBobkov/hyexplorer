@@ -274,8 +274,12 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     //--------------------------------------------
 
     _downloadManager = new DownloadManager(_dataManager, this);
+
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
+
     connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int)));
+    connect(sceneOperationsWidget, SIGNAL(downloadSceneClipRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadSceneClip(const ScenePtr&, int, int)));
+
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));
 }

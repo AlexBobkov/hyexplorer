@@ -17,7 +17,8 @@ namespace portal
 
     signals:
         void downloadSceneRequested(const ScenePtr& scene, int minBand, int maxBand);
-        void selectFragmentRequested();
+        void downloadSceneClipRequested(const ScenePtr& scene, int minBand, int maxBand);
+        void selectBoundingBoxRequested();
 
     public slots:
         void setScene(const ScenePtr& scene);
@@ -25,7 +26,7 @@ namespace portal
     private slots:
         void onMinimumBandChanged(int i);
         void onMaximumBandChanged(int i);
-        void selectFragment();
+        void selectBoundingBox();
         void download();
     
     private:
