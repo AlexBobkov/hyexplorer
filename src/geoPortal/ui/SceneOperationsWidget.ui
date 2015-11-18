@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>343</width>
-    <height>175</height>
+    <height>220</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -100,6 +100,9 @@
           <property name="text">
            <string>Выбрать фрагмент</string>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
         <item>
@@ -110,6 +113,23 @@
          </widget>
         </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Показать на глобусе канал</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="globeBandSpinBox">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>242</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

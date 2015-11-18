@@ -7,6 +7,7 @@
 
 #include <osgGA/GUIEventHandler>
 #include <osgViewer/View>
+#include <osgEarth/Bounds>
 #include <osgEarth/GeoData>
 #include <osgEarth/MapNode>
 #include <osgEarthFeatures/Feature>
@@ -34,6 +35,11 @@ namespace portal
 
         void setScene(const ScenePtr& scene);
 
+    signals:
+        void sceneSelected(const ScenePtr& scene);
+        void rectangleSelected(const osgEarth::Bounds& b);
+        void rectangleSelectFailed();
+
     private slots:
         void executeQuery();
 
@@ -50,8 +56,7 @@ namespace portal
         void finishLoadScenes();
         void finishLoadBands(const ScenePtr& scene, bool result, const QString& message);
 
-    signals:
-        void sceneSelected(const ScenePtr& scene);
+        void selectRectangle();
 
     protected:
         void moveEvent(QMoveEvent* event) override;
@@ -62,6 +67,8 @@ namespace portal
 
         void onMousePositionChanged(const osgEarth::GeoPoint& point);
         void onMouseClicked();
+        void onRectangleCreated(const osgEarth::Bounds& bounds);
+        void onRectangleFailed();
 
         void loadScenes();
 

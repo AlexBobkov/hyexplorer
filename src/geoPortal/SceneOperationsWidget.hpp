@@ -18,15 +18,16 @@ namespace portal
     signals:
         void downloadSceneRequested(const ScenePtr& scene, int minBand, int maxBand);
         void downloadSceneClipRequested(const ScenePtr& scene, int minBand, int maxBand);
-        void selectBoundingBoxRequested();
+        void selectRectangleRequested();
 
     public slots:
         void setScene(const ScenePtr& scene);
+        void finishRectangleSelection();
         
     private slots:
         void onMinimumBandChanged(int i);
         void onMaximumBandChanged(int i);
-        void selectBoundingBox();
+        void selectRectangle(bool b);
         void download();
     
     private:

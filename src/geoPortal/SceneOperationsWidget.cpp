@@ -30,7 +30,7 @@ void SceneOperationsWidget::initUi()
     connect(_ui.fromSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMinimumBandChanged(int)));
     connect(_ui.toSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMaximumBandChanged(int)));
         
-    connect(_ui.selectFragmentButton, SIGNAL(clicked()), this, SLOT(selectBoundingBox()));
+    connect(_ui.selectFragmentButton, SIGNAL(toggled(bool)), this, SLOT(selectRectangle(bool)));
     connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
 }
 
@@ -50,9 +50,12 @@ void SceneOperationsWidget::onMaximumBandChanged(int i)
     _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
 }
 
-void SceneOperationsWidget::selectBoundingBox()
+void SceneOperationsWidget::selectRectangle(bool b)
 {
-    emit selectBoundingBoxRequested();
+    if (b)
+    {
+        emit selectRectangleRequested();
+    }
 }
 
 void SceneOperationsWidget::download()
@@ -81,4 +84,9 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
         _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
         _ui.controlWidget->setVisible(false);
     }
+}
+
+void SceneOperationsWidget::finishRectangleSelection()
+{
+    _ui.selectFragmentButton->setChecked(false);
 }
