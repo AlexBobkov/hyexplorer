@@ -17,7 +17,10 @@
 #include <osgEarthDrivers/xyz/XYZOptions>
 #include <osgEarthDrivers/arcgis/ArcGISOptions>
 
+#include <QSettings>
+#include <QDir>
 #include <QDebug>
+#include <QFileInfo>
 
 using namespace osgEarth;
 using namespace osgEarth::Annotation;
@@ -69,7 +72,9 @@ namespace
 
 DataManager::DataManager(osgViewer::View* view, osgEarth::MapNode* mapNode) :
 _view(view),
-_mapNode(mapNode)
+_mapNode(mapNode),
+_activeBand(1),
+_clipMode(false)
 {
     {
         GDALOptions sourceOpt;
@@ -243,4 +248,73 @@ void DataManager::showOverview(const ScenePtr& scene, const QString& filepath)
 
         _overlayNode = imageOverlay;
     }
+}
+
+void DataManager::setActiveBand(int band)
+{
+    qDebug() << "Set active band " << _activeBand;
+
+    _activeBand = band;
+    showScene(_scene);
+}
+
+void DataManager::setClipMode(bool b)
+{
+    _clipMode = b;
+    showScene(_scene);
+}
+
+void DataManager::showScene(const ScenePtr& scene)
+{
+    _scene = scene;
+
+    if (!_scene)
+    {
+        return;
+    }
+
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
+        
+    QString filepath;
+    if (_clipMode)
+    {
+        QDir dir(QString("%0/hyperion/clips/%1/").arg(dataPath).arg(scene->sceneid));
+        QStringList entries = dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+
+        int clipNumber = entries.size() - 1;
+        filepath = QString("%0/hyperion/clips/%1/clip%2/%3B%4_L1T_clip.TIF").arg(dataPath).arg(scene->sceneid).arg(clipNumber).arg(scene->sceneid.mid(0, 23)).arg(_activeBand, 3, 10, QChar('0'));
+    }
+    else
+    {
+        filepath = QString("%0/hyperion/scenes/%1/%2B%3_L1T.TIF").arg(dataPath).arg(scene->sceneid).arg(scene->sceneid.mid(0, 23)).arg(_activeBand, 3, 10, QChar('0'));
+    }
+
+    qDebug() << "Show band " << filepath;
+
+    if (!QFileInfo::exists(filepath))
+    {
+        qDebug() << "File is not found " << filepath;
+        return;
+    }
+
+    GDALOptions sourceOpt;
+    sourceOpt.url() = filepath.toLocal8Bit().constData();
+
+    ImageLayerOptions imageOpt;
+    imageOpt.driver() = sourceOpt;
+
+    if (_sceneLayer)
+    {
+        _mapNode->getMap()->removeImageLayer(_sceneLayer);
+    }
+
+    _sceneLayer = new ImageLayer(scene->sceneid.toUtf8().constData(), imageOpt);
+    _mapNode->getMap()->addImageLayer(_sceneLayer);
+
+    //if (_overlayNode)
+    //{
+    //    _mapNode->removeChild(_overlayNode);
+    //    _overlayNode = nullptr;
+    //}
 }

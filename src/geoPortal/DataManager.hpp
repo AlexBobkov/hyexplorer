@@ -43,6 +43,10 @@ namespace portal
         const boost::optional<osgEarth::Bounds>& rectangle() const { return _rectangle; }
         void setRectangle(const osgEarth::Bounds& b) { _rectangle = b; }
 
+        void showScene(const ScenePtr& scene);
+        void setActiveBand(int band);
+        void setClipMode(bool b);
+
     protected:
         DataManager(const DataManager&) = delete;
         DataManager& operator=(const DataManager&) = delete;
@@ -53,6 +57,7 @@ namespace portal
         osg::ref_ptr<osgEarth::Util::SkyNode> _sky;
         
         DataSetPtr _dataset;
+        ScenePtr _scene;
 
         osg::ref_ptr<osg::Node> _circleNode;
         osg::ref_ptr<osg::Node> _overlayNode;
@@ -61,6 +66,11 @@ namespace portal
 
         QStringList _coverageNames;
         std::map<QString, osgEarth::ImageLayerOptions> _coverageMap;
+
+        osg::ref_ptr<osgEarth::ImageLayer> _sceneLayer;
+
+        int _activeBand;
+        bool _clipMode;
     };
 
     typedef std::shared_ptr<DataManager> DataManagerPtr;

@@ -687,6 +687,8 @@ void MainWindow::finishLoadBands(const ScenePtr& scene, bool result, const QStri
 {
     if (result)
     {
+        _dataManager->showScene(scene);
+
         QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
     }
     else

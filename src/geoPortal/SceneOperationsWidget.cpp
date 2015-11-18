@@ -1,5 +1,6 @@
 #include "SceneOperationsWidget.hpp"
 
+#include <QDebug>
 #include <QSettings>
 #include <QMessageBox>
 
@@ -23,15 +24,26 @@ void SceneOperationsWidget::initUi()
     QSettings settings;
     _ui.fromSpinBox->setValue(settings.value("SceneOperationsWidget/fromValue", 1).toInt());
     _ui.toSpinBox->setValue(settings.value("SceneOperationsWidget/toValue", 1).toInt());
+    _ui.globeBandSpinBox->setValue(settings.value("SceneOperationsWidget/BandValue", 1).toInt());
 
     _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
     _ui.toSpinBox->setMinimum(_ui.fromSpinBox->value());
 
+    _ui.globeBandSpinBox->setMinimum(_ui.fromSpinBox->value());
+    _ui.globeBandSpinBox->setMaximum(_ui.toSpinBox->value());
+
+    _dataManager->setActiveBand(_ui.globeBandSpinBox->value());
+        
     connect(_ui.fromSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMinimumBandChanged(int)));
     connect(_ui.toSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMaximumBandChanged(int)));
+    connect(_ui.globeBandSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onGlobeBandChanged(int)));
+
+    connect(_ui.fragmentRadioButton, SIGNAL(toggled(bool)), this, SLOT(onFragmentRadioButtonToggled(bool)));
         
     connect(_ui.selectFragmentButton, SIGNAL(toggled(bool)), this, SLOT(selectRectangle(bool)));
     connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
+
+    _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 }
 
 void SceneOperationsWidget::onMinimumBandChanged(int i)
@@ -40,6 +52,8 @@ void SceneOperationsWidget::onMinimumBandChanged(int i)
     settings.setValue("SceneOperationsWidget/fromValue", _ui.fromSpinBox->value());
 
     _ui.toSpinBox->setMinimum(_ui.fromSpinBox->value());
+    _ui.globeBandSpinBox->setMinimum(_ui.fromSpinBox->value());
+    _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 }
 
 void SceneOperationsWidget::onMaximumBandChanged(int i)
@@ -48,6 +62,21 @@ void SceneOperationsWidget::onMaximumBandChanged(int i)
     settings.setValue("SceneOperationsWidget/toValue", _ui.toSpinBox->value());
 
     _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
+    _ui.globeBandSpinBox->setMaximum(_ui.toSpinBox->value());
+    _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
+}
+
+void SceneOperationsWidget::onGlobeBandChanged(int i)
+{
+    QSettings settings;
+    settings.setValue("SceneOperationsWidget/BandValue", _ui.globeBandSpinBox->value());
+
+    _dataManager->setActiveBand(i);
+}
+
+void SceneOperationsWidget::onFragmentRadioButtonToggled(bool b)
+{
+    _dataManager->setClipMode(b);
 }
 
 void SceneOperationsWidget::selectRectangle(bool b)
