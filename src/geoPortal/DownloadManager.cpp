@@ -81,6 +81,12 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
         return;
     }
 
+    if (!_dataManager->rectangle())
+    {
+        emit sceneDownloadFinished(scene, false, tr("Не выбрана область для вырезания"));
+        return;
+    }
+
     _isClip = true;
 
     QSettings settings;
@@ -91,15 +97,17 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
     _clipNumber = entries.size();
 
     qDebug() << "Clip number " << entries << _clipNumber;
+
+    osgEarth::Bounds b = *_dataManager->rectangle();
         
     QNetworkRequest request(QString::fromUtf8("http://178.62.140.44:5000/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
                             .arg(scene->sceneid)
                             .arg(minBand)
                             .arg(maxBand)
-                            .arg(-94.857154026968, 0, 'f', 10)
-                            .arg(31.588149083258, 0, 'f', 10)
-                            .arg(-94.806204078584, 0, 'f', 10)
-                            .arg(31.519174227538, 0, 'f', 10));
+                            .arg(b.xMin(), 0, 'f', 10)
+                            .arg(b.yMax(), 0, 'f', 10)
+                            .arg(b.xMax(), 0, 'f', 10)
+                            .arg(b.yMin(), 0, 'f', 10));
     request.setAttribute(QNetworkRequest::User, QString("Scene"));
 
     QVariant v;

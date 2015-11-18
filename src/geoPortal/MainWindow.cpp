@@ -81,6 +81,11 @@ namespace
             }
         }
 
+        void setInitialRectangle(const osgEarth::Bounds& b)
+        {
+            updateFeature(osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMin(), b.yMax()), osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMax(), b.yMin()));
+        }
+
         bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
         {
             if (_rectangleMode)
@@ -163,7 +168,7 @@ namespace
                     }
                     else
                     {
-                        updateFeature(mapPoint);
+                        updateFeature(*_firstCorner, mapPoint);
 
                         osgEarth::Bounds b;
                         b.expandBy(_firstCorner->x(), _firstCorner->y());
@@ -182,7 +187,10 @@ namespace
                     return false;
                 }
 
-                updateFeature(mapPoint);
+                if (_firstCorner)
+                {
+                    updateFeature(*_firstCorner, mapPoint);
+                }                
             }
 
             return false;
@@ -201,20 +209,16 @@ namespace
             return false;
         }
 
-        void updateFeature(const osgEarth::GeoPoint& mapPoint)
+        void updateFeature(const osgEarth::GeoPoint& point1, const osgEarth::GeoPoint& point2)
         {
-            if (!_firstCorner)
-            {
-                return;
-            }
-
             if (!_ring)
             {
                 _ring = new osgEarth::Symbology::Ring();
 
                 osgEarth::Symbology::Style pathStyle;
-                pathStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color::White;
+                pathStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color::Blue;
                 pathStyle.getOrCreate<LineSymbol>()->stroke()->width() = 2.0f;
+                pathStyle.getOrCreate<LineSymbol>()->stroke()->stipplePattern() = 0x0F0F;
                 pathStyle.getOrCreate<LineSymbol>()->tessellation() = 20;
                 pathStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
                 pathStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_GPU;
@@ -228,8 +232,8 @@ namespace
                 }
             }
 
-            osg::Vec3d p1 = _firstCorner->vec3d();
-            osg::Vec3d p2 = mapPoint.vec3d();
+            osg::Vec3d p1 = point1.vec3d();
+            osg::Vec3d p2 = point2.vec3d();
 
             _ring->clear();
             _ring->push_back(osg::Vec3d(osg::minimum(p1.x(), p2.x()), osg::maximum(p1.y(), p2.y()), 0.0));
@@ -448,6 +452,22 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));
+
+    //--------------------------------------------
+
+    QSettings settings;
+    if (settings.contains("Rectangle/xMin") &&
+        settings.contains("Rectangle/xMax") &&
+        settings.contains("Rectangle/yMin") &&
+        settings.contains("Rectangle/yMax"))
+    {
+        osgEarth::Bounds bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
+
+        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+        handler->setInitialRectangle(bounds);
+
+        _dataManager->setRectangle(bounds);
+    }
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -808,14 +828,18 @@ void MainWindow::selectRectangle()
 
 void MainWindow::onRectangleCreated(const osgEarth::Bounds& bounds)
 {
-    std::cout << "Rectangle created " << bounds.xMin() << " " << bounds.xMax() << " " << bounds.yMin() << " " << bounds.yMax() << std::endl;
+    QSettings settings;
+    settings.setValue("Rectangle/xMin", bounds.xMin());
+    settings.setValue("Rectangle/xMax", bounds.xMax());
+    settings.setValue("Rectangle/yMin", bounds.yMin());
+    settings.setValue("Rectangle/yMax", bounds.yMax());
+
+    _dataManager->setRectangle(bounds);    
 
     emit rectangleSelected(bounds);
 }
 
 void MainWindow::onRectangleFailed()
 {
-    std::cout << "Rectangle failed\n";
-
     emit rectangleSelectFailed();
 }

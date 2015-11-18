@@ -66,7 +66,14 @@ void SceneOperationsWidget::download()
     }
     else
     {
-        emit downloadSceneClipRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+        if (_dataManager->rectangle())
+        {
+            emit downloadSceneClipRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+        }
+        else
+        {
+            QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Сначала выделите фрагмент"));
+        }
     }
 }
 
