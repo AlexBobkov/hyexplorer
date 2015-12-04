@@ -3,9 +3,11 @@
 #include "ui_MainWindow.h"
 #include "Scene.hpp"
 #include "DataManager.hpp"
+#include "DownloadManager.hpp"
 
 #include <osgGA/GUIEventHandler>
 #include <osgViewer/View>
+#include <osgEarth/Bounds>
 #include <osgEarth/GeoData>
 #include <osgEarth/MapNode>
 #include <osgEarthFeatures/Feature>
@@ -33,6 +35,11 @@ namespace portal
 
         void setScene(const ScenePtr& scene);
 
+    signals:
+        void sceneSelected(const ScenePtr& scene);
+        void rectangleSelected(const osgEarth::Bounds& b);
+        void rectangleSelectFailed();
+
     private slots:
         void executeQuery();
 
@@ -47,9 +54,9 @@ namespace portal
         void onSecondTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
 
         void finishLoadScenes();
+        void finishLoadBands(const ScenePtr& scene, bool result, const QString& message);
 
-    signals:
-        void sceneSelected(const ScenePtr& scene);
+        void selectRectangle();
 
     protected:
         void moveEvent(QMoveEvent* event) override;
@@ -60,6 +67,8 @@ namespace portal
 
         void onMousePositionChanged(const osgEarth::GeoPoint& point);
         void onMouseClicked();
+        void onRectangleCreated(const osgEarth::Bounds& bounds);
+        void onRectangleFailed();
 
         void loadScenes();
 
@@ -71,13 +80,15 @@ namespace portal
 
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
 
-        QDockWidget* _metadataDock;
+        QDockWidget* _sceneWidgetDock;
 
         QDockWidget* _scenesMainDock;
         QTableView* _scenesMainView;
 
         QDockWidget* _scenesSecondDock;
         QTableView* _scenesSecondView;
+
+        DownloadManager* _downloadManager;
 
         DataSetPtr _dataset;
 

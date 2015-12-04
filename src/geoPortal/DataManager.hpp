@@ -3,8 +3,13 @@
 #include "DataSet.hpp"
 
 #include <osgViewer/View>
+#include <osgEarth/Bounds>
 #include <osgEarth/MapNode>
 #include <osgEarthUtil/Sky>
+
+#include <QStringList>
+
+#include <boost/optional.hpp>
 
 #include <memory>
 #include <vector>
@@ -30,8 +35,17 @@ namespace portal
 
         void zoomToScene(const ScenePtr& scene);
 
-        const std::vector<std::string>& coverageNames() const { return _coverageNames; }
-        void setCoverage(const std::string& coverageName);
+        const QStringList& coverageNames() const { return _coverageNames; }
+        void setCoverage(const QString& coverageName);
+
+        void showOverview(const ScenePtr& scene, const QString& filepath);
+
+        const boost::optional<osgEarth::Bounds>& rectangle() const { return _rectangle; }
+        void setRectangle(const osgEarth::Bounds& b) { _rectangle = b; }
+
+        void showScene(const ScenePtr& scene);
+        void setActiveBand(int band);
+        void setClipMode(bool b);
 
     protected:
         DataManager(const DataManager&) = delete;
@@ -43,11 +57,20 @@ namespace portal
         osg::ref_ptr<osgEarth::Util::SkyNode> _sky;
         
         DataSetPtr _dataset;
+        ScenePtr _scene;
 
         osg::ref_ptr<osg::Node> _circleNode;
+        osg::ref_ptr<osg::Node> _overlayNode;
 
-        std::vector<std::string> _coverageNames;
-        std::map<std::string, osgEarth::ImageLayerOptions> _coverageMap;
+        boost::optional<osgEarth::Bounds> _rectangle;
+
+        QStringList _coverageNames;
+        std::map<QString, osgEarth::ImageLayerOptions> _coverageMap;
+
+        osg::ref_ptr<osgEarth::ImageLayer> _sceneLayer;
+
+        int _activeBand;
+        bool _clipMode;
     };
 
     typedef std::shared_ptr<DataManager> DataManagerPtr;

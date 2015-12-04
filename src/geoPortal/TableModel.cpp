@@ -2,7 +2,6 @@
 
 #include <QVariant>
 
-#include <iostream>
 #include <vector>
 
 using namespace portal;

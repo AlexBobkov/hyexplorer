@@ -4,9 +4,15 @@
 #include "TableModel.hpp"
 #include "ProxyModel.hpp"
 #include "SettingsWidget.hpp"
+#include "SceneOperationsWidget.hpp"
 
 #include <osgEarth/Terrain>
 #include <osgEarthAnnotation/CircleNode>
+#include <osgEarthAnnotation/FeatureNode>
+#include <osgEarthFeatures/Feature>
+#include <osgEarthSymbology/Geometry>
+#include <osgEarthSymbology/Style>
+#include <osgEarthSymbology/LineSymbol>
 
 #include <QAction>
 #include <QDockWidget>
@@ -34,18 +40,28 @@ using namespace portal;
 
 namespace
 {
-    struct SelectPointMouseHandler : public osgGA::GUIEventHandler
+    class SelectPointMouseHandler : public osgGA::GUIEventHandler
     {
-        typedef std::function<void(const osgEarth::GeoPoint& point)> PointCallbackType;
-        typedef std::function<void()> FinishCallbackType;
+    public:
+        typedef std::function<void(const osgEarth::GeoPoint&)> PointMoveCallbackType;
+        typedef std::function<void()> PointClickCallbackType;
+        typedef std::function<void(const osgEarth::Bounds&)> RectangleCreateCallbackType;
+        typedef std::function<void()> RectangleFailCallbackType;
 
-        SelectPointMouseHandler(osgEarth::MapNode* mapNode, const PointCallbackType &pcb, const FinishCallbackType& fcb) :
-            osgGA::GUIEventHandler(),
-            _mapNode(mapNode),
-            _pointCB(pcb),
-            _finishCB(fcb),
-            _mouseX(0.0),
-            _mouseY(0.0)
+        SelectPointMouseHandler(osgEarth::MapNode* mapNode,
+                                const PointMoveCallbackType &pcb,
+                                const PointClickCallbackType& fcb,
+                                const RectangleCreateCallbackType& rcb,
+                                const RectangleFailCallbackType& rfcb) :
+                                osgGA::GUIEventHandler(),
+                                _mapNode(mapNode),
+                                _pointCB(pcb),
+                                _pointClickCB(fcb),
+                                _rectangleCB(rcb),
+                                _rectangleFailCB(rfcb),
+                                _rectangleMode(false),
+                                _mouseX(0.0),
+                                _mouseY(0.0)
         {
         }
 
@@ -53,7 +69,36 @@ namespace
         {
         }
 
+        void setRectangleMode(bool b)
+        {
+            _rectangleMode = b;
+
+            if (_rectangleMode)
+            {
+                _firstCorner.reset();
+                _ring = nullptr;
+                _feature = nullptr;
+            }
+        }
+
+        void setInitialRectangle(const osgEarth::Bounds& b)
+        {
+            updateFeature(osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMin(), b.yMax()), osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMax(), b.yMin()));
+        }
+
         bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+        {
+            if (_rectangleMode)
+            {
+                return handleRectangle(ea, aa);
+            }
+            else
+            {
+                return handleSimple(ea, aa);
+            }
+        }
+
+        bool handleSimple(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
         {
             osgViewer::View* view = static_cast<osgViewer::View*>(aa.asView());
 
@@ -80,7 +125,7 @@ namespace
                 {
                     if (fabs(ea.getX() - _mouseX) < 2.0f && fabs(ea.getY() - _mouseY) < 2.0f)
                     {
-                        _finishCB();
+                        _pointClickCB();
                     }
                 }
             }
@@ -88,9 +133,129 @@ namespace
             return false;
         }
 
+        bool handleRectangle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
+        {
+            osgViewer::View* view = static_cast<osgViewer::View*>(aa.asView());
+
+            if (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+            {
+                osgEarth::GeoPoint mapPoint;
+                if (!computeMapPoint(aa.asView(), ea.getX(), ea.getY(), mapPoint))
+                {
+                    _rectangleMode = false;
+                    _rectangleFailCB();
+                    return false;
+                }
+
+                _mouseX = ea.getX();
+                _mouseY = ea.getY();
+            }
+            else if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+            {
+                osgEarth::GeoPoint mapPoint;
+                if (!computeMapPoint(aa.asView(), ea.getX(), ea.getY(), mapPoint))
+                {
+                    _rectangleMode = false;
+                    _rectangleFailCB();
+                    return false;
+                }
+
+                if (fabs(ea.getX() - _mouseX) < 2.0f && fabs(ea.getY() - _mouseY) < 2.0f)
+                {
+                    if (!_firstCorner)
+                    {
+                        _firstCorner = mapPoint;
+                    }
+                    else
+                    {
+                        updateFeature(*_firstCorner, mapPoint);
+
+                        osgEarth::Bounds b;
+                        b.expandBy(_firstCorner->x(), _firstCorner->y());
+                        b.expandBy(mapPoint.x(), mapPoint.y());
+                        _rectangleCB(b);
+
+                        _rectangleMode = false;
+                    }
+                }                
+            }
+            else if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE)
+            {
+                osgEarth::GeoPoint mapPoint;
+                if (!computeMapPoint(aa.asView(), ea.getX(), ea.getY(), mapPoint))
+                {
+                    return false;
+                }
+
+                if (_firstCorner)
+                {
+                    updateFeature(*_firstCorner, mapPoint);
+                }                
+            }
+
+            return false;
+        }
+
+    protected:
+        bool computeMapPoint(osg::View* view, float mx, float my, osgEarth::GeoPoint& point)
+        {
+            osg::Vec3d world;
+            if (_mapNode->getTerrain()->getWorldCoordsUnderMouse(view, mx, my, world))
+            {
+                point.fromWorld(_mapNode->getMapSRS(), world);
+                return true;
+            }
+
+            return false;
+        }
+
+        void updateFeature(const osgEarth::GeoPoint& point1, const osgEarth::GeoPoint& point2)
+        {
+            if (!_ring)
+            {
+                _ring = new osgEarth::Symbology::Ring();
+
+                osgEarth::Symbology::Style pathStyle;
+                pathStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color::Blue;
+                pathStyle.getOrCreate<LineSymbol>()->stroke()->width() = 2.0f;
+                pathStyle.getOrCreate<LineSymbol>()->stroke()->stipplePattern() = 0x0F0F;
+                pathStyle.getOrCreate<LineSymbol>()->tessellation() = 20;
+                pathStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
+                pathStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_GPU;
+
+                _feature = new osgEarth::Features::Feature(_ring, _mapNode->getMapSRS(), pathStyle);
+
+                if (!_featureNode.valid())
+                {
+                    _featureNode = new osgEarth::Annotation::FeatureNode(_mapNode.get(), _feature);
+                    _mapNode->addChild(_featureNode);
+                }
+            }
+
+            osg::Vec3d p1 = point1.vec3d();
+            osg::Vec3d p2 = point2.vec3d();
+
+            _ring->clear();
+            _ring->push_back(osg::Vec3d(osg::minimum(p1.x(), p2.x()), osg::maximum(p1.y(), p2.y()), 0.0));
+            _ring->push_back(osg::Vec3d(osg::maximum(p1.x(), p2.x()), osg::maximum(p1.y(), p2.y()), 0.0));
+            _ring->push_back(osg::Vec3d(osg::maximum(p1.x(), p2.x()), osg::minimum(p1.y(), p2.y()), 0.0));
+            _ring->push_back(osg::Vec3d(osg::minimum(p1.x(), p2.x()), osg::minimum(p1.y(), p2.y()), 0.0));
+
+            _featureNode->setFeature(_feature);
+        }
+
         osg::observer_ptr<MapNode>  _mapNode;
-        PointCallbackType _pointCB;
-        FinishCallbackType _finishCB;
+        PointMoveCallbackType _pointCB;
+        PointClickCallbackType _pointClickCB;
+        RectangleCreateCallbackType _rectangleCB;
+        RectangleFailCallbackType _rectangleFailCB;
+
+        bool _rectangleMode;
+        boost::optional<osgEarth::GeoPoint> _firstCorner;
+
+        osg::ref_ptr<osgEarth::Symbology::Ring> _ring;
+        osg::ref_ptr<osgEarth::Features::Feature> _feature;
+        osg::ref_ptr<osgEarth::Annotation::FeatureNode> _featureNode;
 
         float _mouseX;
         float _mouseY;
@@ -100,11 +265,12 @@ namespace
 MainWindow::MainWindow() :
 QMainWindow(),
 _progressBar(0),
-_metadataDock(0),
+_sceneWidgetDock(0),
 _scenesMainDock(0),
 _scenesMainView(0),
 _scenesSecondDock(0),
-_scenesSecondView(0)
+_scenesSecondView(0),
+_downloadManager(0)
 {
     initUi();
 }
@@ -153,7 +319,7 @@ void MainWindow::initUi()
     {
         _ui.l1RRadioButton->setChecked(true);
     }
-    else if(processingLevelValue == 1)
+    else if (processingLevelValue == 1)
     {
         _ui.l1GstRadioButton->setChecked(true);
     }
@@ -181,9 +347,9 @@ void MainWindow::initUi()
     _ui.longitudeSpinBox->setValue(settings.value("Query/centerLongitude").toDouble());
     _ui.latitudeSpinBox->setValue(settings.value("Query/centerLatitude").toDouble());
     _ui.distanceSpinBox->setValue(settings.value("Query/distanceValue", 1000.0).toDouble());
-    
+
     //--------------------------------------------
-        
+
     _scenesMainDock = new QDockWidget(tr("Найденные сцены"));
     _scenesMainDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     //_scenesDock->setVisible(false);
@@ -194,7 +360,7 @@ void MainWindow::initUi()
 
     connect(_scenesMainView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
     connect(_scenesMainView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
-    
+
     //--------------------------------------------
 
     _scenesSecondDock = new QDockWidget(tr("Сцены под указателем"));
@@ -207,13 +373,13 @@ void MainWindow::initUi()
 
     connect(_scenesSecondView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
     connect(_scenesSecondView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
-    
+
     //--------------------------------------------
 
-    _metadataDock = new QDockWidget(tr("Метаданные"));
-    _metadataDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    _metadataDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _metadataDock, Qt::Horizontal);
+    _sceneWidgetDock = new QDockWidget(tr("Выбранная сцена"));
+    _sceneWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _sceneWidgetDock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _sceneWidgetDock, Qt::Horizontal);
 
     //--------------------------------------------
 
@@ -245,16 +411,63 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 {
     _dataManager = dataManager;
 
-    MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
-    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
-    metadataWidget->setMapNode(_dataManager->mapNode());
-    _metadataDock->setWidget(metadataWidget);
-
     _handler = new SelectPointMouseHandler(_dataManager->mapNode(),
                                            std::bind(&MainWindow::onMousePositionChanged, this, std::placeholders::_1),
-                                           std::bind(&MainWindow::onMouseClicked, this));
+                                           std::bind(&MainWindow::onMouseClicked, this),
+                                           std::bind(&MainWindow::onRectangleCreated, this, std::placeholders::_1),
+                                           std::bind(&MainWindow::onRectangleFailed, this));
 
     _dataManager->view()->addEventHandler(_handler);
+
+    //--------------------------------------------
+
+    QWidget* sceneWidget = new QWidget(this);
+    QVBoxLayout* layout = new QVBoxLayout(sceneWidget);
+    sceneWidget->setLayout(layout);
+
+    MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
+    layout->addWidget(metadataWidget);
+
+    SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
+    layout->addWidget(sceneOperationsWidget);
+
+    layout->addStretch();
+
+    _sceneWidgetDock->setWidget(sceneWidget);
+
+    //--------------------------------------------
+
+    _downloadManager = new DownloadManager(_dataManager, this);
+
+    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
+
+    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int)));
+    connect(sceneOperationsWidget, SIGNAL(downloadSceneClipRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadSceneClip(const ScenePtr&, int, int)));
+    connect(sceneOperationsWidget, SIGNAL(selectRectangleRequested()), this, SLOT(selectRectangle()));
+
+    connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(finishRectangleSelection()));
+    connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(finishRectangleSelection()));
+
+    connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
+    connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));
+
+    //--------------------------------------------
+
+    QSettings settings;
+    if (settings.contains("Rectangle/xMin") &&
+        settings.contains("Rectangle/xMax") &&
+        settings.contains("Rectangle/yMin") &&
+        settings.contains("Rectangle/yMax"))
+    {
+        osgEarth::Bounds bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
+
+        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+        handler->setInitialRectangle(bounds);
+
+        _dataManager->setRectangle(bounds);
+    }
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -264,7 +477,7 @@ void MainWindow::setScene(const ScenePtr& scene)
         return;
     }
 
-    _metadataDock->setVisible(true);
+    _sceneWidgetDock->setVisible(true);
 
     emit sceneSelected(scene);
 }
@@ -335,7 +548,7 @@ void MainWindow::executeQuery()
     }
     else
     {
-        std::cerr << "Wrong processing level\n";
+        qDebug() << "Wrong processing level";
     }
 
     settings.setValue("Query/cloudnessEnabled", _ui.cloudnessCheckBox->isChecked());
@@ -403,7 +616,7 @@ void MainWindow::executeQuery()
         }
         else
         {
-            std::cerr << "Wrong processing level\n";
+            qDebug() << "Wrong processing level";
         }
     }
 
@@ -435,14 +648,14 @@ void MainWindow::executeQuery()
     if (_ui.distanceGroupBox->isChecked())
     {
         _dataset->addCondition(QString("ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'),%3)").arg(_ui.longitudeSpinBox->value(), 0, 'f', 12).arg(_ui.latitudeSpinBox->value(), 0, 'f', 12).arg(_ui.distanceSpinBox->value() * 1000));
-                
+
         _dataManager->setCircleNode(GeoPoint(_dataManager->mapNode()->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value(), 0.0, osgEarth::ALTMODE_ABSOLUTE), _ui.distanceSpinBox->value() * 1000);
     }
     else
     {
         _dataManager->removeCircleNode();
     }
-    
+
     QtConcurrent::run(this, &MainWindow::loadScenes);
 }
 
@@ -468,6 +681,20 @@ void MainWindow::finishLoadScenes()
 
     _progressBar->setMaximum(100);
     _ui.dockWidget->setEnabled(true);
+}
+
+void MainWindow::finishLoadBands(const ScenePtr& scene, bool result, const QString& message)
+{
+    if (result)
+    {
+        _dataManager->showScene(scene);
+
+        QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
+    }
+    else
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), message);
+    }
 }
 
 void MainWindow::showAbout()
@@ -536,11 +763,11 @@ void MainWindow::onMouseClicked()
         if (_dataset && _dataset->isInitialized())
         {
             _dataset->selectScenesUnderPointer(_point);
-            
+
             ProxyModel* proxyModel = new ProxyModel(_dataset, this);
             proxyModel->setSourceModel(_scenesMainView->model());
 
-            _scenesSecondView->setModel(proxyModel);            
+            _scenesSecondView->setModel(proxyModel);
             _scenesSecondView->resizeColumnsToContents();
 
             connect(_scenesSecondView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSecondTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
@@ -593,4 +820,28 @@ void MainWindow::onSecondTableViewSelectionChanged(const QItemSelection& selecte
     {
         _scenesMainView->scrollTo(sourceSelection.first().indexes()[0]);
     }
+}
+
+void MainWindow::selectRectangle()
+{
+    SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+    handler->setRectangleMode(true);
+}
+
+void MainWindow::onRectangleCreated(const osgEarth::Bounds& bounds)
+{
+    QSettings settings;
+    settings.setValue("Rectangle/xMin", bounds.xMin());
+    settings.setValue("Rectangle/xMax", bounds.xMax());
+    settings.setValue("Rectangle/yMin", bounds.yMin());
+    settings.setValue("Rectangle/yMax", bounds.yMax());
+
+    _dataManager->setRectangle(bounds);    
+
+    emit rectangleSelected(bounds);
+}
+
+void MainWindow::onRectangleFailed()
+{
+    emit rectangleSelectFailed();
 }
