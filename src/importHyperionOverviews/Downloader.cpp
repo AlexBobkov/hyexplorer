@@ -109,9 +109,9 @@ void Downloader::uploadOverview(const QString& sceneid, const QString& filepath)
     multiPart->append(imagePart);
 
 #if 0
-    QNetworkRequest request(QString("http://localhost:5000/overview/%0").arg(sceneid));
+    QNetworkRequest request(QString("http://localhost:5000/geoportal/overview/%0").arg(sceneid));
 #else
-    QNetworkRequest request(QString("http://178.62.140.44:5000/overview/%0").arg(sceneid));
+    QNetworkRequest request(QString("http://virtualglobe.ru/geoportal/overview/%0").arg(sceneid));
 #endif
     request.setAttribute(QNetworkRequest::User, QString("Upload"));
     QNetworkReply* reply = _networkManager.post(request, multiPart);
@@ -121,6 +121,13 @@ void Downloader::uploadOverview(const QString& sceneid, const QString& filepath)
 void Downloader::onReplyReceived(QNetworkReply* reply)
 {
     qDebug() << "Request is completed " << reply->url().toString();
+
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+        reply->deleteLater();
+        return;
+    }
 
     QByteArray data = reply->readAll();
     if (!data.isNull() && !data.isEmpty())
