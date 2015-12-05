@@ -350,7 +350,7 @@ void MainWindow::initUi()
 
     //--------------------------------------------
 
-    _scenesMainDock = new QDockWidget(tr("Найденные сцены"));
+    _scenesMainDock = new QDockWidget(tr("Результаты поиска"));
     _scenesMainDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     //_scenesDock->setVisible(false);
     addDockWidget(Qt::RightDockWidgetArea, _scenesMainDock);
@@ -376,7 +376,7 @@ void MainWindow::initUi()
 
     //--------------------------------------------
 
-    _sceneWidgetDock = new QDockWidget(tr("Выбранная сцена"));
+    _sceneWidgetDock = new QDockWidget(tr("Метаданные сцены"));
     _sceneWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     _sceneWidgetDock->setVisible(false);
     addDockWidget(Qt::RightDockWidgetArea, _sceneWidgetDock, Qt::Horizontal);

@@ -64,6 +64,8 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
         queryStr = "select ogc_fid, sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudmin, cloudmax, ST_AsText(bounds), hasoverview, hasscene, overviewname from scenes where " + _fullCondition + ";";
     }
 
+    qDebug() << "Query " << queryStr;
+
     QSqlQuery query;
     if (!query.exec(queryStr))
     {

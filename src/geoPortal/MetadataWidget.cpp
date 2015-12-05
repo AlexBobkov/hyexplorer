@@ -53,7 +53,8 @@ void MetadataWidget::initUi()
     _sceneidProp->setAttribute("readOnly", true);
     _browser->addProperty(_sceneidProp);
 
-    _datetimeProp = _variantManager->addProperty(QVariant::DateTime, QString::fromUtf8("Scene time"));
+    //_datetimeProp = _variantManager->addProperty(QVariant::DateTime, QString::fromUtf8("Scene time"));
+    _datetimeProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Scene time"));
     _datetimeProp->setAttribute("readOnly", true);
     _browser->addProperty(_datetimeProp);
 
@@ -116,7 +117,7 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     _scene = scene;
 
     _sceneidProp->setValue(scene->sceneid);
-    _datetimeProp->setValue(scene->sceneTime);
+    _datetimeProp->setValue(scene->sceneTime.toString(Qt::ISODate));
 
     if (scene->cloundMin && scene->cloundMax)
     {

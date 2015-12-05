@@ -113,12 +113,16 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
     if (scene->hasScene)
     {
         _ui.statusLabel->setText(tr("Сцена присутствует на нашем сервере\nи доступна для скачивания"));
-        _ui.controlWidget->setVisible(true);
+        _ui.bandsGroupBox->setVisible(true);
+        _ui.boundsGroupBox->setVisible(true);
+        _ui.downloadButton->setVisible(true);
     }
     else
     {
         _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
-        _ui.controlWidget->setVisible(false);
+        _ui.bandsGroupBox->setVisible(false);
+        _ui.boundsGroupBox->setVisible(false);
+        _ui.downloadButton->setVisible(false);
     }
 }
 

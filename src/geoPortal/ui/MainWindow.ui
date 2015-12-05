@@ -51,7 +51,7 @@
     <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
-    <string>Формирование запроса</string>
+    <string>Параметры поиска</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
@@ -77,7 +77,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>258</width>
+          <width>266</width>
           <height>903</height>
          </rect>
         </property>
@@ -293,7 +293,7 @@
          <item>
           <widget class="QGroupBox" name="lookAngleGroupBox">
            <property name="title">
-            <string>Угол взгляда (°)</string>
+            <string>Угол между надиром и центром сцены (°)</string>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -556,7 +556,7 @@
             <item row="0" column="1">
              <widget class="QPushButton" name="selectPointButton">
               <property name="text">
-               <string>Выбрать точку</string>
+               <string>Выбрать на глобусе</string>
               </property>
               <property name="checkable">
                <bool>true</bool>
@@ -719,12 +719,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>45</x>
-     <y>559</y>
+     <x>46</x>
+     <y>633</y>
     </hint>
     <hint type="destinationlabel">
-     <x>241</x>
-     <y>562</y>
+     <x>256</x>
+     <y>636</y>
     </hint>
    </hints>
   </connection>
@@ -735,12 +735,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>47</x>
-     <y>533</y>
+     <x>48</x>
+     <y>607</y>
     </hint>
     <hint type="destinationlabel">
-     <x>241</x>
-     <y>534</y>
+     <x>256</x>
+     <y>607</y>
     </hint>
    </hints>
   </connection>
@@ -751,12 +751,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>51</x>
-     <y>585</y>
+     <x>52</x>
+     <y>675</y>
     </hint>
     <hint type="destinationlabel">
-     <x>241</x>
-     <y>588</y>
+     <x>256</x>
+     <y>678</y>
     </hint>
    </hints>
   </connection>
@@ -767,12 +767,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>50</x>
-     <y>611</y>
+     <x>51</x>
+     <y>701</y>
     </hint>
     <hint type="destinationlabel">
-     <x>241</x>
-     <y>614</y>
+     <x>256</x>
+     <y>704</y>
     </hint>
    </hints>
   </connection>
@@ -783,12 +783,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>79</x>
-     <y>507</y>
+     <x>80</x>
+     <y>581</y>
     </hint>
     <hint type="destinationlabel">
-     <x>241</x>
-     <y>510</y>
+     <x>256</x>
+     <y>581</y>
     </hint>
    </hints>
   </connection>
