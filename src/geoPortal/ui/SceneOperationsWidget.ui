@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>280</width>
-    <height>358</height>
+    <width>347</width>
+    <height>387</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,6 +21,13 @@
     <widget class="QLabel" name="statusLabel">
      <property name="text">
       <string>Статус сцены</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="getFromUsgsButton">
+     <property name="text">
+      <string>Получить с сервера USGS</string>
      </property>
     </widget>
    </item>

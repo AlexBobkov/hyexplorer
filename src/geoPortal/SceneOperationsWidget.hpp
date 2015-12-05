@@ -33,10 +33,7 @@ namespace portal
         void onGlobeBandChanged(int i);        
         void onFragmentRadioButtonToggled(bool b);
         void selectRectangle(bool b);
-        void onLeftChanged(double d);
-        void onRightChanged(double d);
-        void onTopChanged(double d);
-        void onBottomChanged(double d);
+        void onRectangleBoundsChanged(double d);
         void download();
     
     private:

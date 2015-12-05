@@ -35,6 +35,7 @@ void SceneOperationsWidget::initUi()
     _dataManager->setActiveBand(_ui.globeBandSpinBox->value());
 
     _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
+    _ui.getFromUsgsButton->setVisible(false);
     _ui.bandsGroupBox->setVisible(false);
     _ui.boundsGroupBox->setVisible(false);
     _ui.downloadButton->setVisible(false);
@@ -66,10 +67,10 @@ void SceneOperationsWidget::initUi()
         _ui.bottomSpinBox->setValue(0.0);
     }
 
-    connect(_ui.leftSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onLeftChanged(double)));
-    connect(_ui.rightSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRightChanged(double)));
-    connect(_ui.topSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onTopChanged(double)));
-    connect(_ui.bottomSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onBottomChanged(double)));
+    connect(_ui.leftSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
+    connect(_ui.rightSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
+    connect(_ui.topSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
+    connect(_ui.bottomSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
 }
 
 void SceneOperationsWidget::onMinimumBandChanged(int i)
@@ -139,6 +140,7 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
     if (scene->hasScene)
     {
         _ui.statusLabel->setText(tr("Сцена присутствует на нашем сервере\nи доступна для скачивания"));
+        _ui.getFromUsgsButton->setVisible(false);
         _ui.bandsGroupBox->setVisible(true);
         _ui.boundsGroupBox->setVisible(true);
         _ui.downloadButton->setVisible(true);        
@@ -146,6 +148,7 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
     else
     {
         _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
+        _ui.getFromUsgsButton->setVisible(true);
         _ui.bandsGroupBox->setVisible(false);
         _ui.boundsGroupBox->setVisible(false);
         _ui.downloadButton->setVisible(false);
@@ -167,22 +170,7 @@ void SceneOperationsWidget::onRectangleSelectFailed()
     _ui.selectFragmentButton->setChecked(false);
 }
 
-void SceneOperationsWidget::onLeftChanged(double d)
-{
-    emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
-}
-
-void SceneOperationsWidget::onRightChanged(double d)
-{
-    emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
-}
-
-void SceneOperationsWidget::onTopChanged(double d)
-{
-    emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
-}
-
-void SceneOperationsWidget::onBottomChanged(double d)
+void SceneOperationsWidget::onRectangleBoundsChanged(double d)
 {
     emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
 }
