@@ -180,7 +180,7 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
     Style style;
 
     PolygonSymbol* poly = style.getOrCreate<PolygonSymbol>();
-    poly->fill()->color() = Color::Yellow;
+    poly->fill()->color() = Color(Color::Yellow, 0.8f);
 
     LineSymbol* line = style.getOrCreate<LineSymbol>();
     line->stroke()->color() = Color::Black;
@@ -190,6 +190,9 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
     AltitudeSymbol* alt = style.getOrCreate<AltitudeSymbol>();
     alt->clamping() = alt->CLAMP_TO_TERRAIN;
     alt->technique() = alt->TECHNIQUE_DRAPE;
+
+    RenderSymbol* render = style.getOrCreate<RenderSymbol>();
+    render->depthTest() = false;
 
     StyleSheet* styleSheet = new StyleSheet();
     styleSheet->addStyle(style);

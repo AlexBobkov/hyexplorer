@@ -18,11 +18,14 @@ namespace portal
     signals:
         void downloadSceneRequested(const ScenePtr& scene, int minBand, int maxBand);
         void downloadSceneClipRequested(const ScenePtr& scene, int minBand, int maxBand);
+
         void selectRectangleRequested();
+        void rectangleChanged(const osgEarth::Bounds& b);
 
     public slots:
         void setScene(const ScenePtr& scene);
-        void finishRectangleSelection();
+        void onRectangleSelected(const osgEarth::Bounds& b);
+        void onRectangleSelectFailed();
         
     private slots:
         void onMinimumBandChanged(int i);
@@ -30,6 +33,10 @@ namespace portal
         void onGlobeBandChanged(int i);        
         void onFragmentRadioButtonToggled(bool b);
         void selectRectangle(bool b);
+        void onLeftChanged(double d);
+        void onRightChanged(double d);
+        void onTopChanged(double d);
+        void onBottomChanged(double d);
         void download();
     
     private:

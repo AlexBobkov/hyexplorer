@@ -83,7 +83,9 @@ namespace
 
         void setInitialRectangle(const osgEarth::Bounds& b)
         {
-            updateFeature(osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMin(), b.yMax()), osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMax(), b.yMin()));
+            _initialBounds = b;
+            updateFeature(osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMin(), b.yMax()),
+                          osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMax(), b.yMin()));
         }
 
         bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
@@ -142,7 +144,8 @@ namespace
                 osgEarth::GeoPoint mapPoint;
                 if (!computeMapPoint(aa.asView(), ea.getX(), ea.getY(), mapPoint))
                 {
-                    _rectangleMode = false;
+                    resetFeature();
+                    _rectangleMode = false;                    
                     _rectangleFailCB();
                     return false;
                 }
@@ -155,6 +158,7 @@ namespace
                 osgEarth::GeoPoint mapPoint;
                 if (!computeMapPoint(aa.asView(), ea.getX(), ea.getY(), mapPoint))
                 {
+                    resetFeature();
                     _rectangleMode = false;
                     _rectangleFailCB();
                     return false;
@@ -173,11 +177,19 @@ namespace
                         osgEarth::Bounds b;
                         b.expandBy(_firstCorner->x(), _firstCorner->y());
                         b.expandBy(mapPoint.x(), mapPoint.y());
+                        _initialBounds = b;
                         _rectangleCB(b);
 
                         _rectangleMode = false;
                     }
                 }                
+            }
+            else if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() != osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
+            {
+                resetFeature();
+                _rectangleMode = false;
+                _rectangleFailCB();
+                return false;
             }
             else if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE)
             {
@@ -243,6 +255,12 @@ namespace
 
             _featureNode->setFeature(_feature);
         }
+        
+        void resetFeature()
+        {
+            updateFeature(osgEarth::GeoPoint(_mapNode->getMapSRS(), _initialBounds.xMin(), _initialBounds.yMax()),
+                          osgEarth::GeoPoint(_mapNode->getMapSRS(), _initialBounds.xMax(), _initialBounds.yMin()));
+        }
 
         osg::observer_ptr<MapNode>  _mapNode;
         PointMoveCallbackType _pointCB;
@@ -259,6 +277,8 @@ namespace
 
         float _mouseX;
         float _mouseY;
+
+        osgEarth::Bounds _initialBounds;
     };
 }
 
@@ -270,7 +290,8 @@ _scenesMainDock(0),
 _scenesMainView(0),
 _scenesSecondDock(0),
 _scenesSecondView(0),
-_downloadManager(0)
+_downloadManager(0),
+_mousePosLabel(0)
 {
     initUi();
 }
@@ -348,12 +369,14 @@ void MainWindow::initUi()
     _ui.latitudeSpinBox->setValue(settings.value("Query/centerLatitude").toDouble());
     _ui.distanceSpinBox->setValue(settings.value("Query/distanceValue", 1000.0).toDouble());
 
+    _ui.toolsMenu->addAction(_ui.dockWidget->toggleViewAction());
+
     //--------------------------------------------
 
     _scenesMainDock = new QDockWidget(tr("Результаты поиска"));
     _scenesMainDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     //_scenesDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _scenesMainDock);
+    addDockWidget(Qt::LeftDockWidgetArea, _scenesMainDock, Qt::Vertical);
 
     _scenesMainView = new QTableView(this);
     _scenesMainDock->setWidget(_scenesMainView);
@@ -361,12 +384,15 @@ void MainWindow::initUi()
     connect(_scenesMainView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
     connect(_scenesMainView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
 
+    _ui.toolsMenu->addAction(_scenesMainDock->toggleViewAction());
+
     //--------------------------------------------
 
     _scenesSecondDock = new QDockWidget(tr("Сцены под указателем"));
     _scenesSecondDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     //_scenes2Dock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _scenesSecondDock);
+    addDockWidget(Qt::LeftDockWidgetArea, _scenesSecondDock);
+    tabifyDockWidget(_scenesSecondDock, _scenesMainDock);
 
     _scenesSecondView = new QTableView(this);
     _scenesSecondDock->setWidget(_scenesSecondView);
@@ -374,12 +400,16 @@ void MainWindow::initUi()
     connect(_scenesSecondView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
     connect(_scenesSecondView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
 
+    _ui.toolsMenu->addAction(_scenesSecondDock->toggleViewAction());
+
     //--------------------------------------------
 
     _sceneWidgetDock = new QDockWidget(tr("Метаданные сцены"));
     _sceneWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    _sceneWidgetDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _sceneWidgetDock, Qt::Horizontal);
+    //_sceneWidgetDock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _sceneWidgetDock);
+
+    _ui.toolsMenu->addAction(_sceneWidgetDock->toggleViewAction());
 
     //--------------------------------------------
 
@@ -389,6 +419,11 @@ void MainWindow::initUi()
     _progressBar->setMaximum(100);
     _progressBar->setTextVisible(false);
     statusBar()->addWidget(_progressBar);
+
+    //--------------------------------------------
+
+    _mousePosLabel = new QLabel(tr("Указатель:"));
+    statusBar()->addWidget(_mousePosLabel, 0);
 }
 
 void MainWindow::moveEvent(QMoveEvent* event)
@@ -414,10 +449,26 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     _handler = new SelectPointMouseHandler(_dataManager->mapNode(),
                                            std::bind(&MainWindow::onMousePositionChanged, this, std::placeholders::_1),
                                            std::bind(&MainWindow::onMouseClicked, this),
-                                           std::bind(&MainWindow::onRectangleCreated, this, std::placeholders::_1),
-                                           std::bind(&MainWindow::onRectangleFailed, this));
+                                           std::bind(&MainWindow::onRectangleSelected, this, std::placeholders::_1),
+                                           std::bind(&MainWindow::onRectangleSelectionFailed, this));
 
     _dataManager->view()->addEventHandler(_handler);
+
+    //--------------------------------------------
+
+    QSettings settings;
+    if (settings.contains("Rectangle/xMin") &&
+        settings.contains("Rectangle/xMax") &&
+        settings.contains("Rectangle/yMin") &&
+        settings.contains("Rectangle/yMax"))
+    {
+        osgEarth::Bounds bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
+
+        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+        handler->setInitialRectangle(bounds);
+
+        _dataManager->setRectangle(bounds);
+    }
 
     //--------------------------------------------
 
@@ -447,27 +498,13 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(sceneOperationsWidget, SIGNAL(downloadSceneClipRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadSceneClip(const ScenePtr&, int, int)));
     connect(sceneOperationsWidget, SIGNAL(selectRectangleRequested()), this, SLOT(selectRectangle()));
 
-    connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(finishRectangleSelection()));
-    connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(finishRectangleSelection()));
+    connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(onRectangleSelected(const osgEarth::Bounds&)));
+    connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(onRectangleSelectFailed()));
+
+    connect(sceneOperationsWidget, SIGNAL(rectangleChanged(const osgEarth::Bounds&)), this, SLOT(onRectangleChanged(const osgEarth::Bounds&)));
 
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
-    connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));
-
-    //--------------------------------------------
-
-    QSettings settings;
-    if (settings.contains("Rectangle/xMin") &&
-        settings.contains("Rectangle/xMax") &&
-        settings.contains("Rectangle/yMin") &&
-        settings.contains("Rectangle/yMax"))
-    {
-        osgEarth::Bounds bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
-
-        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setInitialRectangle(bounds);
-
-        _dataManager->setRectangle(bounds);
-    }
+    connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));    
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -750,6 +787,10 @@ void MainWindow::onMousePositionChanged(const osgEarth::GeoPoint& point)
     {
         _point = point;
     }
+
+    _mousePosLabel->setText(tr("Указатель: B: %1° L: %2°")
+                            .arg(point.y(), 0, 'f', 8)
+                            .arg(point.x(), 0, 'f', 8));
 }
 
 void MainWindow::onMouseClicked()
@@ -828,7 +869,21 @@ void MainWindow::selectRectangle()
     handler->setRectangleMode(true);
 }
 
-void MainWindow::onRectangleCreated(const osgEarth::Bounds& bounds)
+void MainWindow::onRectangleChanged(const osgEarth::Bounds& bounds)
+{
+    QSettings settings;
+    settings.setValue("Rectangle/xMin", bounds.xMin());
+    settings.setValue("Rectangle/xMax", bounds.xMax());
+    settings.setValue("Rectangle/yMin", bounds.yMin());
+    settings.setValue("Rectangle/yMax", bounds.yMax());
+
+    _dataManager->setRectangle(bounds);
+
+    SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+    handler->setInitialRectangle(bounds);
+}
+
+void MainWindow::onRectangleSelected(const osgEarth::Bounds& bounds)
 {
     QSettings settings;
     settings.setValue("Rectangle/xMin", bounds.xMin());
@@ -837,11 +892,11 @@ void MainWindow::onRectangleCreated(const osgEarth::Bounds& bounds)
     settings.setValue("Rectangle/yMax", bounds.yMax());
 
     _dataManager->setRectangle(bounds);    
-
+    
     emit rectangleSelected(bounds);
 }
 
-void MainWindow::onRectangleFailed()
+void MainWindow::onRectangleSelectionFailed()
 {
     emit rectangleSelectFailed();
 }

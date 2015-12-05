@@ -23,21 +23,21 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="helpMenu">
     <property name="title">
      <string>Справка</string>
     </property>
     <addaction name="metadataAction"/>
     <addaction name="aboutAction"/>
    </widget>
-   <widget class="QMenu" name="menu_2">
+   <widget class="QMenu" name="toolsMenu">
     <property name="title">
      <string>Инструменты</string>
     </property>
     <addaction name="settingsAction"/>
    </widget>
-   <addaction name="menu_2"/>
-   <addaction name="menu"/>
+   <addaction name="toolsMenu"/>
+   <addaction name="helpMenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
@@ -77,7 +77,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>266</width>
+          <width>280</width>
           <height>903</height>
          </rect>
         </property>

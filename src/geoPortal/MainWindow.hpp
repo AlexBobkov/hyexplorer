@@ -58,6 +58,11 @@ namespace portal
 
         void selectRectangle();
 
+        void onRectangleChanged(const osgEarth::Bounds& bounds);
+
+        void onRectangleSelected(const osgEarth::Bounds& bounds);
+        void onRectangleSelectionFailed();
+
     protected:
         void moveEvent(QMoveEvent* event) override;
         void resizeEvent(QResizeEvent* event) override;
@@ -66,9 +71,7 @@ namespace portal
         void initUi();
 
         void onMousePositionChanged(const osgEarth::GeoPoint& point);
-        void onMouseClicked();
-        void onRectangleCreated(const osgEarth::Bounds& bounds);
-        void onRectangleFailed();
+        void onMouseClicked();        
 
         void loadScenes();
 
@@ -89,6 +92,8 @@ namespace portal
         QTableView* _scenesSecondView;
 
         DownloadManager* _downloadManager;
+
+        QLabel* _mousePosLabel;
 
         DataSetPtr _dataset;
 
