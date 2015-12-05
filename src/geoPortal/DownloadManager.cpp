@@ -23,6 +23,30 @@ DownloadManager::~DownloadManager()
 {
 }
 
+void DownloadManager::downloadFromUsgs(const ScenePtr& scene)
+{
+    if (scene->hasScene)
+    {
+        qDebug() << "Scene is already on the server";
+        return;
+    }
+    
+    QNetworkRequest request(QString::fromUtf8("https://ers.cr.usgs.gov/login/"));
+           
+    request.setAttribute(QNetworkRequest::User, QString("UsgsLogin"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+
+    QVariant v;
+    v.setValue(scene);
+    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+
+    QString options = "username=AlexBobkov&password=1qaz2wsx";
+    
+    QNetworkReply* reply = _networkManager.post(request, options.toLocal8Bit());
+
+    connect(reply, SIGNAL(sslErrors(QList<QSslError>)), reply, SLOT(ignoreSslErrors()));
+}
+
 void DownloadManager::downloadOverview(const ScenePtr& scene)
 {
     if (scene->hasOverview)
@@ -145,10 +169,66 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
         else if (requestType == "SceneBand")
         {
             processSceneBandReply(scene, data, reply->url().fileName());
+        }        
+        else if (requestType == "UsgsRedirect")
+        {
+            //processSceneBandReply(scene, data, reply->url().fileName());
+
+            QFile localFile("TTT3");
+            localFile.open(QIODevice::WriteOnly);
+            localFile.write(data);
+            localFile.close();
         }
     }
     else
     {
+        QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
+        ScenePtr scene = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1)).value<ScenePtr>();
+
+        if (requestType == "UsgsLogin")
+        {
+            QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/EO1H0250382005247110PY_PF1_01/L1T/EE"));
+
+            request.setAttribute(QNetworkRequest::User, QString("UsgsStart"));
+
+            QVariant v;
+            v.setValue(scene);
+            request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+
+            _networkManager.get(request);
+        }
+        else if (requestType == "UsgsStart")
+        {
+            int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            if (statusCode != 302)
+            {
+                qDebug() << "Wrong status code " << statusCode;
+                reply->deleteLater();
+                return;
+            }
+
+            QUrl possibleRedirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                        
+            if (possibleRedirectUrl.isEmpty() || possibleRedirectUrl == _oldRedirectUrl)
+            {
+                qDebug() << "Wrong url " << possibleRedirectUrl;
+                reply->deleteLater();
+                return;
+            }
+
+            _oldRedirectUrl = possibleRedirectUrl;
+
+            QNetworkRequest request(possibleRedirectUrl);
+
+            request.setAttribute(QNetworkRequest::User, QString("UsgsRedirect"));
+
+            QVariant v;
+            v.setValue(scene);
+            request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+
+            _networkManager.get(request);
+        }
+
         qDebug() << "Reply is null or empty";
     }
 

@@ -22,6 +22,7 @@ namespace portal
         void progressChanged(int);
 
     public slots:
+        void downloadFromUsgs(const ScenePtr& scene);
         void downloadOverview(const ScenePtr& scene);
         void downloadScene(const ScenePtr& scene, int minBand, int maxBand);
         void downloadSceneClip(const ScenePtr& scene, int minBand, int maxBand);
@@ -48,5 +49,7 @@ namespace portal
         int _downloadPathIndex;
         bool _isClip;
         int _clipNumber;
+
+        QUrl _oldRedirectUrl;
     };
 }

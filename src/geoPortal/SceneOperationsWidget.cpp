@@ -48,6 +48,7 @@ void SceneOperationsWidget::initUi()
         
     connect(_ui.selectFragmentButton, SIGNAL(toggled(bool)), this, SLOT(selectRectangle(bool)));
     connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
+    connect(_ui.getFromUsgsButton, SIGNAL(clicked()), this, SLOT(getFromUsgs()));
         
     _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 
@@ -173,4 +174,9 @@ void SceneOperationsWidget::onRectangleSelectFailed()
 void SceneOperationsWidget::onRectangleBoundsChanged(double d)
 {
     emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
+}
+
+void SceneOperationsWidget::getFromUsgs()
+{
+    emit getFromUsgsRequested(_scene);
 }

@@ -19,6 +19,8 @@ namespace portal
         void downloadSceneRequested(const ScenePtr& scene, int minBand, int maxBand);
         void downloadSceneClipRequested(const ScenePtr& scene, int minBand, int maxBand);
 
+        void getFromUsgsRequested(const ScenePtr& scene);
+
         void selectRectangleRequested();
         void rectangleChanged(const osgEarth::Bounds& b);
 
@@ -34,6 +36,7 @@ namespace portal
         void onFragmentRadioButtonToggled(bool b);
         void selectRectangle(bool b);
         void onRectangleBoundsChanged(double d);
+        void getFromUsgs();
         void download();
     
     private:

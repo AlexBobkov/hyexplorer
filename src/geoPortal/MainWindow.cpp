@@ -494,6 +494,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
 
+    connect(sceneOperationsWidget, SIGNAL(getFromUsgsRequested(const ScenePtr&)), _downloadManager, SLOT(downloadFromUsgs(const ScenePtr&)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneClipRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadSceneClip(const ScenePtr&, int, int)));
     connect(sceneOperationsWidget, SIGNAL(selectRectangleRequested()), this, SLOT(selectRectangle()));
