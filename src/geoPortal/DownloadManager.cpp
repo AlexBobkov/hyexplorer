@@ -62,7 +62,7 @@ void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxB
     _isClip = false;
 
     //QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0/%1/%2").arg(scene->sceneid).arg(minBand).arg(maxBand));
-    QNetworkRequest request(QString::fromUtf8("http://178.62.140.44:5000/scene/%0/%1/%2").arg(scene->sceneid).arg(minBand).arg(maxBand));
+    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2").arg(scene->sceneid).arg(minBand).arg(maxBand));
     request.setAttribute(QNetworkRequest::User, QString("Scene"));
 
     QVariant v;
@@ -100,7 +100,7 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
 
     osgEarth::Bounds b = *_dataManager->rectangle();
         
-    QNetworkRequest request(QString::fromUtf8("http://178.62.140.44:5000/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
+    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
                             .arg(scene->sceneid)
                             .arg(minBand)
                             .arg(maxBand)
