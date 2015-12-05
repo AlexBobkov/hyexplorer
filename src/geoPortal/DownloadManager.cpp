@@ -121,6 +121,13 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
 {
     qDebug() << "Downloaded " << qPrintable(reply->url().url());
 
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+        reply->deleteLater();
+        return;
+    }
+
     QByteArray data = reply->readAll();
     if (!data.isNull() && !data.isEmpty())
     {
