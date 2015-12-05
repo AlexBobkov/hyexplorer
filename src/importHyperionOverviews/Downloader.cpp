@@ -99,7 +99,7 @@ void Downloader::uploadOverview(const QString& sceneid, const QString& filepath)
 
     QHttpPart imagePart;
     imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/octet-stream"));
-    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"%0\";filename=\"%0\"").arg(info.fileName()));
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"file\";filename=\"%0\"").arg(info.fileName()));
 
     QFile* file = new QFile(filepath);
     file->open(QIODevice::ReadOnly);
@@ -109,7 +109,9 @@ void Downloader::uploadOverview(const QString& sceneid, const QString& filepath)
     multiPart->append(imagePart);
 
 #if 0
-    QNetworkRequest request(QString("http://localhost:5000/geoportal/overview/%0").arg(sceneid));
+    QNetworkRequest request(QString("http://localhost:5000/overview/%0").arg(sceneid));
+#elif 0
+    QNetworkRequest request(QString("http://178.62.140.44:5000/overview/%0").arg(sceneid));
 #else
     QNetworkRequest request(QString("http://virtualglobe.ru/geoportal/overview/%0").arg(sceneid));
 #endif
@@ -125,6 +127,20 @@ void Downloader::onReplyReceived(QNetworkReply* reply)
     if (reply->error() != QNetworkReply::NoError)
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
+
+        if (!_queue.empty())
+        {
+            qDebug() << "Remains " << _queue.size();
+
+            QString sceneid = _queue.front();
+            _queue.pop();
+            processScene(sceneid);
+        }
+        else
+        {
+            qDebug() << "Finish!";
+        }
+
         reply->deleteLater();
         return;
     }
