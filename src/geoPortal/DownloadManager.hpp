@@ -47,10 +47,7 @@ namespace portal
         void processUsgsRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
 
         void downloadNextSceneBand(const ScenePtr& scene);
-
-        QString makeOverviewPath(const QString& filename);
-        QString makeSceneBandPath(const ScenePtr& scene, const QString& filename);
-
+        
         DataManagerPtr _dataManager;
 
         QNetworkAccessManager _networkManager;

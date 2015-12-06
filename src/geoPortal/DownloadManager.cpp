@@ -1,4 +1,5 @@
 #include "DownloadManager.hpp"
+#include "Storage.hpp"
 
 #include <QSettings>
 #include <QFile>
@@ -54,7 +55,7 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
 {
     if (scene->hasOverview)
     {
-        QString path = makeOverviewPath(*scene->overviewName);
+        QString path = Storage::overviewPath(*scene->overviewName);
 
         if (QFile::exists(path))
         {
@@ -199,7 +200,7 @@ void DownloadManager::processOverviewReply(const ScenePtr& scene, QNetworkReply*
         return;
     }
 
-    QString path = makeOverviewPath(reply->url().fileName());
+    QString path = Storage::overviewPath(reply->url().fileName());
 
     QFile localFile(path);
     if (!localFile.open(QIODevice::WriteOnly))
@@ -283,13 +284,15 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
     }
 
     qDebug() << "SceneBand " << _downloadPathIndex;
-
-    QString path = makeSceneBandPath(scene, reply->url().fileName());
+        
+    QString path = _isClip ? Storage::sceneBandClipPath(scene, reply->url().fileName(), _clipNumber) : Storage::sceneBandPath(scene, reply->url().fileName());
 
     QFile localFile(path);
     if (!localFile.open(QIODevice::WriteOnly))
     {
         qDebug() << "Failed to open file " << qPrintable(path);
+
+        emit sceneDownloadFinished(scene, false, tr("Не удается открыть файл для записи канала сцены %0 %1").arg(scene->sceneid).arg(path));
         return;
     }
     localFile.write(data);
@@ -373,23 +376,19 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
 
     connect(_longDownloadReply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(onDownloadProgress(qint64, qint64)));
     connect(_longDownloadReply, SIGNAL(readyRead()), this, SLOT(readDataChunk()));
-    
-    QSettings settings;
-    QString dataPath = settings.value("StoragePath").toString();
 
-    QDir dataDir(dataPath);
-    QString folderName("hyperion/temp/");
-    if (!dataDir.exists(folderName))
-    {
-        dataDir.mkpath(folderName);
-    }
-    
-    _tempFile = new QFile(dataDir.filePath(folderName + "tempfilename.zip"));
+    //----------------------------------------
+        
+    _tempFile = new QFile(Storage::tempPath("tempfilename.zip"));
     if (!_tempFile->open(QIODevice::WriteOnly))
     {
         qDebug() << "Failed to open file ";
+
+        emit usgsDownloadFinished(scene, true, tr("Невозможно создать файл для записи сцены %0 с сервера USGS").arg(scene->sceneid));
         return;
     }
+
+    //----------------------------------------
 
     if (!_progressDialog)
     {
@@ -432,18 +431,8 @@ void DownloadManager::processUsgsRedirectReply(const ScenePtr& scene, QNetworkRe
         emit usgsDownloadFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneid).arg(reply->error()).arg(reply->errorString()));
         return;
     }
-
-    QSettings settings;
-    QString dataPath = settings.value("StoragePath").toString();
-
-    QDir dataDir(dataPath);
-    QString folderName("hyperion/temp/");
-    if (!dataDir.exists(folderName))
-    {
-        dataDir.mkpath(folderName);
-    }
-
-    _tempFile->rename(dataDir.filePath(folderName + reply->url().fileName()));
+    
+    _tempFile->rename(Storage::tempPath(reply->url().fileName()));
 
     delete _tempFile;
     _tempFile = 0;
@@ -459,7 +448,7 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)
 
     QNetworkRequest request(_downloadPaths[_downloadPathIndex]);
 
-    QString path = makeSceneBandPath(scene, request.url().fileName());
+    QString path = _isClip ? Storage::sceneBandClipPath(scene, request.url().fileName(), _clipNumber) : Storage::sceneBandPath(scene, request.url().fileName());
     if (QFile::exists(path))
     {
         _downloadPathIndex++;
@@ -482,46 +471,6 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)
 
         _networkManager.get(request);
     }
-}
-
-QString DownloadManager::makeOverviewPath(const QString& filename)
-{
-    QSettings settings;
-    QString dataPath = settings.value("StoragePath").toString();
-
-    QDir dataDir(dataPath);
-    QString folderName("hyperion/overviews/");
-    if (!dataDir.exists(folderName))
-    {
-        dataDir.mkpath(folderName);
-    }
-        
-    return dataDir.filePath(folderName + filename);
-}
-
-QString DownloadManager::makeSceneBandPath(const ScenePtr& scene, const QString& filename)
-{
-    QSettings settings;
-    QString dataPath = settings.value("StoragePath").toString();
-
-    QDir dataDir(dataPath);
-    
-    QString folderName;
-    if (_isClip)
-    {
-        folderName = QString("hyperion/clips/%0/clip%1/").arg(scene->sceneid).arg(_clipNumber);
-    }
-    else
-    {
-        folderName = QString("hyperion/scenes/%0/").arg(scene->sceneid);
-    }
-
-    if (!dataDir.exists(folderName))
-    {
-        dataDir.mkpath(folderName);
-    }
-
-    return dataDir.filePath(folderName + filename);
 }
 
 void DownloadManager::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)

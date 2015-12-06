@@ -19,6 +19,7 @@ SET(HEADER_FILES
 	Scene.hpp
 	SceneOperationsWidget.hpp
 	SettingsWidget.hpp
+	Storage.hpp
 	TableModel.hpp
 )
 
@@ -33,6 +34,7 @@ SET(SRC_FILES
 	Scene.cpp
 	SceneOperationsWidget.cpp
 	SettingsWidget.cpp
+	Storage.cpp
 	TableModel.cpp
 )
 
