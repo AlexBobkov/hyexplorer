@@ -56,6 +56,8 @@ namespace portal
         void finishLoadScenes();
         void finishLoadBands(const ScenePtr& scene, bool result, const QString& message);
 
+        void finishGetSceneFromUsgs(const ScenePtr& scene, bool result, const QString& message);
+
         void selectRectangle();
 
         void onRectangleChanged(const osgEarth::Bounds& bounds);

@@ -6,6 +6,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QProgressDialog>
+#include <QFile>
 
 namespace portal
 {
@@ -19,8 +21,10 @@ namespace portal
 
     signals:
         void sceneDownloadFinished(const ScenePtr& scene, bool result, const QString& message);
-        void progressChanged(int);
+        void usgsDownloadFinished(const ScenePtr& scene, bool result, const QString& message);
 
+        void progressChanged(int);
+        
     public slots:
         void downloadFromUsgs(const ScenePtr& scene);
         void downloadOverview(const ScenePtr& scene);
@@ -30,11 +34,17 @@ namespace portal
     private slots:        
         void onFileDownloaded(QNetworkReply* reply);
         void onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator);        
-            
+        void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+        void cancelDownload();
+        void readDataChunk();
+                    
     private:
         void processOverviewReply(const ScenePtr& scene, const QByteArray& data, const QString& filename);
         void processSceneReply(const ScenePtr& scene, const QByteArray& data);
         void processSceneBandReply(const ScenePtr& scene, const QByteArray& data, const QString& filename);
+        void processUsgsLoginReply(const ScenePtr& scene);
+        void processUsgsFirstReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processUsgsRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
 
         void downloadNextSceneBand(const ScenePtr& scene);
 
@@ -51,5 +61,9 @@ namespace portal
         int _clipNumber;
 
         QUrl _oldRedirectUrl;
+
+        QProgressDialog* _progressDialog;
+        QNetworkReply* _longDownloadReply;
+        QFile* _tempFile;
     };
 }

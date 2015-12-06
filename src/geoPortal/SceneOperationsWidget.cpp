@@ -178,5 +178,17 @@ void SceneOperationsWidget::onRectangleBoundsChanged(double d)
 
 void SceneOperationsWidget::getFromUsgs()
 {
+    _ui.getFromUsgsButton->setEnabled(false);
+
     emit getFromUsgsRequested(_scene);
+}
+
+void SceneOperationsWidget::onSceneGotFromUsgs(const ScenePtr& scene)
+{
+    _ui.getFromUsgsButton->setEnabled(true);
+
+    if (_scene == scene)
+    {
+        _ui.getFromUsgsButton->setVisible(false);
+    }
 }

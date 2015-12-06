@@ -28,6 +28,7 @@ namespace portal
         void setScene(const ScenePtr& scene);
         void onRectangleSelected(const osgEarth::Bounds& b);
         void onRectangleSelectFailed();
+        void onSceneGotFromUsgs(const ScenePtr& scene);
         
     private slots:
         void onMinimumBandChanged(int i);

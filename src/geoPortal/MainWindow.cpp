@@ -506,6 +506,9 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));    
+    connect(_downloadManager, SIGNAL(usgsDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishGetSceneFromUsgs(const ScenePtr&, bool, const QString&)));
+
+    connect(_downloadManager, SIGNAL(usgsDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneGotFromUsgs(const ScenePtr&)));
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -728,6 +731,20 @@ void MainWindow::finishLoadBands(const ScenePtr& scene, bool result, const QStri
         _dataManager->showScene(scene);
 
         QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
+    }
+    else
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), message);
+    }
+}
+
+void MainWindow::finishGetSceneFromUsgs(const ScenePtr& scene, bool result, const QString& message)
+{
+    if (result)
+    {
+        scene->hasScene = true;
+
+        QMessageBox::information(qApp->activeWindow(), tr("Cцена получена"), message);
     }
     else
     {
