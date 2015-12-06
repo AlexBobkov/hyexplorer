@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QApplication>
+#include <QHttpMultiPart>
 
 using namespace portal;
 
@@ -175,6 +176,10 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
     else if (requestType == "UsgsRedirect")
     {
         processUsgsRedirectReply(scene, reply);
+    }
+    else if (requestType == "Upload")
+    {
+        processUploadReply(scene, reply);
     }
     
     reply->deleteLater();
@@ -400,7 +405,7 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
         connect(_progressDialog, SIGNAL(canceled()), this, SLOT(cancelDownload()));
     }
 
-    _progressDialog->setLabelText(tr("Скачивание сцены %0 с сайта USGS").arg(scene->sceneid));
+    _progressDialog->setLabelText(tr("Скачивание сцены %0 с сервера USGS").arg(scene->sceneid));
     _progressDialog->reset();
     _progressDialog->show();
 }
@@ -431,13 +436,69 @@ void DownloadManager::processUsgsRedirectReply(const ScenePtr& scene, QNetworkRe
         emit usgsDownloadFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneid).arg(reply->error()).arg(reply->errorString()));
         return;
     }
+
+    QString filepath = Storage::tempPath(reply->url().fileName() + ".zip");
     
-    _tempFile->rename(Storage::tempPath(reply->url().fileName()));
+    _tempFile->rename(filepath);
 
     delete _tempFile;
     _tempFile = 0;
+
+    //-----------------------------------
+
+    QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+    QHttpPart imagePart;
+    imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/octet-stream"));
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"file\";filename=\"%0\"").arg(reply->url().fileName() + ".zip"));
+
+    QFile* file = new QFile(filepath);
+    file->open(QIODevice::ReadOnly);
+    imagePart.setBodyDevice(file);
+    file->setParent(multiPart); // we cannot delete the file now, so delete it with the multiPart
+
+    multiPart->append(imagePart);
+
+    QNetworkRequest request(QString("http://virtualglobe.ru/geoportalapi/scene/%0").arg(scene->sceneid));
+
+    request.setAttribute(QNetworkRequest::User, QString("Upload"));
+
+    QVariant v;
+    v.setValue(scene);
+    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+
+    QNetworkReply* uploadReply = _networkManager.post(request, multiPart);
+
+    multiPart->setParent(uploadReply); // delete the multiPart with the reply
+
+    connect(uploadReply, SIGNAL(uploadProgress(qint64, qint64)), this, SLOT(onDownloadProgress(qint64, qint64)));
+
+    //-----------------------------------
+
+    _progressDialog->setLabelText(tr("Загрузка сцены %0 на сервер").arg(scene->sceneid));
+    _progressDialog->show();
+}
+
+void DownloadManager::processUploadReply(const ScenePtr& scene, QNetworkReply* reply)
+{
+    _progressDialog->reset();
+
+    if (reply->error() == QNetworkReply::OperationCanceledError)
+    {
+        qDebug() << "Cancelled";
         
-    emit usgsDownloadFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS").arg(scene->sceneid));
+        emit usgsDownloadFinished(scene, false, tr("Загрузка сцены %0 на сервер отменена пользователем").arg(scene->sceneid));
+        return;
+    }
+    else if (reply->error() != QNetworkReply::NoError)
+    {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+        
+        emit usgsDownloadFinished(scene, false, tr("При загрузке сцены %0 на сервер произошла ошибка %1 %2").arg(scene->sceneid).arg(reply->error()).arg(reply->errorString()));
+        return;
+    }
+
+    emit usgsDownloadFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS и загружена на наш сервер").arg(scene->sceneid));
 }
 
 void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)
@@ -475,11 +536,16 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)
 
 void DownloadManager::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-    emit progressChanged(100 * bytesReceived / bytesTotal);
+    if (bytesTotal != 0)
+    {
+        emit progressChanged(100 * bytesReceived / bytesTotal);
+    }
 }
 
 void DownloadManager::cancelDownload()
 {        
+    //Добавить отмену аплоада
+
     if (_longDownloadReply)
     {
         _longDownloadReply->abort();

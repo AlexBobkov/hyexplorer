@@ -45,6 +45,7 @@ namespace portal
         void processUsgsLoginReply(const ScenePtr& scene, QNetworkReply* reply);
         void processUsgsFirstReply(const ScenePtr& scene, QNetworkReply* reply);
         void processUsgsRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processUploadReply(const ScenePtr& scene, QNetworkReply* reply);
 
         void downloadNextSceneBand(const ScenePtr& scene);
         

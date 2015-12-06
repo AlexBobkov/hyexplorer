@@ -10,21 +10,23 @@ from zipfile import ZipFile
 from flask import Flask, request, redirect, url_for
 from werkzeug import secure_filename
 
+UPLOAD_FOLDER = os.environ['GEOPORTAL_UPLOAD_FOLDER']
+#SCENES_UPLOAD_FOLDER = os.environ['GEOPORTAL_SCENES_UPLOAD_FOLDER']
+#OVERVIEWS_UPLOAD_FOLDER = os.environ['GEOPORTAL_OVERVIEWS_UPLOAD_FOLDER']
+
 SCENES_FOLDER = os.environ['GEOPORTAL_SCENES_FOLDER']
 SCENES_EXTRACT_FOLDER = os.environ['GEOPORTAL_SCENES_EXTRACT_FOLDER']
 SCENES_CLIPS_FOLDER = os.environ['GEOPORTAL_SCENES_CLIPS_FOLDER']
 
-UPLOAD_FOLDER = os.environ['GEOPORTAL_UPLOAD_FOLDER']
-ALLOWED_EXTENSIONS = set(['jpeg'])
+ALLOWED_EXTENSIONS = set(['jpeg', 'zip'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024 #1mb
-
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024 #1Gb
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+        filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def hello_world():
@@ -36,14 +38,14 @@ def overview(sceneid):
     app.logger.info('Overview %s %s', sceneid, request.method)
 
     if request.method == 'POST':
-	app.logger.info('POST')
-    
-	file = request.files['file']
+        app.logger.info('POST')
+
+        file = request.files['file']
         app.logger.info('File %s ', file.filename)
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
 
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
             conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
@@ -56,9 +58,39 @@ def overview(sceneid):
 
             app.logger.info('Scene is ready %s', sceneid)
 
-        return 'Success POST'
+        return 'Success overview POST'
     else:
-        return 'Success GET'
+        return 'Success overview GET'
+
+@app.route('/scene/<sceneid>', methods=['GET', 'POST'])
+def scene_upload(sceneid):
+    app.logger.info('Scene %s %s', sceneid, request.method)
+
+    if request.method == 'POST':
+        app.logger.info('POST')
+
+        file = request.files['file']
+        app.logger.info('File %s ', file.filename)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(SCENES_FOLDER, filename))
+            return 'Test'
+
+            #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
+            conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
+
+            cur = conn.cursor()
+            cur.execute("update scenes set hasscene=TRUE where sceneid=%s;", (sceneid,))
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            app.logger.info('Scene is ready %s', sceneid)
+
+        return 'Success scene POST'
+    else:
+        return 'Success scene GET'
 
 def extract_bands(sceneid, minband, maxband):
     zipfilepath = SCENES_FOLDER + "/" + sceneid[:23] + "1T.ZIP"
@@ -191,7 +223,7 @@ def sceneclip(sceneid, minband, maxband):
     return output
 
 if __name__ == '__main__':
-    app.debug = True
+    app.debug = False
 
     if not app.debug:
         import logging
