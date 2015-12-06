@@ -39,10 +39,10 @@ namespace portal
         void readDataChunk();
                     
     private:
-        void processOverviewReply(const ScenePtr& scene, const QByteArray& data, const QString& filename);
-        void processSceneReply(const ScenePtr& scene, const QByteArray& data);
-        void processSceneBandReply(const ScenePtr& scene, const QByteArray& data, const QString& filename);
-        void processUsgsLoginReply(const ScenePtr& scene);
+        void processOverviewReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processSceneReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processSceneBandReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processUsgsLoginReply(const ScenePtr& scene, QNetworkReply* reply);
         void processUsgsFirstReply(const ScenePtr& scene, QNetworkReply* reply);
         void processUsgsRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
 

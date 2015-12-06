@@ -19,7 +19,7 @@ _longDownloadReply(0),
 _tempFile(0)
 {
     connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
-    connect(&_networkManager, SIGNAL(authenticationRequired(QNetworkReply*, QAuthenticator*)), SLOT(onAuthenticationRequired(QNetworkReply*, QAuthenticator*)));
+    connect(&_networkManager, SIGNAL(authenticationRequired(QNetworkReply*, QAuthenticator*)), SLOT(onAuthenticationRequired(QNetworkReply*, QAuthenticator*)));    
 }
 
 DownloadManager::~DownloadManager()
@@ -148,33 +148,24 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
 {
     qDebug() << "Downloaded " << qPrintable(reply->url().url());
 
-    if (reply->error() != QNetworkReply::NoError)
-    {
-        qDebug() << "Error " << reply->error() << " " << reply->errorString();
-        reply->deleteLater();
-        return;
-    }
-
     QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
     ScenePtr scene = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1)).value<ScenePtr>();
-
-    qDebug() << "Request " << requestType;
-
+        
     if (requestType == "Overview")
     {
-        processOverviewReply(scene, reply->readAll(), reply->url().fileName());
+        processOverviewReply(scene, reply);
     }
     else if (requestType == "Scene")
     {
-        processSceneReply(scene, reply->readAll());
+        processSceneReply(scene, reply);
     }
     else if (requestType == "SceneBand")
     {
-        processSceneBandReply(scene, reply->readAll(), reply->url().fileName());
+        processSceneBandReply(scene, reply);
     }
     else if (requestType == "UsgsLogin")
     {
-        processUsgsLoginReply(scene);
+        processUsgsLoginReply(scene, reply);
     }
     else if (requestType == "UsgsFirst")
     {
@@ -193,15 +184,22 @@ void DownloadManager::onAuthenticationRequired(QNetworkReply* reply, QAuthentica
     qDebug() << "authenticationRequired";
 }
 
-void DownloadManager::processOverviewReply(const ScenePtr& scene, const QByteArray& data, const QString& filename)
+void DownloadManager::processOverviewReply(const ScenePtr& scene, QNetworkReply* reply)
 {
-    if (data.isNull() || data.isEmpty())
+    if (reply->error() != QNetworkReply::NoError)
     {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();        
         return;
-        qDebug() << "Reply is null or empty";
     }
 
-    QString path = makeOverviewPath(filename);
+    QByteArray data = reply->readAll();
+    if (data.isNull() || data.isEmpty())
+    {
+        qDebug() << "Reply is null or empty";
+        return;
+    }
+
+    QString path = makeOverviewPath(reply->url().fileName());
 
     QFile localFile(path);
     if (!localFile.open(QIODevice::WriteOnly))
@@ -215,22 +213,29 @@ void DownloadManager::processOverviewReply(const ScenePtr& scene, const QByteArr
     _dataManager->showOverview(scene, path);
 }
 
-void DownloadManager::processSceneReply(const ScenePtr& scene, const QByteArray& data)
+void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* reply)
 {
-    if (data.isNull() || data.isEmpty())
+    if (reply->error() != QNetworkReply::NoError)
     {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+
+        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneid).arg(reply->error()).arg(reply->errorString()));
         return;
-        qDebug() << "Reply is null or empty";
     }
 
-    //QFile file("debug.txt");
-    //file.open(QIODevice::WriteOnly);
-    //file.write(data);
-    //file.close();
+    QByteArray data = reply->readAll();
+    if (data.isNull() || data.isEmpty())
+    {        
+        qDebug() << "Reply is null or empty";
+
+        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneid));
+        return;
+    }
 
     if (!data.startsWith("SUCCESS"))
     {
         _downloadPaths.clear();
+
         emit sceneDownloadFinished(scene, false, tr("Сцена %0 не найдена на сервере").arg(scene->sceneid));
         return;
     }
@@ -258,17 +263,28 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, const QByteArray&
     downloadNextSceneBand(scene);
 }
 
-void DownloadManager::processSceneBandReply(const ScenePtr& scene, const QByteArray& data, const QString& filename)
+void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply* reply)
 {
-    if (data.isNull() || data.isEmpty())
+    if (reply->error() != QNetworkReply::NoError)
     {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+
+        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneid).arg(reply->error()).arg(reply->errorString()));
         return;
+    }
+
+    QByteArray data = reply->readAll();
+    if (data.isNull() || data.isEmpty())
+    {        
         qDebug() << "Reply is null or empty";
+
+        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneid));
+        return;
     }
 
     qDebug() << "SceneBand " << _downloadPathIndex;
 
-    QString path = makeSceneBandPath(scene, filename);    
+    QString path = makeSceneBandPath(scene, reply->url().fileName());
 
     QFile localFile(path);
     if (!localFile.open(QIODevice::WriteOnly))
@@ -283,6 +299,7 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, const QByteAr
     if (_downloadPathIndex >= _downloadPaths.size())
     {
         _downloadPaths.clear();
+
         emit sceneDownloadFinished(scene, true, tr("Сцена %0 успешно получена").arg(scene->sceneid));
         return;
     }
@@ -290,9 +307,18 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, const QByteAr
     downloadNextSceneBand(scene);
 }
 
-void DownloadManager::processUsgsLoginReply(const ScenePtr& scene)
+void DownloadManager::processUsgsLoginReply(const ScenePtr& scene, QNetworkReply* reply)
 {
-    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/L1T/EE").arg(scene->sceneid));
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+
+        emit usgsDownloadFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneid).arg(reply->error()).arg(reply->errorString()));
+        return;
+    }
+
+    //QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/L1T/EE").arg(scene->sceneid));
+    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/GRB/EE").arg(scene->sceneid));
 
     request.setAttribute(QNetworkRequest::User, QString("UsgsFirst"));
 
@@ -305,32 +331,37 @@ void DownloadManager::processUsgsLoginReply(const ScenePtr& scene)
 
 void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply* reply)
 {
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+        
+        emit usgsDownloadFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneid).arg(reply->error()).arg(reply->errorString()));
+        return;
+    }
+
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode != 302)
     {
         qDebug() << "Wrong status code " << statusCode;
 
-        emit usgsDownloadFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: неверный код ответа").arg(scene->sceneid));
-
+        emit usgsDownloadFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: неверный код ответа %1").arg(scene->sceneid).arg(statusCode));
         return;
     }
 
-    QUrl possibleRedirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-
-    if (possibleRedirectUrl.isEmpty() || possibleRedirectUrl == _oldRedirectUrl)
+    QUrl redirectUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+    if (redirectUrl.isEmpty() || redirectUrl == _oldRedirectUrl)
     {
-        qDebug() << "Wrong url " << possibleRedirectUrl;
+        qDebug() << "Wrong url " << redirectUrl;
 
         emit usgsDownloadFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: ошибка перенаправления").arg(scene->sceneid));
-
         return;
     }
 
-    _oldRedirectUrl = possibleRedirectUrl;
+    qDebug() << "Redirect " << redirectUrl;
 
-    qDebug() << "Redirect " << possibleRedirectUrl;
+    _oldRedirectUrl = redirectUrl;    
 
-    QNetworkRequest request(possibleRedirectUrl);
+    QNetworkRequest request(redirectUrl);
 
     request.setAttribute(QNetworkRequest::User, QString("UsgsRedirect"));
 
@@ -342,8 +373,18 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
 
     connect(_longDownloadReply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(onDownloadProgress(qint64, qint64)));
     connect(_longDownloadReply, SIGNAL(readyRead()), this, SLOT(readDataChunk()));
+    
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
 
-    _tempFile = new QFile("TTT3.zip");
+    QDir dataDir(dataPath);
+    QString folderName("hyperion/temp/");
+    if (!dataDir.exists(folderName))
+    {
+        dataDir.mkpath(folderName);
+    }
+    
+    _tempFile = new QFile(dataDir.filePath(folderName + "tempfilename.zip"));
     if (!_tempFile->open(QIODevice::WriteOnly))
     {
         qDebug() << "Failed to open file ";
@@ -353,7 +394,6 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
     if (!_progressDialog)
     {
         _progressDialog = new QProgressDialog(qApp->activeWindow());
-        //_progressDialog->setWindowFlags(Qt::Window);        
         _progressDialog->setMinimum(0);
         _progressDialog->setMaximum(100);
 
@@ -369,35 +409,45 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
 void DownloadManager::processUsgsRedirectReply(const ScenePtr& scene, QNetworkReply* reply)
 {
     _progressDialog->reset();
-
-#if 0
-    QByteArray data = reply->readAll();
-    if (data.isNull() || data.isEmpty())
-    {
-        qDebug() << "Reply is null or empty";
-
-        emit usgsDownloadFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: пустой ответ").arg(scene->sceneid));
-
-        return;
-    }
-        
-    QFile localFile("TTT3.zip");
-    if (!localFile.open(QIODevice::WriteOnly))
-    {
-        qDebug() << "Failed to open file ";
-        return;
-    }
-    localFile.write(data);
-    localFile.close();
-#endif
-
     _tempFile->close();
+    _longDownloadReply = 0;
+
+    if (reply->error() == QNetworkReply::OperationCanceledError)
+    {
+        qDebug() << "Cancelled";
+
+        delete _tempFile;
+        _tempFile = 0;
+
+        emit usgsDownloadFinished(scene, false, tr("Получение сцены %0 отменено пользователем").arg(scene->sceneid));
+        return;
+    }
+    else if (reply->error() != QNetworkReply::NoError)
+    {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+
+        delete _tempFile;
+        _tempFile = 0;
+
+        emit usgsDownloadFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneid).arg(reply->error()).arg(reply->errorString()));
+        return;
+    }
+
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
+
+    QDir dataDir(dataPath);
+    QString folderName("hyperion/temp/");
+    if (!dataDir.exists(folderName))
+    {
+        dataDir.mkpath(folderName);
+    }
+
+    _tempFile->rename(dataDir.filePath(folderName + reply->url().fileName()));
+
     delete _tempFile;
     _tempFile = 0;
-
-    qDebug() << "Scene Filename " << reply->url().toLocalFile();
-    qDebug() << "Scene Filename " << reply->url().fileName();
-
+        
     emit usgsDownloadFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS").arg(scene->sceneid));
 }
 
@@ -476,28 +526,15 @@ QString DownloadManager::makeSceneBandPath(const ScenePtr& scene, const QString&
 
 void DownloadManager::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-    qDebug() << "Progress " << bytesReceived << " " << bytesTotal << " " << 1.0 * bytesReceived / bytesTotal;
-
     emit progressChanged(100 * bytesReceived / bytesTotal);
 }
 
 void DownloadManager::cancelDownload()
-{
-    qDebug() << "Cancel";
-        
+{        
     if (_longDownloadReply)
     {
-        ScenePtr scene = _longDownloadReply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1)).value<ScenePtr>();
-
         _longDownloadReply->abort();
-        
-        emit usgsDownloadFinished(scene, false, tr("Получение сцены %0 отменено пользователем").arg(scene->sceneid));
-
         _longDownloadReply = 0;
-
-        _tempFile->close();
-        delete _tempFile;
-        _tempFile = 0;
     }
     else
     {
@@ -507,11 +544,13 @@ void DownloadManager::cancelDownload()
 
 void DownloadManager::readDataChunk()
 {
-    qDebug() << "Read chunk";
-
-    if (_longDownloadReply)
+    if (_tempFile && _longDownloadReply)
     {
         _tempFile->write(_longDownloadReply->readAll());
+    }
+    else if (!_tempFile)
+    {
+        qDebug() << "File is null";
     }
     else
     {
