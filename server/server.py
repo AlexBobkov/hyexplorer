@@ -4,6 +4,7 @@ import os
 import os.path
 import psycopg2
 import subprocess
+import tempfile
 from osgeo import gdal
 from osgeo import osr
 from zipfile import ZipFile
@@ -11,17 +12,18 @@ from flask import Flask, request, redirect, url_for
 from werkzeug import secure_filename
 
 UPLOAD_FOLDER = os.environ['GEOPORTAL_UPLOAD_FOLDER']
-#SCENES_UPLOAD_FOLDER = os.environ['GEOPORTAL_SCENES_UPLOAD_FOLDER']
-#OVERVIEWS_UPLOAD_FOLDER = os.environ['GEOPORTAL_OVERVIEWS_UPLOAD_FOLDER']
-
+OVERVIEWS_FOLDER = os.environ['GEOPORTAL_OVERVIEWS_FOLDER']
 SCENES_FOLDER = os.environ['GEOPORTAL_SCENES_FOLDER']
 SCENES_EXTRACT_FOLDER = os.environ['GEOPORTAL_SCENES_EXTRACT_FOLDER']
 SCENES_CLIPS_FOLDER = os.environ['GEOPORTAL_SCENES_CLIPS_FOLDER']
 
-ALLOWED_EXTENSIONS = set(['jpeg', 'zip'])
+ALLOWED_EXTENSIONS = set(['jpeg', 'ZIP'])
+
+tempfile.tempdir = UPLOAD_FOLDER
+
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+#app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024 #1Gb
 
 def allowed_file(filename):
@@ -38,14 +40,12 @@ def overview(sceneid):
     app.logger.info('Overview %s %s', sceneid, request.method)
 
     if request.method == 'POST':
-        app.logger.info('POST')
-
         file = request.files['file']
         app.logger.info('File %s ', file.filename)
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            file.save(os.path.join(OVERVIEWS_FOLDER, filename))
 
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
             conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
@@ -57,6 +57,8 @@ def overview(sceneid):
             conn.close()
 
             app.logger.info('Scene is ready %s', sceneid)
+        else:
+            return 'Wrong file'
 
         return 'Success overview POST'
     else:
@@ -67,15 +69,12 @@ def scene_upload(sceneid):
     app.logger.info('Scene %s %s', sceneid, request.method)
 
     if request.method == 'POST':
-        app.logger.info('POST')
-
         file = request.files['file']
         app.logger.info('File %s ', file.filename)
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(SCENES_FOLDER, filename))
-            return 'Test'
 
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
             conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
