@@ -196,10 +196,15 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
 
     StyleSheet* styleSheet = new StyleSheet();
     styleSheet->addStyle(style);
+
+    //osgEarth::Features::FeatureDisplayLayout layout;
+    //layout.tileSizeFactor() = 5.0f;
+    //layout.addLevel(osgEarth::Features::FeatureLevel(0, 50000000));
     
     FeatureGeomModelOptions fgmOpt;
     fgmOpt.featureSource() = _featureSource;
     fgmOpt.styles() = styleSheet;
+    //fgmOpt.layout() = layout;
     
     _layer = new ModelLayer("scenes", fgmOpt);
 
