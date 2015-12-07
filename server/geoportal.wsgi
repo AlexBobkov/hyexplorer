@@ -2,7 +2,8 @@ import sys
 sys.path.insert(0, '/opt/geoportal/geoportal/server')
 
 import os
-os.environ['GEOPORTAL_UPLOAD_FOLDER']='/opt/virtualglobe.ru/geoportal/hyperion/overviews'
+os.environ['GEOPORTAL_UPLOAD_FOLDER']='/opt/geoportal/temp'
+os.environ['GEOPORTAL_OVERVIEWS_FOLDER']='/opt/virtualglobe.ru/geoportal/hyperion/overviews'
 os.environ['GEOPORTAL_SCENES_FOLDER']='/opt/geoportal/hyperion/scenes'
 os.environ['GEOPORTAL_SCENES_EXTRACT_FOLDER']='/opt/virtualglobe.ru/geoportal/hyperion/scenes'
 os.environ['GEOPORTAL_SCENES_CLIPS_FOLDER']='/opt/virtualglobe.ru/geoportal/hyperion/scenes/clips'
