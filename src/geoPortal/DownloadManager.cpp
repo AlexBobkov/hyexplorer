@@ -325,8 +325,8 @@ void DownloadManager::processUsgsLoginReply(const ScenePtr& scene, QNetworkReply
         return;
     }
 
-    //QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/L1T/EE").arg(scene->sceneid));
-    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/GRB/EE").arg(scene->sceneid));
+    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/L1T/EE").arg(scene->sceneid));
+    //QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/GRB/EE").arg(scene->sceneid));
 
     request.setAttribute(QNetworkRequest::User, QString("UsgsFirst"));
 
@@ -437,7 +437,7 @@ void DownloadManager::processUsgsRedirectReply(const ScenePtr& scene, QNetworkRe
         return;
     }
 
-    QString filepath = Storage::tempPath(reply->url().fileName() + ".zip");
+    QString filepath = Storage::tempPath(reply->url().fileName());
     
     _tempFile->rename(filepath);
 
@@ -450,7 +450,7 @@ void DownloadManager::processUsgsRedirectReply(const ScenePtr& scene, QNetworkRe
 
     QHttpPart imagePart;
     imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/octet-stream"));
-    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"file\";filename=\"%0\"").arg(reply->url().fileName() + ".zip"));
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"file\";filename=\"%0\"").arg(reply->url().fileName()));
 
     QFile* file = new QFile(filepath);
     file->open(QIODevice::ReadOnly);
