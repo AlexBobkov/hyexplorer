@@ -740,6 +740,8 @@ void MainWindow::finishLoadBands(const ScenePtr& scene, bool result, const QStri
 
 void MainWindow::finishGetSceneFromUsgs(const ScenePtr& scene, bool result, const QString& message)
 {
+    _progressBar->reset();
+
     if (result)
     {
         scene->hasScene = true;

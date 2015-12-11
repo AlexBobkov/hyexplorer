@@ -10,8 +10,12 @@ namespace portal
     {
     public:
         static QString overviewPath(const QString& filename);
+
         static QString sceneBandPath(const ScenePtr& scene, const QString& filename);
+
         static QString sceneBandClipPath(const ScenePtr& scene, const QString& filename, int clipNumber);
+        static int nextClipNumber(const ScenePtr& scene);
+
         static QString tempPath(const QString& filename);
     };
 }

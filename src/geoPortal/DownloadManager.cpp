@@ -117,15 +117,10 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
     }
 
     _isClip = true;
+        
+    _clipNumber = Storage::nextClipNumber(scene);
 
-    QSettings settings;
-    QString dataPath = settings.value("StoragePath").toString();
-    QDir clipsDir(dataPath + QString("/hyperion/clips/%0/").arg(scene->sceneid));
-    QStringList entries = clipsDir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
-    
-    _clipNumber = entries.size();
-
-    qDebug() << "Clip number " << entries << _clipNumber;
+    qDebug() << "Clip number " << _clipNumber;
 
     osgEarth::Bounds b = *_dataManager->rectangle();
         

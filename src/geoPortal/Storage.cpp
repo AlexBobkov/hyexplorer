@@ -2,6 +2,7 @@
 
 #include <QSettings>
 #include <QDir>
+#include <QDebug>
 
 using namespace portal;
 
@@ -48,6 +49,31 @@ QString Storage::sceneBandClipPath(const ScenePtr& scene, const QString& filenam
     }
 
     return dataDir.filePath(folderName + filename);
+}
+
+int Storage::nextClipNumber(const ScenePtr& scene)
+{
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
+
+    QDir clipsDir(dataPath + QString("/hyperion/clips/%0/").arg(scene->sceneid));
+    QStringList entries = clipsDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+
+    int clipNumber = 0;
+
+    for (const auto& s : entries)
+    {
+        bool ok = false;
+        int num = s.mid(4, s.size() - 4).toInt(&ok); //clip<num> pattern
+        if (ok && num > clipNumber)
+        {
+            clipNumber = num;
+        }
+    }
+
+    clipNumber++;
+
+    return clipNumber;
 }
 
 QString Storage::tempPath(const QString& filename)
