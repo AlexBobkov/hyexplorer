@@ -77,7 +77,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>280</width>
+          <width>266</width>
           <height>903</height>
          </rect>
         </property>
@@ -389,7 +389,7 @@
            <item row="1" column="0">
             <widget class="QCheckBox" name="orbitPathCheckBox">
              <property name="text">
-              <string>Orbit Path</string>
+              <string>Номер витка</string>
              </property>
             </widget>
            </item>
@@ -409,7 +409,7 @@
            <item row="2" column="0">
             <widget class="QCheckBox" name="orbitRowCheckBox">
              <property name="text">
-              <string>Orbit Row</string>
+              <string>Номер ряда</string>
              </property>
             </widget>
            </item>
@@ -429,7 +429,7 @@
            <item row="3" column="0">
             <widget class="QCheckBox" name="targetPathCheckBox">
              <property name="text">
-              <string>Target Path</string>
+              <string>Номер целевого витка</string>
              </property>
             </widget>
            </item>
@@ -452,7 +452,7 @@
            <item row="4" column="0">
             <widget class="QCheckBox" name="targetRowCheckBox">
              <property name="text">
-              <string>Target Row</string>
+              <string>Номер целевого ряда</string>
              </property>
             </widget>
            </item>
@@ -663,7 +663,7 @@
   </action>
   <action name="metadataAction">
    <property name="text">
-    <string>Описание метаданных</string>
+    <string>Описание метаданных Гипериона</string>
    </property>
   </action>
   <action name="settingsAction">

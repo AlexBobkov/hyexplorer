@@ -49,55 +49,56 @@ void MetadataWidget::initUi()
     _browser->setFactoryForManager(_variantManager, new QtVariantEditorFactory(this));
     layout->addWidget(_browser);
 
-    _sceneidProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Scene Id"));
+    _sceneidProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Идентификатор"));
     _sceneidProp->setAttribute("readOnly", true);
     _browser->addProperty(_sceneidProp);
 
     //_datetimeProp = _variantManager->addProperty(QVariant::DateTime, QString::fromUtf8("Scene time"));
-    _datetimeProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Scene time"));
+    _datetimeProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Дата и время съемки"));
     _datetimeProp->setAttribute("readOnly", true);
     _browser->addProperty(_datetimeProp);
 
-    _cloudnessProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Cloud cover"));
+    _cloudnessProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Процент облачности"));
     _cloudnessProp->setAttribute("readOnly", true);
     _browser->addProperty(_cloudnessProp);
 
-    _orbitPathProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Orbit path"));
+    _orbitPathProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Номер витка"));
     _orbitPathProp->setAttribute("readOnly", true);
     _browser->addProperty(_orbitPathProp);
 
-    _orbitRowProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Orbit row"));
+    _orbitRowProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Номер ряда"));
     _orbitRowProp->setAttribute("readOnly", true);
     _browser->addProperty(_orbitRowProp);
 
-    _targetPathProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Target path"));
+    _targetPathProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Номер целевого витка"));
     _targetPathProp->setAttribute("readOnly", true);
     _browser->addProperty(_targetPathProp);
 
-    _targetRowProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Target row"));
+    _targetRowProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Номер целевого ряда"));
     _targetRowProp->setAttribute("readOnly", true);
     _browser->addProperty(_targetRowProp);
 
-    _processingLevelProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Processing level"));
+    _processingLevelProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Уровень обработки"));
     _processingLevelProp->setAttribute("readOnly", true);
     _browser->addProperty(_processingLevelProp);
 
-    _sunAzimuthProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Sun azimuth"));
+    _sunAzimuthProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Азимут Солнца"));
     _sunAzimuthProp->setAttribute("readOnly", true);
     _browser->addProperty(_sunAzimuthProp);
 
-    _sunElevationProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Sun elevation"));
+    _sunElevationProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Высота Солнца"));
     _sunElevationProp->setAttribute("readOnly", true);
     _browser->addProperty(_sunElevationProp);
 
-    _inclinationProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Satellite inclination"));
+    _inclinationProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Наклонение орбиты спутника"));
     _inclinationProp->setAttribute("readOnly", true);
     _browser->addProperty(_inclinationProp);
 
-    _lookAngleProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Look angle"));
+    _lookAngleProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Угол между надиром и центром сцены"));
     _lookAngleProp->setAttribute("readOnly", true);
     _browser->addProperty(_lookAngleProp);
-
+       
+        
     _overviewDownloadLabel = new QLabel(QString::fromUtf8("Скачать обзор (<a href='http://google.ru'>ссылка</a>)"));
     _overviewDownloadLabel->setOpenExternalLinks(true);
     layout->addWidget(_overviewDownloadLabel);

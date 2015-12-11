@@ -59,13 +59,18 @@ void SceneOperationsWidget::initUi()
         _ui.rightSpinBox->setValue(rect->xMax());
         _ui.topSpinBox->setValue(rect->yMax());
         _ui.bottomSpinBox->setValue(rect->yMin());
+
+        _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
+        _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
+        _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
+        _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
     }
     else
     {
-        _ui.leftSpinBox->setValue(0.0);
-        _ui.rightSpinBox->setValue(0.0);
-        _ui.topSpinBox->setValue(0.0);
-        _ui.bottomSpinBox->setValue(0.0);
+        _ui.leftSpinBox->setValue(-10.0);
+        _ui.rightSpinBox->setValue(10.0);
+        _ui.topSpinBox->setValue(10.0);
+        _ui.bottomSpinBox->setValue(-10.0);
     }
 
     connect(_ui.leftSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
@@ -164,6 +169,11 @@ void SceneOperationsWidget::onRectangleSelected(const osgEarth::Bounds& b)
     _ui.rightSpinBox->setValue(b.xMax());
     _ui.topSpinBox->setValue(b.yMax());
     _ui.bottomSpinBox->setValue(b.yMin());
+
+    _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
+    _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
+    _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
+    _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
 }
 
 void SceneOperationsWidget::onRectangleSelectFailed()
@@ -173,6 +183,11 @@ void SceneOperationsWidget::onRectangleSelectFailed()
 
 void SceneOperationsWidget::onRectangleBoundsChanged(double d)
 {
+    _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
+    _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
+    _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
+    _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
+
     emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
 }
 
