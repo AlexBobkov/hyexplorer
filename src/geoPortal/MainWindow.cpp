@@ -314,6 +314,9 @@ void MainWindow::initUi()
 
     QSettings settings;
 
+    _ui.hyperionRadioButton->setChecked(settings.value("Query/hyperionChecked", true).toBool());
+    _ui.avirisRadioButton->setChecked(settings.value("Query/avirisChecked", false).toBool());
+
     _ui.dateGroupBox->setChecked(settings.value("Query/dateEnabled", false).toBool());
     _ui.dateTimeEditFrom->setDateTime(settings.value("Query/dateFrom", QDateTime::currentDateTime().addYears(-1)).toDateTime());
     _ui.dateTimeEditTo->setDateTime(settings.value("Query/dateTo", QDateTime::currentDateTime()).toDateTime());
@@ -554,6 +557,9 @@ void MainWindow::executeQuery()
 
     QSettings settings;
 
+    settings.setValue("Query/hyperionChecked", _ui.hyperionRadioButton->isChecked());
+    settings.setValue("Query/avirisChecked", _ui.avirisRadioButton->isChecked());
+    
     settings.setValue("Query/dateEnabled", _ui.dateGroupBox->isChecked());
     settings.setValue("Query/dateFrom", _ui.dateTimeEditFrom->dateTime());
     settings.setValue("Query/dateTo", _ui.dateTimeEditTo->dateTime());
@@ -615,6 +621,15 @@ void MainWindow::executeQuery()
     //-----------------------------------------------------    
 
     _dataset = std::make_shared<DataSet>();
+
+    if (_ui.hyperionRadioButton->isChecked())
+    {
+        _dataset->addCondition(QString("sensor='Hyperion'"));
+    }
+    else if (_ui.avirisRadioButton->isChecked())
+    {
+        _dataset->addCondition(QString("sensor='AVIRIS'"));
+    }
 
     if (_ui.dateGroupBox->isChecked())
     {

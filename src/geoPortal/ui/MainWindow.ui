@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>829</width>
-    <height>968</height>
+    <height>1050</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -78,10 +78,36 @@
           <x>0</x>
           <y>0</y>
           <width>266</width>
-          <height>903</height>
+          <height>985</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string>Сенсоры</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <widget class="QRadioButton" name="hyperionRadioButton">
+              <property name="text">
+               <string>Hyperion</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="avirisRadioButton">
+              <property name="text">
+               <string>AVIRIS</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
          <item>
           <widget class="QGroupBox" name="dateGroupBox">
            <property name="title">
