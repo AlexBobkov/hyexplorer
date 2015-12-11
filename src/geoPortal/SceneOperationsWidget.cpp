@@ -130,7 +130,14 @@ void SceneOperationsWidget::download()
     {
         if (_dataManager->rectangle())
         {
-            emit downloadSceneClipRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+            if (_dataManager->rectangle()->intersects(_scene->feature->getGeometry()->getBounds()))
+            {
+                emit downloadSceneClipRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+            }
+            else
+            {
+                QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Фрагмент не пересекает границы сцены"));
+            }
         }
         else
         {
@@ -165,15 +172,15 @@ void SceneOperationsWidget::onRectangleSelected(const osgEarth::Bounds& b)
 {
     _ui.selectFragmentButton->setChecked(false);
 
+    _ui.leftSpinBox->setMaximum(b.xMax());
+    _ui.rightSpinBox->setMinimum(b.xMin());
+    _ui.topSpinBox->setMinimum(b.yMin());
+    _ui.bottomSpinBox->setMaximum(b.yMax());
+
     _ui.leftSpinBox->setValue(b.xMin());
     _ui.rightSpinBox->setValue(b.xMax());
     _ui.topSpinBox->setValue(b.yMax());
-    _ui.bottomSpinBox->setValue(b.yMin());
-
-    _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
-    _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
-    _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
-    _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
+    _ui.bottomSpinBox->setValue(b.yMin());    
 }
 
 void SceneOperationsWidget::onRectangleSelectFailed()
@@ -187,7 +194,7 @@ void SceneOperationsWidget::onRectangleBoundsChanged(double d)
     _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
     _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
     _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
-
+    
     emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
 }
 
