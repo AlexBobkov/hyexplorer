@@ -19,12 +19,28 @@ namespace portal
         std::size_t id;
 
         QString sensor;
-        QString sceneid;
+        QString sceneId;
 
         QDateTime sceneTime;
 
-        boost::optional<int> cloundMin;
-        boost::optional<int> cloundMax;
+        double pixelSize;
+
+        osg::ref_ptr<osgEarth::Features::Feature> feature;
+
+        osg::Vec3d swCorner;
+        osg::Vec3d seCorner;
+        osg::Vec3d neCorner;
+        osg::Vec3d nwCorner;
+
+        boost::optional<double> sunAzimuth;
+        boost::optional<double> sunElevation;
+
+        bool hasOverview;
+        bool hasScene;
+
+        boost::optional<QString> overviewName;
+
+        //-- Hyperion
 
         boost::optional<int> orbitPath;
         boost::optional<int> orbitRow;
@@ -34,22 +50,28 @@ namespace portal
 
         boost::optional<QString> processingLevel;
 
-        boost::optional<double> sunAzimuth;
-        boost::optional<double> sunElevation;
         boost::optional<double> inclination;
         boost::optional<double> lookAngle;
 
-        osg::ref_ptr<osgEarth::Features::Feature> feature;
+        boost::optional<int> cloundMin;
+        boost::optional<int> cloundMax;
 
-        osg::Vec3d swCorner;
-        osg::Vec3d seCorner;
-        osg::Vec3d neCorner;
-        osg::Vec3d nwCorner;
+        //-- AVIRIS
 
-        bool hasOverview;
-        bool hasScene;
+        boost::optional<QString> sitename;
+        boost::optional<QString> comments;
+        boost::optional<QString> investigator;
+        boost::optional<double> scenerotation;
+        boost::optional<QString> tape;
+        boost::optional<QString> geover;
+        boost::optional<QString> rdnver;
+        boost::optional<double> meansceneelev;
+        boost::optional<double> minsceneelev;
+        boost::optional<double> maxsceneelev;
+        boost::optional<int> flight;
+        boost::optional<int> run;
 
-        boost::optional<QString> overviewName;
+        Scene();
     };
 
     typedef std::shared_ptr<Scene> ScenePtr;    

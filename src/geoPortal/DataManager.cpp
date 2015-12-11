@@ -279,15 +279,15 @@ void DataManager::showScene(const ScenePtr& scene)
     QString filepath;
     if (_clipMode)
     {
-        QDir dir(QString("%0/hyperion/clips/%1/").arg(dataPath).arg(scene->sceneid));
+        QDir dir(QString("%0/hyperion/clips/%1/").arg(dataPath).arg(scene->sceneId));
         QStringList entries = dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
 
         int clipNumber = entries.size() - 1;
-        filepath = QString("%0/hyperion/clips/%1/clip%2/%3B%4_L1T_clip.TIF").arg(dataPath).arg(scene->sceneid).arg(clipNumber).arg(scene->sceneid.mid(0, 23)).arg(_activeBand, 3, 10, QChar('0'));
+        filepath = QString("%0/hyperion/clips/%1/clip%2/%3B%4_L1T_clip.TIF").arg(dataPath).arg(scene->sceneId).arg(clipNumber).arg(scene->sceneId.mid(0, 23)).arg(_activeBand, 3, 10, QChar('0'));
     }
     else
     {
-        filepath = QString("%0/hyperion/scenes/%1/%2B%3_L1T.TIF").arg(dataPath).arg(scene->sceneid).arg(scene->sceneid.mid(0, 23)).arg(_activeBand, 3, 10, QChar('0'));
+        filepath = QString("%0/hyperion/scenes/%1/%2B%3_L1T.TIF").arg(dataPath).arg(scene->sceneId).arg(scene->sceneId.mid(0, 23)).arg(_activeBand, 3, 10, QChar('0'));
     }
 
     qDebug() << "Show band " << filepath;
@@ -309,7 +309,7 @@ void DataManager::showScene(const ScenePtr& scene)
         _mapNode->getMap()->removeImageLayer(_sceneLayer);
     }
 
-    _sceneLayer = new ImageLayer(scene->sceneid.toUtf8().constData(), imageOpt);
+    _sceneLayer = new ImageLayer(scene->sceneId.toUtf8().constData(), imageOpt);
     _mapNode->getMap()->addImageLayer(_sceneLayer);
 
     //if (_overlayNode)

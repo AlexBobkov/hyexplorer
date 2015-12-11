@@ -53,15 +53,16 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
         throw std::runtime_error("DataSet is already initialized");
     }
 
-    QString queryStr;
+    QString baseStr = "select scenes.ogc_fid, sensor, sceneid, scenetime, ST_AsText(bounds), sunazimuth, sunelevation, hasoverview, hasscene, overviewname, orbitpath, orbitrow, targetpath, targetrow, processinglevel, satelliteinclination, lookangle, cloudmin, cloudmax from scenes inner join hyperion on (scenes.ogc_fid = hyperion.ogc_fid)";
 
+    QString queryStr;
     if (_fullCondition.isEmpty())
     {
-        queryStr = "select ogc_fid, sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudmin, cloudmax, ST_AsText(bounds), hasoverview, hasscene, overviewname from scenes;";
+        queryStr = baseStr + ";";
     }
     else
     {
-        queryStr = "select ogc_fid, sensor, sceneid, orbitpath, orbitrow, targetpath, targetrow, processinglevel, sunazimuth, sunelevation, satelliteinclination, lookangle, scenetime, cloudmin, cloudmax, ST_AsText(bounds), hasoverview, hasscene, overviewname from scenes where " + _fullCondition + ";";
+        queryStr = baseStr + " where " + _fullCondition + ";";
     }
 
     qDebug() << "Query " << queryStr;
@@ -81,72 +82,24 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
     {
         ScenePtr scene = std::make_shared<Scene>();
 
-        scene->id = query.value(0).toInt();
-        scene->sensor = query.value(1).toString();
-        scene->sceneid = query.value(2).toString();
+        int c = 0;
+        scene->id = query.value(c).toInt();
 
-        if (query.value(3).isValid())
+        c++;
+        scene->sensor = query.value(c).toString();
+
+        c++;
+        scene->sceneId = query.value(c).toString();
+
+        c++;
+        if (query.value(c).isValid())
         {
-            scene->orbitPath = query.value(3).toInt();
+            scene->sceneTime = query.value(c).toDateTime();
         }
 
-        if (query.value(4).isValid())
-        {
-            scene->orbitRow = query.value(4).toInt();
-        }
+        c++;
+        QString boundsStr = query.value(c).toString();
 
-        if (query.value(5).isValid())
-        {
-            scene->targetPath = query.value(5).toInt();
-        }
-
-        if (query.value(6).isValid())
-        {
-            scene->targetRow = query.value(6).toInt();
-        }
-
-        if (query.value(7).isValid())
-        {
-            scene->processingLevel = query.value(7).toString();
-        }
-
-        if (query.value(8).isValid())
-        {
-            scene->sunAzimuth = query.value(8).toDouble();
-        }
-
-        if (query.value(9).isValid())
-        {
-            scene->sunElevation = query.value(9).toDouble();
-        }
-
-        if (query.value(10).isValid())
-        {
-            scene->inclination = query.value(10).toDouble();
-        }
-
-        if (query.value(11).isValid())
-        {
-            scene->lookAngle = query.value(11).toDouble();
-        }
-
-        if (query.value(12).isValid())
-        {
-            scene->sceneTime = query.value(12).toDateTime();
-        }
-
-        if (query.value(13).isValid())
-        {
-            scene->cloundMin = query.value(13).toInt();
-        }
-
-        if (query.value(14).isValid())
-        {
-            scene->cloundMax = query.value(14).toInt();
-        }
-        
-        QString boundsStr = query.value(15).toString();
-                
         osg::ref_ptr<Geometry> geometry = GeometryUtils::geometryFromWKT(boundsStr.toUtf8().constData());
         if (geometry->getType() == Geometry::TYPE_POLYGON && geometry->size() >= 4)
         {
@@ -163,12 +116,84 @@ void DataSet::selectScenes(const ProgressCallbackType& cb)
 
         scene->feature = new Feature(geometry, srs, Style(), scene->id);
 
-        scene->hasOverview = query.value(16).toBool();
-        scene->hasScene = query.value(17).toBool();
-
-        if (query.value(18).isValid())
+        c++;
+        if (query.value(c).isValid())
         {
-            scene->overviewName = query.value(18).toString();
+            scene->sunAzimuth = query.value(c).toDouble();
+        }
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->sunElevation = query.value(c).toDouble();
+        }
+
+        c++;
+        scene->hasOverview = query.value(c).toBool();
+
+        c++;
+        scene->hasScene = query.value(c).toBool();
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->overviewName = query.value(c).toString();
+        }
+
+        //-- Hyperion
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->orbitPath = query.value(c).toInt();
+        }
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->orbitRow = query.value(c).toInt();
+        }
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->targetPath = query.value(c).toInt();
+        }
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->targetRow = query.value(c).toInt();
+        }
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->processingLevel = query.value(c).toString();
+        }
+        
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->inclination = query.value(c).toDouble();
+        }
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->lookAngle = query.value(c).toDouble();
+        }        
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->cloundMin = query.value(c).toInt();
+        }
+
+        c++;
+        if (query.value(c).isValid())
+        {
+            scene->cloundMax = query.value(c).toInt();
         }
 
         _scenes.push_back(scene);
@@ -220,15 +245,16 @@ void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
         throw std::runtime_error("DataSet is not initialized");
     }
 
-    QString queryStr;
+    QString baseStr = "select scenes.ogc_fid from scenes inner join hyperion on (scenes.ogc_fid = hyperion.ogc_fid)";
 
+    QString queryStr;
     if (_fullCondition.isEmpty())
     {
-        queryStr = QString("select ogc_fid from scenes where ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+        queryStr = QString(baseStr + " where ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
     }
     else
     {
-        queryStr = QString("select ogc_fid from scenes where " + _fullCondition + " and ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+        queryStr = QString(baseStr + " where " + _fullCondition + " and ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
     }
 
     QSqlQuery query;

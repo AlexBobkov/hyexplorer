@@ -117,7 +117,7 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 
     _scene = scene;
 
-    _sceneidProp->setValue(scene->sceneid);
+    _sceneidProp->setValue(scene->sceneId);
     _datetimeProp->setValue(scene->sceneTime.toString(Qt::ISODate));
 
     if (scene->cloundMin && scene->cloundMax)
@@ -230,8 +230,8 @@ void MetadataWidget::setScene(const ScenePtr& scene)
         _lookAngleProp->setEnabled(false);
     }
 
-    _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
-    _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneid));
+    _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneId));
+    _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneId));
 
     if (scene->hasScene)
     {

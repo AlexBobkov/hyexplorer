@@ -24,6 +24,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    std::cout << "Table structure has changed, but this importer has not.\n";
+    return 1;
+
     QApplication app(argc, argv);
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");

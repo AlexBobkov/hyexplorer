@@ -33,7 +33,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
     {
         if (index.column() == 0)
         {
-            return _dataset->scenes()[index.row()]->sceneid;
+            return _dataset->scenes()[index.row()]->sceneId;
         }
         else if (index.column() == 1)
         {

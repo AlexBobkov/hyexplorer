@@ -27,7 +27,7 @@ QString Storage::sceneBandPath(const ScenePtr& scene, const QString& filename)
     QString dataPath = settings.value("StoragePath").toString();
 
     QDir dataDir(dataPath);
-    QString folderName = QString("hyperion/scenes/%0/").arg(scene->sceneid);
+    QString folderName = QString("hyperion/scenes/%0/").arg(scene->sceneId);
     if (!dataDir.exists(folderName))
     {
         dataDir.mkpath(folderName);
@@ -42,7 +42,7 @@ QString Storage::sceneBandClipPath(const ScenePtr& scene, const QString& filenam
     QString dataPath = settings.value("StoragePath").toString();
 
     QDir dataDir(dataPath);
-    QString folderName = QString("hyperion/clips/%0/clip%1/").arg(scene->sceneid).arg(clipNumber);
+    QString folderName = QString("hyperion/clips/%0/clip%1/").arg(scene->sceneId).arg(clipNumber);
     if (!dataDir.exists(folderName))
     {
         dataDir.mkpath(folderName);
@@ -56,7 +56,7 @@ int Storage::nextClipNumber(const ScenePtr& scene)
     QSettings settings;
     QString dataPath = settings.value("StoragePath").toString();
 
-    QDir clipsDir(dataPath + QString("/hyperion/clips/%0/").arg(scene->sceneid));
+    QDir clipsDir(dataPath + QString("/hyperion/clips/%0/").arg(scene->sceneId));
     QStringList entries = clipsDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
 
     int clipNumber = 0;

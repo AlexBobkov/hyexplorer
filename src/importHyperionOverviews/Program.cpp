@@ -54,8 +54,7 @@ int main(int argc, char** argv)
     }
 
     //------------------------------------------
-
-    //QString queryStr = "select sceneid from scenes where sensor='Hyperion' and targetpath=25 and targetrow=38 and not hasoverview limit 50;";
+        
     QString queryStr = "select sceneid from scenes where sensor='Hyperion' and not hasoverview limit 1000;";
 
     QSqlQuery query;
