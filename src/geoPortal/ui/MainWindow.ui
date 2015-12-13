@@ -89,7 +89,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
-             <widget class="QRadioButton" name="hyperionRadioButton">
+             <widget class="QCheckBox" name="hyperionCheckBox">
               <property name="text">
                <string>Hyperion</string>
               </property>
@@ -99,7 +99,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="avirisRadioButton">
+             <widget class="QCheckBox" name="avirisCheckBox">
               <property name="text">
                <string>AVIRIS</string>
               </property>

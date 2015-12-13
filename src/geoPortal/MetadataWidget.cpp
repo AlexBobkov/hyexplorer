@@ -27,7 +27,19 @@ _sunAzimuthProp(0),
 _sunElevationProp(0),
 _inclinationProp(0),
 _lookAngleProp(0),
-_overviewDownloadLabel(0),
+_sitenameProp(0),
+_commentsProp(0),
+_investigatorProp(0),
+_scenerotationProp(0),
+_tapeProp(0),
+_geoverProp(0),
+_rdnverProp(0),
+_meanSceneElevProp(0),
+_minSceneElevProp(0),
+_maxSceneElevProp(0),
+_flightProp(0),
+_runProp(0),
+//_overviewDownloadLabel(0),
 _sceneDownloadLabel(0)
 {
     initUi();
@@ -58,10 +70,20 @@ void MetadataWidget::initUi()
     _datetimeProp->setAttribute("readOnly", true);
     _browser->addProperty(_datetimeProp);
 
-    _cloudnessProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Процент облачности"));
-    _cloudnessProp->setAttribute("readOnly", true);
-    _browser->addProperty(_cloudnessProp);
+    _pixelSizeProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Размер пикселя"));
+    _pixelSizeProp->setAttribute("readOnly", true);
+    _browser->addProperty(_pixelSizeProp);
 
+    _sunAzimuthProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Азимут Солнца"));
+    _sunAzimuthProp->setAttribute("readOnly", true);
+    _browser->addProperty(_sunAzimuthProp);
+
+    _sunElevationProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Высота Солнца"));
+    _sunElevationProp->setAttribute("readOnly", true);
+    _browser->addProperty(_sunElevationProp);
+
+    //-- Hyperion
+        
     _orbitPathProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Номер витка"));
     _orbitPathProp->setAttribute("readOnly", true);
     _browser->addProperty(_orbitPathProp);
@@ -82,13 +104,9 @@ void MetadataWidget::initUi()
     _processingLevelProp->setAttribute("readOnly", true);
     _browser->addProperty(_processingLevelProp);
 
-    _sunAzimuthProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Азимут Солнца"));
-    _sunAzimuthProp->setAttribute("readOnly", true);
-    _browser->addProperty(_sunAzimuthProp);
-
-    _sunElevationProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Высота Солнца"));
-    _sunElevationProp->setAttribute("readOnly", true);
-    _browser->addProperty(_sunElevationProp);
+    _cloudnessProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Процент облачности"));
+    _cloudnessProp->setAttribute("readOnly", true);
+    _browser->addProperty(_cloudnessProp);   
 
     _inclinationProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Наклонение орбиты спутника"));
     _inclinationProp->setAttribute("readOnly", true);
@@ -97,13 +115,64 @@ void MetadataWidget::initUi()
     _lookAngleProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Угол между надиром и центром сцены"));
     _lookAngleProp->setAttribute("readOnly", true);
     _browser->addProperty(_lookAngleProp);
-       
-        
-    _overviewDownloadLabel = new QLabel(QString::fromUtf8("Скачать обзор (<a href='http://google.ru'>ссылка</a>)"));
-    _overviewDownloadLabel->setOpenExternalLinks(true);
-    layout->addWidget(_overviewDownloadLabel);
 
-    _sceneDownloadLabel = new QLabel(QString::fromUtf8("Скачать сцену (<a href='http://google.ru'>ссылка</a>)"));
+    //-- AVIRIS
+
+    _sitenameProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Имя объекта"));
+    _sitenameProp->setAttribute("readOnly", true);
+    _browser->addProperty(_sitenameProp);
+
+    _commentsProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Комментарии"));
+    _commentsProp->setAttribute("readOnly", true);
+    _browser->addProperty(_commentsProp);
+
+    _investigatorProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Исследователь"));
+    _investigatorProp->setAttribute("readOnly", true);
+    _browser->addProperty(_investigatorProp);
+
+    _scenerotationProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Вращение сцены"));
+    _scenerotationProp->setAttribute("readOnly", true);
+    _browser->addProperty(_scenerotationProp);
+
+    _tapeProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Номер ленты"));
+    _tapeProp->setAttribute("readOnly", true);
+    _browser->addProperty(_tapeProp);
+
+    _geoverProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("Геокоррекция"));
+    _geoverProp->setAttribute("readOnly", true);
+    _browser->addProperty(_geoverProp);
+
+    _rdnverProp = _variantManager->addProperty(QVariant::String, QString::fromUtf8("RDN"));
+    _rdnverProp->setAttribute("readOnly", true);
+    _browser->addProperty(_rdnverProp);
+
+    _meanSceneElevProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Средняя высота сцены"));
+    _meanSceneElevProp->setAttribute("readOnly", true);
+    _browser->addProperty(_meanSceneElevProp);
+
+    _minSceneElevProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Минимальная высота сцены"));
+    _minSceneElevProp->setAttribute("readOnly", true);
+    _browser->addProperty(_minSceneElevProp);
+
+    _maxSceneElevProp = _variantManager->addProperty(QVariant::Double, QString::fromUtf8("Максимальная высота сцены"));
+    _maxSceneElevProp->setAttribute("readOnly", true);
+    _browser->addProperty(_maxSceneElevProp);
+
+    _flightProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Номер вылета"));
+    _flightProp->setAttribute("readOnly", true);
+    _browser->addProperty(_flightProp);
+
+    _runProp = _variantManager->addProperty(QVariant::Int, QString::fromUtf8("Номер захода"));
+    _runProp->setAttribute("readOnly", true);
+    _browser->addProperty(_runProp);
+
+    //--
+            
+    //_overviewDownloadLabel = new QLabel(QString::fromUtf8("Скачать обзор (<a href='http://google.ru'>ссылка</a>)"));
+    //_overviewDownloadLabel->setOpenExternalLinks(true);
+    //layout->addWidget(_overviewDownloadLabel);
+
+    _sceneDownloadLabel = new QLabel(QString::fromUtf8("Ссылка для скачивания отсутствует"));
     _sceneDownloadLabel->setOpenExternalLinks(true);
     layout->addWidget(_sceneDownloadLabel);
 }
@@ -119,6 +188,32 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 
     _sceneidProp->setValue(scene->sceneId);
     _datetimeProp->setValue(scene->sceneTime.toString(Qt::ISODate));
+
+    _pixelSizeProp->setValue(scene->pixelSize);
+
+    if (scene->sunAzimuth)
+    {
+        _sunAzimuthProp->setValue(scene->sunAzimuth.get());
+        _sunAzimuthProp->setEnabled(true);
+    }
+    else
+    {
+        _sunAzimuthProp->setValue(0.0);
+        _sunAzimuthProp->setEnabled(false);
+    }
+
+    if (scene->sunElevation)
+    {
+        _sunElevationProp->setValue(scene->sunElevation.get());
+        _sunElevationProp->setEnabled(true);
+    }
+    else
+    {
+        _sunElevationProp->setValue(0.0);
+        _sunElevationProp->setEnabled(false);
+    }
+
+    //-- Hyperion
 
     if (scene->cloundMin && scene->cloundMax)
     {
@@ -186,28 +281,6 @@ void MetadataWidget::setScene(const ScenePtr& scene)
         _processingLevelProp->setEnabled(false);
     }
 
-    if (scene->sunAzimuth)
-    {
-        _sunAzimuthProp->setValue(scene->sunAzimuth.get());
-        _sunAzimuthProp->setEnabled(true);
-    }
-    else
-    {
-        _sunAzimuthProp->setValue(0.0);
-        _sunAzimuthProp->setEnabled(false);
-    }
-
-    if (scene->sunElevation)
-    {
-        _sunElevationProp->setValue(scene->sunElevation.get());
-        _sunElevationProp->setEnabled(true);
-    }
-    else
-    {
-        _sunElevationProp->setValue(0.0);
-        _sunElevationProp->setEnabled(false);
-    }
-
     if (scene->inclination)
     {
         _inclinationProp->setValue(scene->inclination.get());
@@ -230,17 +303,161 @@ void MetadataWidget::setScene(const ScenePtr& scene)
         _lookAngleProp->setEnabled(false);
     }
 
-    _overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneId));
-    _sceneDownloadLabel->setText(QString::fromUtf8("Скачать сцену с сервера USGS (<a href='http://earthexplorer.usgs.gov/download/options/1854/%0/'>ссылка</a>)").arg(scene->sceneId));
+    //-- AVIRIS
 
+    if (scene->sitename)
+    {
+        _sitenameProp->setValue(scene->sitename.get());
+        _sitenameProp->setEnabled(true);
+    }
+    else
+    {
+        _sitenameProp->setValue(QVariant());
+        _sitenameProp->setEnabled(false);
+    }
+
+    if (scene->comments)
+    {
+        _commentsProp->setValue(scene->comments.get());
+        _commentsProp->setEnabled(true);
+    }
+    else
+    {
+        _commentsProp->setValue(QVariant());
+        _commentsProp->setEnabled(false);
+    }
+
+    if (scene->investigator)
+    {
+        _investigatorProp->setValue(scene->investigator.get());
+        _investigatorProp->setEnabled(true);
+    }
+    else
+    {
+        _investigatorProp->setValue(QVariant());
+        _investigatorProp->setEnabled(false);
+    }
+
+    if (scene->scenerotation)
+    {
+        _scenerotationProp->setValue(scene->scenerotation.get());
+        _scenerotationProp->setEnabled(true);
+    }
+    else
+    {
+        _scenerotationProp->setValue(QVariant());
+        _scenerotationProp->setEnabled(false);
+    }
+
+    if (scene->tape)
+    {
+        _tapeProp->setValue(scene->tape.get());
+        _tapeProp->setEnabled(true);
+    }
+    else
+    {
+        _tapeProp->setValue(QVariant());
+        _tapeProp->setEnabled(false);
+    }
+
+    if (scene->geover)
+    {
+        _geoverProp->setValue(scene->geover.get());
+        _geoverProp->setEnabled(true);
+    }
+    else
+    {
+        _geoverProp->setValue(QVariant());
+        _geoverProp->setEnabled(false);
+    }
+
+    if (scene->rdnver)
+    {
+        _rdnverProp->setValue(scene->rdnver.get());
+        _rdnverProp->setEnabled(true);
+    }
+    else
+    {
+        _rdnverProp->setValue(QVariant());
+        _rdnverProp->setEnabled(false);
+    }
+
+    if (scene->meansceneelev)
+    {
+        _meanSceneElevProp->setValue(scene->meansceneelev.get());
+        _meanSceneElevProp->setEnabled(true);
+    }
+    else
+    {
+        _meanSceneElevProp->setValue(QVariant());
+        _meanSceneElevProp->setEnabled(false);
+    }
+
+    if (scene->minsceneelev)
+    {
+        _minSceneElevProp->setValue(scene->minsceneelev.get());
+        _minSceneElevProp->setEnabled(true);
+    }
+    else
+    {
+        _minSceneElevProp->setValue(QVariant());
+        _minSceneElevProp->setEnabled(false);
+    }
+
+    if (scene->maxsceneelev)
+    {
+        _maxSceneElevProp->setValue(scene->maxsceneelev.get());
+        _maxSceneElevProp->setEnabled(true);
+    }
+    else
+    {
+        _maxSceneElevProp->setValue(QVariant());
+        _maxSceneElevProp->setEnabled(false);
+    }
+
+    if (scene->flight)
+    {
+        _flightProp->setValue(scene->flight.get());
+        _flightProp->setEnabled(true);
+    }
+    else
+    {
+        _flightProp->setValue(QVariant());
+        _flightProp->setEnabled(false);
+    }
+
+    if (scene->run)
+    {
+        _runProp->setValue(scene->run.get());
+        _runProp->setEnabled(true);
+    }
+    else
+    {
+        _runProp->setValue(QVariant());
+        _runProp->setEnabled(false);
+    }
+
+    //--
+            
     if (scene->hasScene)
     {
-        _overviewDownloadLabel->setVisible(true);
+        //_overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneId));
+        //_overviewDownloadLabel->setVisible(true);
+
         _sceneDownloadLabel->setVisible(false);
     }
     else
     {
-        _overviewDownloadLabel->setVisible(true);
+        //_overviewDownloadLabel->setVisible(true);        
+
+        if (scene->sceneUrl)
+        {
+            _sceneDownloadLabel->setText(QString::fromUtf8("Сцена отсутствует на геопортале. <a href='%0'>Скачать</a> сцену вручную").arg(*scene->sceneUrl));
+        }
+        else
+        {
+            _sceneDownloadLabel->setText(QString::fromUtf8("Сцена отсутствует на геопортале."));
+        }
         _sceneDownloadLabel->setVisible(true);
     }
 }

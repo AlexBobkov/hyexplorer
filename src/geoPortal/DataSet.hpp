@@ -4,8 +4,11 @@
 
 #include <osgEarth/MapNode>
 #include <osgEarthFeatures/FeatureSource>
+#include <osgEarthFeatures/FeatureListSource>
 
 #include <QString>
+#include <QStringList>
+#include <QSqlQuery>
 
 #include <functional>
 #include <memory>
@@ -30,6 +33,11 @@ namespace portal
         Добавляет компонент условия
         */
         void addCondition(const QString& str);
+
+        /**
+        Добавляет новое имя сенсора к поиску
+        */
+        void addSensor(const QString& sensorName);
         
         /**
         Выполняет запрос к БД, скачивает все сцены на основе условия _fullCondition
@@ -57,13 +65,30 @@ namespace portal
         const std::vector<ScenePtr>& scenes() const { return _scenes; }
 
     protected:
+        void selectScenesForHyperion();
+        void selectScenesForAviris();
+
+        QString queryForScenesUnderPointerForHyperion(const osgEarth::GeoPoint& point) const;
+        QString queryForScenesUnderPointerForAviris(const osgEarth::GeoPoint& point) const;
+
+        bool grabCommonAttributes(const ScenePtr& scene, const QSqlQuery& query, int& column) const;
+
+        typedef std::function<void()> SensorQueryMethodType;
+        std::map<QString, SensorQueryMethodType> _sensorQueryMethods;
+
+        typedef std::function<QString(const osgEarth::GeoPoint&)> SensorQueryUnderPointerMethodType;
+        std::map<QString, SensorQueryUnderPointerMethodType> _sensorQueryScenesUnderPointerMethods;
+
         bool _initialized;
 
+        osg::ref_ptr<osgEarth::SpatialReference> _srs;
+
         QString _fullCondition;
+        QStringList _sensors;
 
         std::vector<ScenePtr> _scenes;
 
-        osg::ref_ptr<osgEarth::Features::FeatureSource> _featureSource;
+        osg::ref_ptr<osgEarth::Features::FeatureListSource> _featureSource;
         osg::ref_ptr<osgEarth::ModelLayer> _layer;
 
         std::set<std::size_t> _sceneIdsUnderPointer;

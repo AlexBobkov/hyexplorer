@@ -22,3 +22,6 @@ UPDATE scenes SET pixelsize=30 WHERE sensor='Hyperion';
 
 ALTER TABLE scenes ADD COLUMN sceneurl character varying;
 
+UPDATE scenes SET sceneurl='http://earthexplorer.usgs.gov/download/1854/' || sceneid || '/L1T/EE'
+FROM hyperion WHERE scenes.ogc_fid = hyperion.ogc_fid AND hyperion.processinglevel='L1T Product Available';
+

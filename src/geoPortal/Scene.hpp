@@ -39,6 +39,7 @@ namespace portal
         bool hasScene;
 
         boost::optional<QString> overviewName;
+        boost::optional<QString> sceneUrl;
 
         //-- Hyperion
 
@@ -74,7 +75,7 @@ namespace portal
         Scene();
     };
 
-    typedef std::shared_ptr<Scene> ScenePtr;    
+    typedef std::shared_ptr<Scene> ScenePtr;
 }
 
 Q_DECLARE_METATYPE(portal::ScenePtr);

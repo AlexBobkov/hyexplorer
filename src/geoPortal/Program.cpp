@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
-#if 0
+#if 1
     db.setHostName("localhost");
     db.setDatabaseName("GeoPortal");
     db.setUserName("user");
