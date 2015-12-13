@@ -57,6 +57,7 @@ LINK_DIRECTORIES(
 	${CMAKE_LIBRARY_PATH}
 )
 
+ADD_SUBDIRECTORY(src/importAviris)
 ADD_SUBDIRECTORY(src/importHyperion)
 ADD_SUBDIRECTORY(src/importHyperionOverviews)
 ADD_SUBDIRECTORY(src/geoPortal)
