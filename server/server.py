@@ -12,12 +12,12 @@ from flask import Flask, request, redirect, url_for
 from werkzeug import secure_filename
 
 UPLOAD_FOLDER = os.environ['GEOPORTAL_UPLOAD_FOLDER']
-OVERVIEWS_FOLDER = os.environ['GEOPORTAL_OVERVIEWS_FOLDER']
+PUBLIC_FOLDER = os.environ['GEOPORTAL_PUBLIC_FOLDER']
 SCENES_FOLDER = os.environ['GEOPORTAL_SCENES_FOLDER']
 SCENES_EXTRACT_FOLDER = os.environ['GEOPORTAL_SCENES_EXTRACT_FOLDER']
 SCENES_CLIPS_FOLDER = os.environ['GEOPORTAL_SCENES_CLIPS_FOLDER']
 
-ALLOWED_EXTENSIONS = set(['jpeg', 'ZIP'])
+ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'ZIP'])
 
 tempfile.tempdir = UPLOAD_FOLDER
 
@@ -35,9 +35,12 @@ def hello_world():
     app.logger.info('Hello World!')
     return 'Hello World!'
 
-@app.route('/overview/<sceneid>', methods=['GET', 'POST'])
-def overview(sceneid):
+@app.route('/overview/<sensor>/<sceneid>', methods=['GET', 'POST'])
+def overview(sensor, sceneid):
     app.logger.info('Overview %s %s', sceneid, request.method)
+    
+    if sensor != 'Hyperion' and sensor != 'AVIRIS':
+	return 'Wrong sensor'
 
     if request.method == 'POST':
         file = request.files['file']
@@ -45,7 +48,7 @@ def overview(sceneid):
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(OVERVIEWS_FOLDER, filename))
+            file.save(os.path.join(PUBLIC_FOLDER + "/" + sensor.lower() + "/overviews", filename))
 
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
             conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
