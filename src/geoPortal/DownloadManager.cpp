@@ -66,17 +66,7 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
         }
         else
         {
-            QUrl url;
-            if (scene->sensor == "Hyperion")
-            {
-                url = QString::fromUtf8("http://virtualglobe.ru/geoportal/hyperion/overviews/%0").arg(*scene->overviewName);
-            }
-            else
-            {
-                url = QString::fromUtf8("http://virtualglobe.ru/geoportal/aviris/overviews/%0").arg(*scene->overviewName);
-            }
-
-            QNetworkRequest request(url);
+            QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportal/%0/overviews/%1").arg(scene->sensor).arg(*scene->overviewName));
 
             request.setAttribute(QNetworkRequest::User, QString("Overview"));
 

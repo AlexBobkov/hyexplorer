@@ -161,7 +161,16 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
     else
     {
         _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
-        _ui.getFromUsgsButton->setVisible(true);
+
+        if (scene->sensor == "Hyperion" && *scene->processingLevel == "L1T Product Available")
+        {
+            _ui.getFromUsgsButton->setVisible(true);
+        }
+        else
+        {
+            _ui.getFromUsgsButton->setVisible(false);
+        }
+
         _ui.bandsGroupBox->setVisible(false);
         _ui.boundsGroupBox->setVisible(false);
         _ui.downloadButton->setVisible(false);

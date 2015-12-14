@@ -450,7 +450,7 @@ void MetadataWidget::setScene(const ScenePtr& scene)
     {
         //_overviewDownloadLabel->setVisible(true);        
 
-        if (scene->sceneUrl)
+        if (scene->sceneUrl && scene->sceneUrl->size() > 0)
         {
             _sceneDownloadLabel->setText(QString::fromUtf8("Сцена отсутствует на геопортале. <a href='%0'>Скачать</a> сцену вручную").arg(*scene->sceneUrl));
         }

@@ -12,15 +12,7 @@ QString Storage::overviewPath(const ScenePtr& scene, const QString& filename)
     QString dataPath = settings.value("StoragePath").toString();
 
     QDir dataDir(dataPath);
-    QString folderName;
-    if (scene->sensor == "Hyperion")
-    {
-        folderName = "hyperion/overviews/";
-    }
-    else
-    {
-        folderName = "aviris/overviews/";
-    }
+    QString folderName = QString("%0/overviews/").arg(scene->sensor);    
     if (!dataDir.exists(folderName))
     {
         dataDir.mkpath(folderName);
