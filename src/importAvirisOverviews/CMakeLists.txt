@@ -1,10 +1,11 @@
-SET(APP_NAME ImportAviris)
+SET(APP_NAME ImportAvirisOverviews)
 
 SET(HEADER_FILES
-	${PROJECT_SOURCE_DIR}/include/AvirisCsvRow.hpp
+	Downloader.hpp
 )
 
 SET(SRC_FILES	
+	Downloader.cpp
 	Program.cpp
 )
 
@@ -19,7 +20,7 @@ INCLUDE_DIRECTORIES(
 ADD_EXECUTABLE(${APP_NAME} ${SRC_FILES} ${HEADER_FILES})
 
 IF(Qt5Widgets_FOUND)
-    QT5_USE_MODULES(${APP_NAME} Gui Widgets OpenGL Sql Xml)
+    QT5_USE_MODULES(${APP_NAME} Gui Widgets OpenGL Sql Xml Network)
 ENDIF(Qt5Widgets_FOUND)
 
 INSTALL(TARGETS ${APP_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})

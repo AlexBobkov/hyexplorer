@@ -58,6 +58,7 @@ LINK_DIRECTORIES(
 )
 
 ADD_SUBDIRECTORY(src/importAviris)
+ADD_SUBDIRECTORY(src/importAvirisOverviews)
 ADD_SUBDIRECTORY(src/importHyperion)
 ADD_SUBDIRECTORY(src/importHyperionOverviews)
 ADD_SUBDIRECTORY(src/geoPortal)
