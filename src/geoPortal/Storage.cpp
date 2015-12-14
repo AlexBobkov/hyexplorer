@@ -6,13 +6,21 @@
 
 using namespace portal;
 
-QString Storage::overviewPath(const QString& filename)
+QString Storage::overviewPath(const ScenePtr& scene, const QString& filename)
 {
     QSettings settings;
     QString dataPath = settings.value("StoragePath").toString();
 
     QDir dataDir(dataPath);
-    QString folderName("hyperion/overviews/");
+    QString folderName;
+    if (scene->sensor == "Hyperion")
+    {
+        folderName = "hyperion/overviews/";
+    }
+    else
+    {
+        folderName = "aviris/overviews/";
+    }
     if (!dataDir.exists(folderName))
     {
         dataDir.mkpath(folderName);

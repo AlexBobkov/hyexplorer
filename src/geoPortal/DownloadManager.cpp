@@ -56,7 +56,7 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
 {
     if (scene->hasOverview)
     {
-        QString path = Storage::overviewPath(*scene->overviewName);
+        QString path = Storage::overviewPath(scene, *scene->overviewName);
 
         if (QFile::exists(path))
         {
@@ -66,7 +66,17 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
         }
         else
         {
-            QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportal/hyperion/overviews/%0").arg(*scene->overviewName));
+            QUrl url;
+            if (scene->sensor == "Hyperion")
+            {
+                url = QString::fromUtf8("http://virtualglobe.ru/geoportal/hyperion/overviews/%0").arg(*scene->overviewName);
+            }
+            else
+            {
+                url = QString::fromUtf8("http://virtualglobe.ru/geoportal/aviris/overviews/%0").arg(*scene->overviewName);
+            }
+
+            QNetworkRequest request(url);
 
             request.setAttribute(QNetworkRequest::User, QString("Overview"));
 
@@ -200,7 +210,7 @@ void DownloadManager::processOverviewReply(const ScenePtr& scene, QNetworkReply*
         return;
     }
 
-    QString path = Storage::overviewPath(reply->url().fileName());
+    QString path = Storage::overviewPath(scene, reply->url().fileName());
 
     QFile localFile(path);
     if (!localFile.open(QIODevice::WriteOnly))

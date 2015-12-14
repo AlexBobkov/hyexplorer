@@ -9,7 +9,7 @@ namespace portal
     class Storage
     {
     public:
-        static QString overviewPath(const QString& filename);
+        static QString overviewPath(const ScenePtr& scene, const QString& filename);
 
         static QString sceneBandPath(const ScenePtr& scene, const QString& filename);
 
