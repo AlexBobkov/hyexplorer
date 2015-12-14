@@ -626,7 +626,7 @@ void MainWindow::executeQuery()
     {
         _dataset->addSensor("Hyperion");
     }
-    else if (_ui.avirisCheckBox->isChecked())
+    if (_ui.avirisCheckBox->isChecked())
     {
         _dataset->addSensor("AVIRIS");
     }
