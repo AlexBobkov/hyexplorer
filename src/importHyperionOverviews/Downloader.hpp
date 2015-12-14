@@ -15,7 +15,7 @@ public:
     explicit Downloader(QObject* parent = 0);
     virtual ~Downloader();
 
-    void process(const std::queue<QString>& queue);
+    void setQueue(const std::queue<QString>& queue);
 
     void processScene(const QString& sceneid);
     void processMetadata(const QString& sceneid, const QByteArray& data);
@@ -26,6 +26,8 @@ private slots:
     void onReplyReceived(QNetworkReply* reply);
 
 private:
+    void startNextScene();
+
     QNetworkAccessManager _networkManager;
     QDir _dataDir;
 

@@ -26,7 +26,7 @@ Downloader::~Downloader()
 {
 }
 
-void Downloader::process(const std::queue<QString>& queue)
+void Downloader::setQueue(const std::queue<QString>& queue)
 {
     _queue = queue;
 
@@ -63,6 +63,14 @@ void Downloader::processMetadata(const QString& sceneid, const QByteArray& data)
             _networkManager.get(request);
 
             return;
+        }
+    }
+    else
+    {
+        int index = data.indexOf(sceneid);
+        if (index != -1)
+        {
+            startNextScene();
         }
     }
 
@@ -128,18 +136,7 @@ void Downloader::onReplyReceived(QNetworkReply* reply)
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
 
-        if (!_queue.empty())
-        {
-            qDebug() << "Remains " << _queue.size();
-
-            QString sceneid = _queue.front();
-            _queue.pop();
-            processScene(sceneid);
-        }
-        else
-        {
-            qDebug() << "Finish!";
-        }
+        startNextScene();
 
         reply->deleteLater();
         return;
@@ -161,18 +158,7 @@ void Downloader::onReplyReceived(QNetworkReply* reply)
         }
         else if (requestType == "Upload")
         {
-            if (!_queue.empty())
-            {
-                qDebug() << "Remains " << _queue.size();
-
-                QString sceneid = _queue.front();
-                _queue.pop();
-                processScene(sceneid);
-            }
-            else
-            {
-                qDebug() << "Finish!";
-            }
+            startNextScene();
         }
     }
     else
@@ -181,4 +167,20 @@ void Downloader::onReplyReceived(QNetworkReply* reply)
     }
 
     reply->deleteLater();
+}
+
+void Downloader::startNextScene()
+{
+    if (!_queue.empty())
+    {
+        qDebug() << "Remains " << _queue.size();
+
+        QString sceneid = _queue.front();
+        _queue.pop();
+        processScene(sceneid);
+    }
+    else
+    {
+        qDebug() << "Finish!";
+    }
 }

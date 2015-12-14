@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
     std::cout << "Scenes found: " << scenes.size() << std::endl;
 
-    downloader.process(scenes);
+    downloader.setQueue(scenes);
 
     int result = app.exec();
     return result;
