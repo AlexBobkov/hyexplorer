@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QString>
+
 #include <boost/lexical_cast.hpp>
 
 #include <string>
@@ -65,7 +67,7 @@ public:
 
         return boost::lexical_cast<T>(_tokens[column]);
     }
-        
+
     template<>
     std::string as<std::string>(std::size_t column) const
     {
@@ -83,6 +85,14 @@ public:
         }
 
         return str;
+    }
+        
+    template<>
+    QString as<QString>(std::size_t column) const
+    {
+        assert(column < _tokens.size());
+
+        return QString::fromUtf8(as<std::string>(column).c_str());
     }
 
 protected:
