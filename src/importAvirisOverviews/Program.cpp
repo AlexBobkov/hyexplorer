@@ -86,15 +86,15 @@ int main(int argc, char** argv)
 
         CsvRow row(str);
 
-        QString sceneId = QString::fromUtf8(row.as<std::string>(0).c_str());
-        QString sceneUrl = QString::fromUtf8(row.as<std::string>(37).c_str());
+        QString flightScene = row.as<QString>(5);
+        QString sceneUrl = row.as<QString>(37);
 
-        overviewMap[sceneId] = sceneUrl;
+        overviewMap[flightScene] = sceneUrl;
     }
 
     //------------------------------------------
         
-    QString queryStr = "select sceneid from scenes where sensor='AVIRIS' and not hasoverview limit 500;";
+    QString queryStr = "select sceneid from scenes where sensor='AVIRIS' and not hasoverview limit 1000;";
 
     QSqlQuery query;
     if (!query.exec(queryStr))
