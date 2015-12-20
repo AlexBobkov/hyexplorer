@@ -55,25 +55,9 @@ bool SensorQuery::parseCommonAttributes(const ScenePtr& scene, const QSqlQuery& 
     scene->pixelSize = query.value(c).toDouble();
 
     c++;
-    QString boundsStr = query.value(c).toString();
-
-    osg::ref_ptr<Geometry> geometry = GeometryUtils::geometryFromWKT(boundsStr.toUtf8().constData());
-    if (geometry->getType() == Geometry::TYPE_POLYGON && geometry->size() >= 4)
-    {
-        scene->swCorner = geometry->at(3);
-        scene->seCorner = geometry->at(0);
-        scene->neCorner = geometry->at(1);
-        scene->nwCorner = geometry->at(2);
-
-        scene->geometry = geometry;
-    }
-    else
-    {
-        qDebug() << "Geometry is not a polygon";
-        return false;
-    }
-
-    //scene->feature = new Feature(geometry, _srs, Style(), scene->id);
+    QString polygonStr = query.value(c).toString();
+    
+    scene->geometry = GeometryUtils::geometryFromWKT(polygonStr.toUtf8().constData());
 
     c++;
     if (query.value(c).isValid())
