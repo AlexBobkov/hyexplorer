@@ -56,7 +56,7 @@ namespace portal
         void finishLoadScenes();
         void finishLoadBands(const ScenePtr& scene, bool result, const QString& message);
 
-        void finishGetSceneFromUsgs(const ScenePtr& scene, bool result, const QString& message);
+        void finishImport(const ScenePtr& scene, bool result, const QString& message);
 
         void selectRectangle();
 
@@ -85,7 +85,8 @@ namespace portal
 
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
 
-        QDockWidget* _sceneWidgetDock;
+        QDockWidget* _metadataWidgetDock;
+        QDockWidget* _operationsWidgetDock;
 
         QDockWidget* _scenesMainDock;
         QTableView* _scenesMainView;

@@ -19,7 +19,7 @@ namespace portal
         void downloadSceneRequested(const ScenePtr& scene, int minBand, int maxBand);
         void downloadSceneClipRequested(const ScenePtr& scene, int minBand, int maxBand);
 
-        void getFromUsgsRequested(const ScenePtr& scene);
+        void importSceneRequested(const ScenePtr& scene);
 
         void selectRectangleRequested();
         void rectangleChanged(const osgEarth::Bounds& b);
@@ -28,7 +28,7 @@ namespace portal
         void setScene(const ScenePtr& scene);
         void onRectangleSelected(const osgEarth::Bounds& b);
         void onRectangleSelectFailed();
-        void onSceneGotFromUsgs(const ScenePtr& scene);
+        void onSceneImported(const ScenePtr& scene);
         
     private slots:
         void onMinimumBandChanged(int i);
@@ -37,7 +37,7 @@ namespace portal
         void onFragmentRadioButtonToggled(bool b);
         void selectRectangle(bool b);
         void onRectangleBoundsChanged(double d);
-        void getFromUsgs();
+        void importScene();
         void download();
     
     private:

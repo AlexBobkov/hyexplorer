@@ -10,9 +10,8 @@
 
 using namespace portal;
 
-MetadataWidget::MetadataWidget(const DataManagerPtr& dataManager, QWidget* parent) :
+MetadataWidget::MetadataWidget(QWidget* parent) :
 QWidget(),
-_dataManager(dataManager),
 _browser(0),
 _variantManager(0),
 _sceneidProp(0),
@@ -38,9 +37,9 @@ _meanSceneElevProp(0),
 _minSceneElevProp(0),
 _maxSceneElevProp(0),
 _flightProp(0),
-_runProp(0),
+_runProp(0)//,
 //_overviewDownloadLabel(0),
-_sceneDownloadLabel(0)
+//_sceneDownloadLabel(0)
 {
     initUi();
 }
@@ -172,9 +171,9 @@ void MetadataWidget::initUi()
     //_overviewDownloadLabel->setOpenExternalLinks(true);
     //layout->addWidget(_overviewDownloadLabel);
 
-    _sceneDownloadLabel = new QLabel(QString::fromUtf8("Ссылка для скачивания отсутствует"));
-    _sceneDownloadLabel->setOpenExternalLinks(true);
-    layout->addWidget(_sceneDownloadLabel);
+    //_sceneDownloadLabel = new QLabel(QString::fromUtf8("Ссылка для скачивания отсутствует"));
+    //_sceneDownloadLabel->setOpenExternalLinks(true);
+    //layout->addWidget(_sceneDownloadLabel);
 }
 
 void MetadataWidget::setScene(const ScenePtr& scene)
@@ -439,25 +438,25 @@ void MetadataWidget::setScene(const ScenePtr& scene)
 
     //--
             
-    if (scene->hasScene)
-    {
-        //_overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneId));
-        //_overviewDownloadLabel->setVisible(true);
+    //if (scene->hasScene)
+    //{
+    //    //_overviewDownloadLabel->setText(QString::fromUtf8("Скачать обзор с сервера USGS (<a href='http://earthexplorer.usgs.gov/metadata/1854/%0/'>ссылка</a>)").arg(scene->sceneId));
+    //    //_overviewDownloadLabel->setVisible(true);
 
-        _sceneDownloadLabel->setVisible(false);
-    }
-    else
-    {
-        //_overviewDownloadLabel->setVisible(true);        
+    //    _sceneDownloadLabel->setVisible(false);
+    //}
+    //else
+    //{
+    //    //_overviewDownloadLabel->setVisible(true);        
 
-        if (scene->sceneUrl && scene->sceneUrl->size() > 0)
-        {
-            _sceneDownloadLabel->setText(QString::fromUtf8("Сцена отсутствует на геопортале. <a href='%0'>Скачать</a> сцену вручную").arg(*scene->sceneUrl));
-        }
-        else
-        {
-            _sceneDownloadLabel->setText(QString::fromUtf8("Сцена отсутствует на геопортале."));
-        }
-        _sceneDownloadLabel->setVisible(true);
-    }
+    //    if (scene->sceneUrl && scene->sceneUrl->size() > 0)
+    //    {
+    //        _sceneDownloadLabel->setText(QString::fromUtf8("Сцена отсутствует на геопортале. <a href='%0'>Скачать</a> сцену вручную").arg(*scene->sceneUrl));
+    //    }
+    //    else
+    //    {
+    //        _sceneDownloadLabel->setText(QString::fromUtf8("Сцена отсутствует на геопортале."));
+    //    }
+    //    _sceneDownloadLabel->setVisible(true);
+    //}
 }

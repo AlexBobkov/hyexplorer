@@ -28,7 +28,7 @@ DownloadManager::~DownloadManager()
 {
 }
 
-void DownloadManager::downloadFromUsgs(const ScenePtr& scene)
+void DownloadManager::importScene(const ScenePtr& scene)
 {
     if (scene->hasScene)
     {
@@ -162,15 +162,15 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
     }
     else if (requestType == "UsgsLogin")
     {
-        processUsgsLoginReply(scene, reply);
+        processImportLoginReply(scene, reply);
     }
     else if (requestType == "UsgsFirst")
     {
-        processUsgsFirstReply(scene, reply);
+        processImportFirstReply(scene, reply);
     }
     else if (requestType == "UsgsRedirect")
     {
-        processUsgsRedirectReply(scene, reply);
+        processImportRedirectReply(scene, reply);
     }
     else if (requestType == "Upload")
     {
@@ -310,13 +310,13 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
     downloadNextSceneBand(scene);
 }
 
-void DownloadManager::processUsgsLoginReply(const ScenePtr& scene, QNetworkReply* reply)
+void DownloadManager::processImportLoginReply(const ScenePtr& scene, QNetworkReply* reply)
 {
     if (reply->error() != QNetworkReply::NoError)
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
 
-        emit usgsDownloadFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
@@ -332,13 +332,13 @@ void DownloadManager::processUsgsLoginReply(const ScenePtr& scene, QNetworkReply
     _networkManager.get(request);
 }
 
-void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply* reply)
+void DownloadManager::processImportFirstReply(const ScenePtr& scene, QNetworkReply* reply)
 {
     if (reply->error() != QNetworkReply::NoError)
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
         
-        emit usgsDownloadFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
@@ -347,7 +347,7 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
     {
         qDebug() << "Wrong status code " << statusCode;
 
-        emit usgsDownloadFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: неверный код ответа %1").arg(scene->sceneId).arg(statusCode));
+        emit importFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: неверный код ответа %1").arg(scene->sceneId).arg(statusCode));
         return;
     }
 
@@ -356,7 +356,7 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
     {
         qDebug() << "Wrong url " << redirectUrl;
 
-        emit usgsDownloadFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: ошибка перенаправления").arg(scene->sceneId));
+        emit importFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: ошибка перенаправления").arg(scene->sceneId));
         return;
     }
 
@@ -384,7 +384,7 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
     {
         qDebug() << "Failed to open file ";
 
-        emit usgsDownloadFinished(scene, true, tr("Невозможно создать файл для записи сцены %0 с сервера USGS").arg(scene->sceneId));
+        emit importFinished(scene, true, tr("Невозможно создать файл для записи сцены %0 с сервера USGS").arg(scene->sceneId));
         return;
     }
 
@@ -405,7 +405,7 @@ void DownloadManager::processUsgsFirstReply(const ScenePtr& scene, QNetworkReply
     _progressDialog->show();
 }
 
-void DownloadManager::processUsgsRedirectReply(const ScenePtr& scene, QNetworkReply* reply)
+void DownloadManager::processImportRedirectReply(const ScenePtr& scene, QNetworkReply* reply)
 {
     _progressDialog->reset();
     _tempFile->close();
@@ -418,7 +418,7 @@ void DownloadManager::processUsgsRedirectReply(const ScenePtr& scene, QNetworkRe
         delete _tempFile;
         _tempFile = 0;
 
-        emit usgsDownloadFinished(scene, false, tr("Получение сцены %0 отменено пользователем").arg(scene->sceneId));
+        emit importFinished(scene, false, tr("Получение сцены %0 отменено пользователем").arg(scene->sceneId));
         return;
     }
     else if (reply->error() != QNetworkReply::NoError)
@@ -428,7 +428,7 @@ void DownloadManager::processUsgsRedirectReply(const ScenePtr& scene, QNetworkRe
         delete _tempFile;
         _tempFile = 0;
 
-        emit usgsDownloadFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
@@ -482,18 +482,18 @@ void DownloadManager::processUploadReply(const ScenePtr& scene, QNetworkReply* r
     {
         qDebug() << "Cancelled";
         
-        emit usgsDownloadFinished(scene, false, tr("Загрузка сцены %0 на сервер отменена пользователем").arg(scene->sceneId));
+        emit importFinished(scene, false, tr("Загрузка сцены %0 на сервер отменена пользователем").arg(scene->sceneId));
         return;
     }
     else if (reply->error() != QNetworkReply::NoError)
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
         
-        emit usgsDownloadFinished(scene, false, tr("При загрузке сцены %0 на сервер произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit importFinished(scene, false, tr("При загрузке сцены %0 на сервер произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
-    emit usgsDownloadFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS и загружена на наш сервер").arg(scene->sceneId));
+    emit importFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS и загружена на наш сервер").arg(scene->sceneId));
 }
 
 void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)

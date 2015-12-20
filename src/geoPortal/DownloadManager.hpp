@@ -21,12 +21,12 @@ namespace portal
 
     signals:
         void sceneDownloadFinished(const ScenePtr& scene, bool result, const QString& message);
-        void usgsDownloadFinished(const ScenePtr& scene, bool result, const QString& message);
+        void importFinished(const ScenePtr& scene, bool result, const QString& message);
 
         void progressChanged(int);
         
     public slots:
-        void downloadFromUsgs(const ScenePtr& scene);
+        void importScene(const ScenePtr& scene);
         void downloadOverview(const ScenePtr& scene);
         void downloadScene(const ScenePtr& scene, int minBand, int maxBand);
         void downloadSceneClip(const ScenePtr& scene, int minBand, int maxBand);
@@ -42,9 +42,9 @@ namespace portal
         void processOverviewReply(const ScenePtr& scene, QNetworkReply* reply);
         void processSceneReply(const ScenePtr& scene, QNetworkReply* reply);
         void processSceneBandReply(const ScenePtr& scene, QNetworkReply* reply);
-        void processUsgsLoginReply(const ScenePtr& scene, QNetworkReply* reply);
-        void processUsgsFirstReply(const ScenePtr& scene, QNetworkReply* reply);
-        void processUsgsRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processImportLoginReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processImportFirstReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processImportRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
         void processUploadReply(const ScenePtr& scene, QNetworkReply* reply);
 
         void downloadNextSceneBand(const ScenePtr& scene);

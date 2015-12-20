@@ -285,7 +285,8 @@ namespace
 MainWindow::MainWindow() :
 QMainWindow(),
 _progressBar(0),
-_sceneWidgetDock(0),
+_metadataWidgetDock(0),
+_operationsWidgetDock(0),
 _scenesMainDock(0),
 _scenesMainView(0),
 _scenesSecondDock(0),
@@ -407,12 +408,21 @@ void MainWindow::initUi()
 
     //--------------------------------------------
 
-    _sceneWidgetDock = new QDockWidget(tr("Метаданные сцены"));
-    _sceneWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _metadataWidgetDock = new QDockWidget(tr("Метаданные сцены"));
+    _metadataWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     //_sceneWidgetDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _sceneWidgetDock);
+    addDockWidget(Qt::RightDockWidgetArea, _metadataWidgetDock);
 
-    _ui.toolsMenu->addAction(_sceneWidgetDock->toggleViewAction());
+    _ui.toolsMenu->addAction(_metadataWidgetDock->toggleViewAction());
+
+    //--------------------------------------------
+
+    _operationsWidgetDock = new QDockWidget(tr("Операции со сценой"));
+    _operationsWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    //_sceneWidgetDock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _operationsWidgetDock);
+
+    _ui.toolsMenu->addAction(_operationsWidgetDock->toggleViewAction());
 
     //--------------------------------------------
 
@@ -475,21 +485,39 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     //--------------------------------------------
 
-    QWidget* sceneWidget = new QWidget(this);
-    QVBoxLayout* layout = new QVBoxLayout(sceneWidget);
-    sceneWidget->setLayout(layout);
+    //QWidget* sceneWidget = new QWidget(this);
+    //QVBoxLayout* layout = new QVBoxLayout(sceneWidget);
+    //sceneWidget->setLayout(layout);
 
-    MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
+    MetadataWidget* metadataWidget = new MetadataWidget(this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
-    layout->addWidget(metadataWidget);
+    //layout->addWidget(metadataWidget);
+
+    //SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
+    //connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
+    //layout->addWidget(sceneOperationsWidget);
+
+    //layout->addStretch();
+
+    _metadataWidgetDock->setWidget(metadataWidget);
+
+    //--------------------------------------------
+
+    //QWidget* sceneWidget = new QWidget(this);
+    //QVBoxLayout* layout = new QVBoxLayout(sceneWidget);
+    //sceneWidget->setLayout(layout);
+
+    //MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
+    //connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
+    //layout->addWidget(metadataWidget);
 
     SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
-    layout->addWidget(sceneOperationsWidget);
+    //layout->addWidget(sceneOperationsWidget);
 
-    layout->addStretch();
+    //layout->addStretch();
 
-    _sceneWidgetDock->setWidget(sceneWidget);
+    _operationsWidgetDock->setWidget(sceneOperationsWidget);
 
     //--------------------------------------------
 
@@ -497,7 +525,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
 
-    connect(sceneOperationsWidget, SIGNAL(getFromUsgsRequested(const ScenePtr&)), _downloadManager, SLOT(downloadFromUsgs(const ScenePtr&)));
+    connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneClipRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadSceneClip(const ScenePtr&, int, int)));
     connect(sceneOperationsWidget, SIGNAL(selectRectangleRequested()), this, SLOT(selectRectangle()));
@@ -509,9 +537,9 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));    
-    connect(_downloadManager, SIGNAL(usgsDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishGetSceneFromUsgs(const ScenePtr&, bool, const QString&)));
+    connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
 
-    connect(_downloadManager, SIGNAL(usgsDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneGotFromUsgs(const ScenePtr&)));
+    connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneImported(const ScenePtr&)));
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -521,7 +549,8 @@ void MainWindow::setScene(const ScenePtr& scene)
         return;
     }
 
-    _sceneWidgetDock->setVisible(true);
+    _metadataWidgetDock->setVisible(true);
+    _operationsWidgetDock->setVisible(true);
 
     emit sceneSelected(scene);
 }
@@ -753,7 +782,7 @@ void MainWindow::finishLoadBands(const ScenePtr& scene, bool result, const QStri
     }
 }
 
-void MainWindow::finishGetSceneFromUsgs(const ScenePtr& scene, bool result, const QString& message)
+void MainWindow::finishImport(const ScenePtr& scene, bool result, const QString& message)
 {
     _progressBar->reset();
 

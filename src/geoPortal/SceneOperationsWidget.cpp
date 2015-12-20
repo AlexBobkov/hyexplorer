@@ -35,7 +35,8 @@ void SceneOperationsWidget::initUi()
     _dataManager->setActiveBand(_ui.globeBandSpinBox->value());
 
     _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
-    _ui.getFromUsgsButton->setVisible(false);
+    _ui.statusLabel->setVisible(false);
+    _ui.importButton->setVisible(false);
     _ui.bandsGroupBox->setVisible(false);
     _ui.boundsGroupBox->setVisible(false);
     _ui.downloadButton->setVisible(false);
@@ -48,7 +49,7 @@ void SceneOperationsWidget::initUi()
         
     connect(_ui.selectFragmentButton, SIGNAL(toggled(bool)), this, SLOT(selectRectangle(bool)));
     connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
-    connect(_ui.getFromUsgsButton, SIGNAL(clicked()), this, SLOT(getFromUsgs()));
+    connect(_ui.importButton, SIGNAL(clicked()), this, SLOT(importScene()));
         
     _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 
@@ -152,23 +153,33 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
 
     if (scene->hasScene)
     {
-        _ui.statusLabel->setText(tr("Сцена присутствует на нашем сервере\nи доступна для скачивания"));
-        _ui.getFromUsgsButton->setVisible(false);
+        _ui.statusLabel->setText(tr("Сцена находится на нашем сервере и доступна для работы"));
+        _ui.statusLabel->setVisible(true);
+        _ui.importButton->setVisible(false);
         _ui.bandsGroupBox->setVisible(true);
         _ui.boundsGroupBox->setVisible(true);
         _ui.downloadButton->setVisible(true);        
     }
     else
     {
-        _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере\nи не доступна для работы"));
-
-        if (scene->sensor == "Hyperion" && *scene->processingLevel == "L1T Product Available")
-        {
-            _ui.getFromUsgsButton->setVisible(true);
+        if (scene->sceneUrl && scene->sceneUrl->size() > 0)
+        {            
+            _ui.statusLabel->setText(QString::fromUtf8("Сцена отсутствует на нашем сервере, но вы можете <a href='%0'>скачать</a> сцену вручную").arg(*scene->sceneUrl));
         }
         else
         {
-            _ui.getFromUsgsButton->setVisible(false);
+            _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере и не доступна для работы"));
+        }
+
+        _ui.statusLabel->setVisible(true);
+
+        if (scene->sensor == "Hyperion" && *scene->processingLevel == "L1T Product Available")
+        {
+            _ui.importButton->setVisible(true);
+        }
+        else
+        {
+            _ui.importButton->setVisible(false);
         }
 
         _ui.bandsGroupBox->setVisible(false);
@@ -207,19 +218,19 @@ void SceneOperationsWidget::onRectangleBoundsChanged(double d)
     emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
 }
 
-void SceneOperationsWidget::getFromUsgs()
+void SceneOperationsWidget::importScene()
 {
-    _ui.getFromUsgsButton->setEnabled(false);
+    _ui.importButton->setEnabled(false);
 
-    emit getFromUsgsRequested(_scene);
+    emit importSceneRequested(_scene);
 }
 
-void SceneOperationsWidget::onSceneGotFromUsgs(const ScenePtr& scene)
+void SceneOperationsWidget::onSceneImported(const ScenePtr& scene)
 {
-    _ui.getFromUsgsButton->setEnabled(true);
+    _ui.importButton->setEnabled(true);
 
     if (_scene == scene)
     {
-        _ui.getFromUsgsButton->setVisible(false);
+        _ui.importButton->setVisible(false);
     }
 }
