@@ -468,20 +468,13 @@ void MainWindow::initUi()
     statusBar()->addWidget(_mousePosLabel, 0);
 }
 
-void MainWindow::moveEvent(QMoveEvent* event)
+void MainWindow::closeEvent(QCloseEvent* event)
 {
     QSettings settings;
-    settings.setValue("MainWindow/pos", pos());
+    settings.setValue("MainWindow/geometry", saveGeometry());
+    //settings.setValue("MainWindow/windowState", saveState());
 
-    QMainWindow::moveEvent(event);
-}
-
-void MainWindow::resizeEvent(QResizeEvent* event)
-{
-    QSettings settings;
-    settings.setValue("MainWindow/size", size());
-
-    QMainWindow::resizeEvent(event);
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::setDataManager(const DataManagerPtr& dataManager)

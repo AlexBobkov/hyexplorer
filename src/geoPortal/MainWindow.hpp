@@ -68,8 +68,7 @@ namespace portal
         void sensorChanged();
 
     protected:
-        void moveEvent(QMoveEvent* event) override;
-        void resizeEvent(QResizeEvent* event) override;
+        void closeEvent(QCloseEvent* event) override;
 
     private:
         void initUi();
