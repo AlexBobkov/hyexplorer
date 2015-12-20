@@ -311,6 +311,9 @@ void MainWindow::initUi()
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
 
+    connect(_ui.hyperionCheckBox, SIGNAL(toggled(bool)), this, SLOT(sensorChanged()));
+    connect(_ui.avirisCheckBox, SIGNAL(toggled(bool)), this, SLOT(sensorChanged()));
+
     //--------------------------------------------
 
     QSettings settings;
@@ -372,6 +375,8 @@ void MainWindow::initUi()
     _ui.longitudeSpinBox->setValue(settings.value("Query/centerLongitude").toDouble());
     _ui.latitudeSpinBox->setValue(settings.value("Query/centerLatitude").toDouble());
     _ui.distanceSpinBox->setValue(settings.value("Query/distanceValue", 1000.0).toDouble());
+
+    sensorChanged();
 
     _ui.toolsMenu->addAction(_ui.dockWidget->toggleViewAction());
 
@@ -553,6 +558,13 @@ void MainWindow::setScene(const ScenePtr& scene)
     _operationsWidgetDock->setVisible(true);
 
     emit sceneSelected(scene);
+}
+
+void MainWindow::sensorChanged()
+{
+    _ui.commonGroupBox->setVisible(_ui.hyperionCheckBox->isChecked() || _ui.avirisCheckBox->isChecked());
+    _ui.hyperionGroupBox->setVisible(_ui.hyperionCheckBox->isChecked() && !_ui.avirisCheckBox->isChecked());
+    _ui.avirisGroupBox->setVisible(!_ui.hyperionCheckBox->isChecked() && _ui.avirisCheckBox->isChecked());
 }
 
 void MainWindow::executeQuery()

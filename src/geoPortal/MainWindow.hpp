@@ -65,6 +65,8 @@ namespace portal
         void onRectangleSelected(const osgEarth::Bounds& bounds);
         void onRectangleSelectionFailed();
 
+        void sensorChanged();
+
     protected:
         void moveEvent(QMoveEvent* event) override;
         void resizeEvent(QResizeEvent* event) override;

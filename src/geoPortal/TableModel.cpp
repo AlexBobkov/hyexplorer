@@ -19,7 +19,7 @@ int TableModel::rowCount(const QModelIndex& parent) const
 
 int TableModel::columnCount(const QModelIndex& parent) const
 {
-    return 3;
+    return 2;
 }
 
 QVariant TableModel::data(const QModelIndex& index, int role) const
@@ -39,10 +39,10 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
         {
             return _dataset->scenes()[index.row()]->sceneTime.date().toString(Qt::ISODate);
         }
-        else if (index.column() == 2 && _dataset->scenes()[index.column()]->cloundMax)
-        {
-            return _dataset->scenes()[index.row()]->cloundMax.get();
-        }
+        //else if (index.column() == 2 && _dataset->scenes()[index.column()]->cloundMax)
+        //{
+        //    return _dataset->scenes()[index.row()]->cloundMax.get();
+        //}
 
         return QVariant();
     }
@@ -82,10 +82,10 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
         {
             return tr("Дата");
         }
-        else if (section == 2)
-        {
-            return tr("Макс. облачность");
-        }
+        //else if (section == 2)
+        //{
+        //    return tr("Макс. облачность");
+        //}
         
         return QVariant();
     }
