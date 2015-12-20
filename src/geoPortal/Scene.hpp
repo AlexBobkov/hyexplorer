@@ -25,7 +25,8 @@ namespace portal
 
         double pixelSize;
 
-        osg::ref_ptr<osgEarth::Features::Feature> feature;
+        //osg::ref_ptr<osgEarth::Features::Feature> feature;
+        osg::ref_ptr<osgEarth::Symbology::Geometry> geometry;
 
         osg::Vec3d swCorner;
         osg::Vec3d seCorner;

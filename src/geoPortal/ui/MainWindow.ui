@@ -134,7 +134,7 @@
             <item>
              <widget class="QGroupBox" name="dateGroupBox">
               <property name="title">
-               <string>Период времени</string>
+               <string>Время съемки</string>
               </property>
               <property name="checkable">
                <bool>true</bool>

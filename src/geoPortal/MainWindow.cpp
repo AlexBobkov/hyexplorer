@@ -659,99 +659,136 @@ void MainWindow::executeQuery()
     settings.setValue("Query/centerLatitude", _ui.latitudeSpinBox->value());
     settings.setValue("Query/distanceValue", _ui.distanceSpinBox->value());
 
-    //-----------------------------------------------------    
-
-    _dataset = std::make_shared<DataSet>();
-
-    if (_ui.hyperionCheckBox->isChecked())
-    {
-        _dataset->addSensor("Hyperion");
-    }
-    if (_ui.avirisCheckBox->isChecked())
-    {
-        _dataset->addSensor("AVIRIS");
-    }
-
-    if (_ui.dateGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("scenetime>='%0'::timestamp without time zone and scenetime<='%1'::timestamp without time zone").arg(_ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate)).arg(_ui.dateTimeEditTo->dateTime().toString(Qt::ISODate)));
-    }
-
-    if (_ui.sunAzimuthGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("sunazimuth>=%0 and sunazimuth<=%1").arg(_ui.sunAzimuthFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunAzimuthToSpinBox->value(), 0, 'f', 7));
-    }
-
-    if (_ui.sunElevationGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("sunelevation>=%0 and sunelevation<=%1").arg(_ui.sunElevationFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunElevationToSpinBox->value(), 0, 'f', 7));
-    }
-
-    if (_ui.inclinationGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("satelliteinclination>=%0 and satelliteinclination<=%1").arg(_ui.inclinationFromSpinBox->value(), 0, 'f', 7).arg(_ui.inclinationToSpinBox->value(), 0, 'f', 7));
-    }
-
-    if (_ui.lookAngleGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("lookangle>=%0 and lookangle<=%1").arg(_ui.lookAngleFromSpinBox->value(), 0, 'f', 7).arg(_ui.lookAngleToSpinBox->value(), 0, 'f', 7));
-    }
-
-    if (_ui.processingLevelGroupBox->isChecked())
-    {
-        if (_ui.l1RRadioButton->isChecked())
-        {
-            _dataset->addCondition("processinglevel='L1R Product Available'");
-        }
-        else if (_ui.l1GstRadioButton->isChecked())
-        {
-            _dataset->addCondition("processinglevel='L1Gst Product Available'");
-        }
-        else if (_ui.l1TRadioButton->isChecked())
-        {
-            _dataset->addCondition("processinglevel='L1T Product Available'");
-        }
-        else
-        {
-            qDebug() << "Wrong processing level";
-        }
-    }
-
-    if (_ui.cloudnessCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("cloudmax<=%0").arg(_ui.cloudnessComboBox->currentText().toInt()));
-    }
-
-    if (_ui.orbitPathCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("orbitpath=%0").arg(_ui.orbitPathSpinBox->value()));
-    }
-
-    if (_ui.orbitRowCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("orbitrow=%0").arg(_ui.orbitRowSpinBox->value()));
-    }
-
-    if (_ui.targetPathCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("targetpath=%0").arg(_ui.targetPathSpinBox->value()));
-    }
-
-    if (_ui.targetRowCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("targetrow=%0").arg(_ui.targetRowSpinBox->value()));
-    }
+    //-----------------------------------------------------
 
     if (_ui.distanceGroupBox->isChecked())
     {
-        _dataset->addCondition(QString("ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'),%3)").arg(_ui.longitudeSpinBox->value(), 0, 'f', 12).arg(_ui.latitudeSpinBox->value(), 0, 'f', 12).arg(_ui.distanceSpinBox->value() * 1000));
-
         _dataManager->setCircleNode(GeoPoint(_dataManager->mapNode()->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value(), 0.0, osgEarth::ALTMODE_ABSOLUTE), _ui.distanceSpinBox->value() * 1000);
     }
     else
     {
         _dataManager->removeCircleNode();
     }
+
+    //-----------------------------------------------------    
+
+    _dataset = std::make_shared<DataSet>();
+
+    SensorQueryPtr hyperionQuery, avirisQuery;
+    std::vector<SensorQueryPtr> activeQueries;
+
+    if (_ui.hyperionCheckBox->isChecked())
+    {
+        hyperionQuery = std::make_shared<HyperionQuery>();
+        activeQueries.push_back(hyperionQuery);
+
+        _dataset->addSensor(hyperionQuery);
+    }
+    if (_ui.avirisCheckBox->isChecked())
+    {
+        avirisQuery = std::make_shared<AvirisQuery>();
+        activeQueries.push_back(avirisQuery);
+
+        _dataset->addSensor(avirisQuery);
+    }
+
+    //-- Common
+
+    if (_ui.dateGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("scenetime>='%0'::timestamp without time zone and scenetime<='%1'::timestamp without time zone").arg(_ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate)).arg(_ui.dateTimeEditTo->dateTime().toString(Qt::ISODate)));
+        }
+    }
+
+    if (_ui.sunAzimuthGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("sunazimuth>=%0 and sunazimuth<=%1").arg(_ui.sunAzimuthFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunAzimuthToSpinBox->value(), 0, 'f', 7));
+        }
+    }
+
+    if (_ui.sunElevationGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("sunelevation>=%0 and sunelevation<=%1").arg(_ui.sunElevationFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunElevationToSpinBox->value(), 0, 'f', 7));
+        }
+    }
+
+    if (_ui.distanceGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'),%3)").arg(_ui.longitudeSpinBox->value(), 0, 'f', 12).arg(_ui.latitudeSpinBox->value(), 0, 'f', 12).arg(_ui.distanceSpinBox->value() * 1000));
+        }
+    }
+
+    //-- Hyperion
+
+    if (hyperionQuery && activeQueries.size() == 1)
+    {
+        if (_ui.inclinationGroupBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("satelliteinclination>=%0 and satelliteinclination<=%1").arg(_ui.inclinationFromSpinBox->value(), 0, 'f', 7).arg(_ui.inclinationToSpinBox->value(), 0, 'f', 7));
+        }
+
+        if (_ui.lookAngleGroupBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("lookangle>=%0 and lookangle<=%1").arg(_ui.lookAngleFromSpinBox->value(), 0, 'f', 7).arg(_ui.lookAngleToSpinBox->value(), 0, 'f', 7));
+        }
+
+        if (_ui.processingLevelGroupBox->isChecked())
+        {
+            if (_ui.l1RRadioButton->isChecked())
+            {
+                hyperionQuery->addCondition("processinglevel='L1R Product Available'");
+            }
+            else if (_ui.l1GstRadioButton->isChecked())
+            {
+                hyperionQuery->addCondition("processinglevel='L1Gst Product Available'");
+            }
+            else if (_ui.l1TRadioButton->isChecked())
+            {
+                hyperionQuery->addCondition("processinglevel='L1T Product Available'");
+            }
+            else
+            {
+                qDebug() << "Wrong processing level";
+            }
+        }
+
+        if (_ui.cloudnessCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("cloudmax<=%0").arg(_ui.cloudnessComboBox->currentText().toInt()));
+        }
+
+        if (_ui.orbitPathCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("orbitpath=%0").arg(_ui.orbitPathSpinBox->value()));
+        }
+
+        if (_ui.orbitRowCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("orbitrow=%0").arg(_ui.orbitRowSpinBox->value()));
+        }
+
+        if (_ui.targetPathCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("targetpath=%0").arg(_ui.targetPathSpinBox->value()));
+        }
+
+        if (_ui.targetRowCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("targetrow=%0").arg(_ui.targetRowSpinBox->value()));
+        }
+    }
+
+    //-- AVIRIS
+
+    //--
 
     QtConcurrent::run(this, &MainWindow::loadScenes);
 }

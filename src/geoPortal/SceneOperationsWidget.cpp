@@ -131,7 +131,7 @@ void SceneOperationsWidget::download()
     {
         if (_dataManager->rectangle())
         {
-            if (_dataManager->rectangle()->intersects(_scene->feature->getGeometry()->getBounds()))
+            if (_dataManager->rectangle()->intersects(_scene->geometry->getBounds()))
             {
                 emit downloadSceneClipRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
             }

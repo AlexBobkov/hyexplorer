@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Scene.hpp"
+#include "SensorQuery.hpp"
 
 #include <osgEarth/MapNode>
 #include <osgEarthFeatures/FeatureSource>
@@ -25,20 +26,10 @@ namespace portal
         bool isInitialized() const { return _initialized; }
 
         /**
-        Возвращает полное условие выборки сцен из БД
-        */
-        QString fullCondition() const { return _fullCondition; }
-
-        /**
-        Добавляет компонент условия
-        */
-        void addCondition(const QString& str);
-
-        /**
         Добавляет новое имя сенсора к поиску
         */
-        void addSensor(const QString& sensorName);
-        
+        void addSensor(const SensorQueryPtr& sensorQuery);
+                        
         /**
         Выполняет запрос к БД, скачивает все сцены на основе условия _fullCondition
         */
@@ -57,7 +48,7 @@ namespace portal
         /**
         Слой для отображения на глобусе
         */
-        osgEarth::ModelLayer* layer() const { return _layer; }
+        osg::ref_ptr<osgEarth::ModelLayer> getOrCreateLayer();
 
         /**
         Список всех сцен
@@ -65,33 +56,15 @@ namespace portal
         const std::vector<ScenePtr>& scenes() const { return _scenes; }
 
     protected:
-        void selectScenesForHyperion();
-        void selectScenesForAviris();
+        bool _initialized;        
 
-        QString queryForScenesUnderPointerForHyperion(const osgEarth::GeoPoint& point) const;
-        QString queryForScenesUnderPointerForAviris(const osgEarth::GeoPoint& point) const;
-
-        bool grabCommonAttributes(const ScenePtr& scene, const QSqlQuery& query, int& column) const;
-
-        typedef std::function<void()> SensorQueryMethodType;
-        std::map<QString, SensorQueryMethodType> _sensorQueryMethods;
-
-        typedef std::function<QString(const osgEarth::GeoPoint&)> SensorQueryUnderPointerMethodType;
-        std::map<QString, SensorQueryUnderPointerMethodType> _sensorQueryScenesUnderPointerMethods;
-
-        bool _initialized;
-
-        osg::ref_ptr<osgEarth::SpatialReference> _srs;
-
-        QString _fullCondition;
-        QStringList _sensors;
+        std::vector<SensorQueryPtr> _sensors;
 
         std::vector<ScenePtr> _scenes;
-
-        osg::ref_ptr<osgEarth::Features::FeatureListSource> _featureSource;
-        osg::ref_ptr<osgEarth::ModelLayer> _layer;
-
         std::set<std::size_t> _sceneIdsUnderPointer;
+
+        osg::ref_ptr<osgEarth::SpatialReference> _srs;
+        osg::ref_ptr<osgEarth::ModelLayer> _layer;        
     };
 
     typedef std::shared_ptr<DataSet> DataSetPtr;

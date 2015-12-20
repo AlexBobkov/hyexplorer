@@ -105,8 +105,7 @@ void DataManager::setDataSet(const DataSetPtr& dataset)
 {
     if (_dataset)
     {
-        _mapNode->getMap()->removeModelLayer(_dataset->layer());
-        _dataset = nullptr;
+        _mapNode->getMap()->removeModelLayer(_dataset->getOrCreateLayer());
     }
 
     _dataset = dataset;
@@ -115,7 +114,7 @@ void DataManager::setDataSet(const DataSetPtr& dataset)
     {
         osg::Timer_t startTick = osg::Timer::instance()->tick();
 
-        _mapNode->getMap()->addModelLayer(_dataset->layer());
+        _mapNode->getMap()->addModelLayer(_dataset->getOrCreateLayer());
 
         osg::Timer_t endTick = osg::Timer::instance()->tick();
         qDebug() << "Loading time " << osg::Timer::instance()->delta_s(startTick, endTick);
