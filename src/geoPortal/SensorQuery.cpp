@@ -31,7 +31,7 @@ void SensorQuery::addCondition(const QString& str)
         return;
     }
 
-    _fullCondition += " and " + str;
+    _fullCondition += " AND " + str;
 }
 
 bool SensorQuery::parseCommonAttributes(const ScenePtr& scene, const QSqlQuery& query, int& c) const
@@ -118,11 +118,11 @@ void HyperionQuery::selectScenes(std::vector<ScenePtr>& scenes, const ProgressCa
     QString queryStr;
     if (_fullCondition.isEmpty())
     {
-        queryStr = baseStr + QString(" where sensor='Hyperion';");
+        queryStr = baseStr + QString(" WHERE sensor='Hyperion';");
     }
     else
     {
-        queryStr = baseStr + QString(" where sensor='Hyperion' and ") + _fullCondition + ";";
+        queryStr = baseStr + QString(" WHERE sensor='Hyperion' AND ") + _fullCondition + ";";
     }
 
     qDebug() << "Query " << queryStr;
@@ -212,11 +212,11 @@ void HyperionQuery::selectScenesUnderPointer(std::set<std::size_t>& ids, const o
     QString queryStr;
     if (_fullCondition.isEmpty())
     {
-        queryStr = QString(baseStr + " where sensor='Hyperion' and ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+        queryStr = QString(baseStr + " WHERE sensor='Hyperion' AND ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
     }
     else
     {
-        queryStr = QString(baseStr + " where sensor='Hyperion' and " + _fullCondition + " and ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+        queryStr = QString(baseStr + " WHERE sensor='Hyperion' AND " + _fullCondition + " AND ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
     }
 
     QSqlQuery query;
@@ -242,11 +242,11 @@ void AvirisQuery::selectScenes(std::vector<ScenePtr>& scenes, const ProgressCall
     QString queryStr;
     if (_fullCondition.isEmpty())
     {
-        queryStr = baseStr + QString(" where sensor='AVIRIS';");
+        queryStr = baseStr + QString(" WHERE sensor='AVIRIS';");
     }
     else
     {
-        queryStr = baseStr + QString(" where sensor='AVIRIS' and ") + _fullCondition + ";";
+        queryStr = baseStr + QString(" WHERE sensor='AVIRIS' AND ") + _fullCondition + ";";
     }
 
     qDebug() << "Query " << queryStr;
@@ -348,16 +348,16 @@ void AvirisQuery::selectScenes(std::vector<ScenePtr>& scenes, const ProgressCall
 
 void AvirisQuery::selectScenesUnderPointer(std::set<std::size_t>& ids, const osgEarth::GeoPoint& point)
 {
-    QString baseStr = "SELECT scenes.ogc_fid FROM scenes INNER JOING aviris ON (scenes.ogc_fid = aviris.ogc_fid)";
+    QString baseStr = "SELECT scenes.ogc_fid FROM scenes INNER JOIN aviris ON (scenes.ogc_fid = aviris.ogc_fid)";
 
     QString queryStr;
     if (_fullCondition.isEmpty())
     {
-        queryStr = QString(baseStr + " where sensor='AVIRIS' and ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+        queryStr = QString(baseStr + " WHERE sensor='AVIRIS' AND ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
     }
     else
     {
-        queryStr = QString(baseStr + " where sensor='AVIRIS' and " + _fullCondition + " and ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
+        queryStr = QString(baseStr + " WHERE sensor='AVIRIS' AND " + _fullCondition + " AND ST_Intersects(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'));").arg(point.x(), 0, 'f', 12).arg(point.y(), 0, 'f', 12);
     }
 
     QSqlQuery query;

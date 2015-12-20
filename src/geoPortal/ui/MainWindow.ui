@@ -127,7 +127,11 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="sceneIdLineEdit"/>
+               <widget class="QLineEdit" name="sceneIdLineEdit">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -758,7 +762,11 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="siteNameLineEdit"/>
+               <widget class="QLineEdit" name="siteNameLineEdit">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -787,10 +795,10 @@
                   <number>2</number>
                  </property>
                  <property name="minimum">
-                  <double>-90.000000000000000</double>
+                  <double>-180.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>90.000000000000000</double>
+                  <double>180.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -807,10 +815,10 @@
                   <number>2</number>
                  </property>
                  <property name="minimum">
-                  <double>-90.000000000000000</double>
+                  <double>-180.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>90.000000000000000</double>
+                  <double>180.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -842,10 +850,10 @@
                   <number>2</number>
                  </property>
                  <property name="minimum">
-                  <double>-90.000000000000000</double>
+                  <double>0.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>90.000000000000000</double>
+                  <double>8000.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -862,10 +870,10 @@
                   <number>2</number>
                  </property>
                  <property name="minimum">
-                  <double>-90.000000000000000</double>
+                  <double>0.000000000000000</double>
                  </property>
                  <property name="maximum">
-                  <double>90.000000000000000</double>
+                  <double>8000.000000000000000</double>
                  </property>
                 </widget>
                </item>
