@@ -48,7 +48,7 @@ def overview(sensor, sceneid):
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(PUBLIC_FOLDER + "/" + sensor.lower() + "/overviews", filename))
+            file.save(os.path.join(PUBLIC_FOLDER + "/" + sensor + "/overviews", filename))
 
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
             conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
@@ -129,7 +129,7 @@ def scene(sceneid, minband, maxband):
     output = 'SUCCESS\n'
     for i in range(minband, maxband + 1):
         filename = sceneid[:23] + "B{0:0>3}_L1T.TIF".format(i)
-        output += 'http://virtualglobe.ru/geoportal/hyperion/scenes/' + sceneid + '/' + filename + '\n'
+        output += 'http://virtualglobe.ru/geoportal/Hyperion/scenes/' + sceneid + '/' + filename + '\n'
 
     return output
 
@@ -220,7 +220,7 @@ def sceneclip(sceneid, minband, maxband):
 
         subprocess.call(["gdal_translate", "-projwin", '{0}'.format(left), '{0}'.format(up), '{0}'.format(right), '{0}'.format(down), inFilepath, outFilepath])
 
-        output += 'http://virtualglobe.ru/geoportal/hyperion/scenes/clips/{0}/clip{1}/{2}\n'.format(sceneid, clipNum, outFilename)
+        output += 'http://virtualglobe.ru/geoportal/Hyperion/scenes/clips/{0}/clip{1}/{2}\n'.format(sceneid, clipNum, outFilename)
 
     return output
 
