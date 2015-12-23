@@ -15,10 +15,9 @@ public:
     explicit Downloader(QObject* parent = 0);
     virtual ~Downloader();
 
-    void setQueue(const std::queue<QString>& queue);
+    void setQueue(const std::queue<QString>& queue, const std::map<QString, QString>& overviewMap);
 
     void processScene(const QString& sceneid);
-    void processMetadata(const QString& sceneid, const QByteArray& data);
     void processOverview(const QString& sceneid, const QString& filename, const QByteArray& data);
     void uploadOverview(const QString& sceneid, const QString& filepath);
 
@@ -32,4 +31,5 @@ private:
     QDir _dataDir;
 
     std::queue<QString> _queue;
+    std::map<QString, QString> _overviewMap;
 };

@@ -56,7 +56,7 @@ namespace portal
         void finishLoadScenes();
         void finishLoadBands(const ScenePtr& scene, bool result, const QString& message);
 
-        void finishGetSceneFromUsgs(const ScenePtr& scene, bool result, const QString& message);
+        void finishImport(const ScenePtr& scene, bool result, const QString& message);
 
         void selectRectangle();
 
@@ -65,9 +65,10 @@ namespace portal
         void onRectangleSelected(const osgEarth::Bounds& bounds);
         void onRectangleSelectionFailed();
 
+        void sensorChanged();
+
     protected:
-        void moveEvent(QMoveEvent* event) override;
-        void resizeEvent(QResizeEvent* event) override;
+        void closeEvent(QCloseEvent* event) override;
 
     private:
         void initUi();
@@ -85,7 +86,8 @@ namespace portal
 
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
 
-        QDockWidget* _sceneWidgetDock;
+        QDockWidget* _metadataWidgetDock;
+        QDockWidget* _operationsWidgetDock;
 
         QDockWidget* _scenesMainDock;
         QTableView* _scenesMainView;

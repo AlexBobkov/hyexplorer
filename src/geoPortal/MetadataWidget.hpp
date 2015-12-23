@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "Scene.hpp"
-#include "DataManager.hpp"
 
 #include <osg/observer_ptr>
 #include <osgEarth/MapNode>
@@ -24,7 +23,7 @@ namespace portal
         Q_OBJECT
 
     public:
-        explicit MetadataWidget(const DataManagerPtr& dataManager, QWidget* parent = 0);
+        explicit MetadataWidget(QWidget* parent = 0);
         virtual ~MetadataWidget();
         
     public slots:
@@ -71,8 +70,8 @@ namespace portal
         QtVariantProperty* _runProp;
 
         //QLabel* _overviewDownloadLabel;
-        QLabel* _sceneDownloadLabel;
+        //QLabel* _sceneDownloadLabel;
                                 
-        DataManagerPtr _dataManager; //Возможно он здесь не нужен
+        //DataManagerPtr _dataManager; //Возможно он здесь не нужен
     };
 }

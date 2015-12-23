@@ -12,7 +12,8 @@ CREATE TABLE public.scenes
   hasscene boolean,
   overviewname character varying,
   sceneurl character varying,
-  CONSTRAINT scenes_pk PRIMARY KEY (ogc_fid)
+  CONSTRAINT scenes_pk PRIMARY KEY (ogc_fid),
+  CONSTRAINT scenes_uk UNIQUE (sceneid)
 )
 WITH (
   OIDS=FALSE

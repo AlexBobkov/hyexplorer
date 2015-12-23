@@ -25,3 +25,7 @@ ALTER TABLE scenes ADD COLUMN sceneurl character varying;
 UPDATE scenes SET sceneurl='http://earthexplorer.usgs.gov/download/1854/' || sceneid || '/L1T/EE'
 FROM hyperion WHERE scenes.ogc_fid = hyperion.ogc_fid AND hyperion.processinglevel='L1T Product Available';
 
+-- Просмотр всех данных одного сенсора
+
+SELECT * FROM scenes INNER JOIN aviris ON (scenes.ogc_fid = aviris.ogc_fid);
+

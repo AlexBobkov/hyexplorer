@@ -285,7 +285,8 @@ namespace
 MainWindow::MainWindow() :
 QMainWindow(),
 _progressBar(0),
-_sceneWidgetDock(0),
+_metadataWidgetDock(0),
+_operationsWidgetDock(0),
 _scenesMainDock(0),
 _scenesMainView(0),
 _scenesSecondDock(0),
@@ -310,12 +311,18 @@ void MainWindow::initUi()
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
 
+    connect(_ui.hyperionCheckBox, SIGNAL(toggled(bool)), this, SLOT(sensorChanged()));
+    connect(_ui.avirisCheckBox, SIGNAL(toggled(bool)), this, SLOT(sensorChanged()));
+
     //--------------------------------------------
 
     QSettings settings;
 
     _ui.hyperionCheckBox->setChecked(settings.value("Query/hyperionChecked", true).toBool());
     _ui.avirisCheckBox->setChecked(settings.value("Query/avirisChecked", false).toBool());
+
+    _ui.sceneIdCheckBox->setChecked(settings.value("Query/sceneIdEnabled", false).toBool());
+    _ui.sceneIdLineEdit->setText(settings.value("Query/sceneIdText", QString()).toString());
 
     _ui.dateGroupBox->setChecked(settings.value("Query/dateEnabled", false).toBool());
     _ui.dateTimeEditFrom->setDateTime(settings.value("Query/dateFrom", QDateTime::currentDateTime().addYears(-1)).toDateTime());
@@ -328,6 +335,17 @@ void MainWindow::initUi()
     _ui.sunElevationGroupBox->setChecked(settings.value("Query/sunElevationEnabled", false).toBool());
     _ui.sunElevationFromSpinBox->setValue(settings.value("Query/sunElevationFrom").toDouble());
     _ui.sunElevationToSpinBox->setValue(settings.value("Query/sunElevationTo").toDouble());
+
+    _ui.pixelSizeGroupBox->setChecked(settings.value("Query/pixelSizeEnabled", false).toBool());
+    _ui.pixelSizeFromSpinBox->setValue(settings.value("Query/pixelSizeFrom").toDouble());
+    _ui.pixelSizeToSpinBox->setValue(settings.value("Query/pixelSizeTo").toDouble());
+
+    _ui.distanceGroupBox->setChecked(settings.value("Query/distanceEnabled", false).toBool());
+    _ui.longitudeSpinBox->setValue(settings.value("Query/centerLongitude").toDouble());
+    _ui.latitudeSpinBox->setValue(settings.value("Query/centerLatitude").toDouble());
+    _ui.distanceSpinBox->setValue(settings.value("Query/distanceValue", 1000.0).toDouble());
+
+    //-- Hyperion
 
     _ui.inclinationGroupBox->setChecked(settings.value("Query/inclinationEnabled", false).toBool());
     _ui.inclinationFromSpinBox->setValue(settings.value("Query/inclinationFrom").toDouble());
@@ -367,10 +385,22 @@ void MainWindow::initUi()
     _ui.targetRowCheckBox->setChecked(settings.value("Query/targetRowEnabled", false).toBool());
     _ui.targetRowSpinBox->setValue(settings.value("Query/targetRowValue").toInt());
 
-    _ui.distanceGroupBox->setChecked(settings.value("Query/distanceEnabled", false).toBool());
-    _ui.longitudeSpinBox->setValue(settings.value("Query/centerLongitude").toDouble());
-    _ui.latitudeSpinBox->setValue(settings.value("Query/centerLatitude").toDouble());
-    _ui.distanceSpinBox->setValue(settings.value("Query/distanceValue", 1000.0).toDouble());
+    //-- AVIRIS
+
+    _ui.siteNameCheckBox->setChecked(settings.value("Query/siteNameEnabled", false).toBool());
+    _ui.siteNameLineEdit->setText(settings.value("Query/siteNameText", QString()).toString());
+
+    _ui.rotationGroupBox->setChecked(settings.value("Query/rotationEnabled", false).toBool());
+    _ui.rotationFromSpinBox->setValue(settings.value("Query/rotationFrom").toDouble());
+    _ui.rotationToSpinBox->setValue(settings.value("Query/rotationTo").toDouble());
+
+    _ui.meanElevationGroupBox->setChecked(settings.value("Query/meanElevationEnabled", false).toBool());
+    _ui.meanElevationFromSpinBox->setValue(settings.value("Query/meanElevationFrom").toDouble());
+    _ui.meanElevationToSpinBox->setValue(settings.value("Query/meanElevationTo").toDouble());
+
+    //--
+        
+    sensorChanged();
 
     _ui.toolsMenu->addAction(_ui.dockWidget->toggleViewAction());
 
@@ -407,12 +437,21 @@ void MainWindow::initUi()
 
     //--------------------------------------------
 
-    _sceneWidgetDock = new QDockWidget(tr("Метаданные сцены"));
-    _sceneWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    _metadataWidgetDock = new QDockWidget(tr("Метаданные сцены"));
+    _metadataWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     //_sceneWidgetDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _sceneWidgetDock);
+    addDockWidget(Qt::RightDockWidgetArea, _metadataWidgetDock);
 
-    _ui.toolsMenu->addAction(_sceneWidgetDock->toggleViewAction());
+    _ui.toolsMenu->addAction(_metadataWidgetDock->toggleViewAction());
+
+    //--------------------------------------------
+
+    _operationsWidgetDock = new QDockWidget(tr("Операции со сценой"));
+    _operationsWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    //_sceneWidgetDock->setVisible(false);
+    addDockWidget(Qt::RightDockWidgetArea, _operationsWidgetDock);
+
+    _ui.toolsMenu->addAction(_operationsWidgetDock->toggleViewAction());
 
     //--------------------------------------------
 
@@ -429,20 +468,13 @@ void MainWindow::initUi()
     statusBar()->addWidget(_mousePosLabel, 0);
 }
 
-void MainWindow::moveEvent(QMoveEvent* event)
+void MainWindow::closeEvent(QCloseEvent* event)
 {
     QSettings settings;
-    settings.setValue("MainWindow/pos", pos());
+    settings.setValue("MainWindow/geometry", saveGeometry());
+    //settings.setValue("MainWindow/windowState", saveState());
 
-    QMainWindow::moveEvent(event);
-}
-
-void MainWindow::resizeEvent(QResizeEvent* event)
-{
-    QSettings settings;
-    settings.setValue("MainWindow/size", size());
-
-    QMainWindow::resizeEvent(event);
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::setDataManager(const DataManagerPtr& dataManager)
@@ -474,22 +506,18 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     }
 
     //--------------------------------------------
-
-    QWidget* sceneWidget = new QWidget(this);
-    QVBoxLayout* layout = new QVBoxLayout(sceneWidget);
-    sceneWidget->setLayout(layout);
-
-    MetadataWidget* metadataWidget = new MetadataWidget(_dataManager, this);
+    
+    MetadataWidget* metadataWidget = new MetadataWidget(this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
-    layout->addWidget(metadataWidget);
+
+    _metadataWidgetDock->setWidget(metadataWidget);
+
+    //--------------------------------------------
 
     SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
-    layout->addWidget(sceneOperationsWidget);
 
-    layout->addStretch();
-
-    _sceneWidgetDock->setWidget(sceneWidget);
+    _operationsWidgetDock->setWidget(sceneOperationsWidget);
 
     //--------------------------------------------
 
@@ -497,7 +525,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
 
-    connect(sceneOperationsWidget, SIGNAL(getFromUsgsRequested(const ScenePtr&)), _downloadManager, SLOT(downloadFromUsgs(const ScenePtr&)));
+    connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneClipRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadSceneClip(const ScenePtr&, int, int)));
     connect(sceneOperationsWidget, SIGNAL(selectRectangleRequested()), this, SLOT(selectRectangle()));
@@ -509,9 +537,9 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));    
-    connect(_downloadManager, SIGNAL(usgsDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishGetSceneFromUsgs(const ScenePtr&, bool, const QString&)));
+    connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
 
-    connect(_downloadManager, SIGNAL(usgsDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneGotFromUsgs(const ScenePtr&)));
+    connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneImported(const ScenePtr&)));
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -521,9 +549,17 @@ void MainWindow::setScene(const ScenePtr& scene)
         return;
     }
 
-    _sceneWidgetDock->setVisible(true);
+    _metadataWidgetDock->setVisible(true);
+    _operationsWidgetDock->setVisible(true);
 
     emit sceneSelected(scene);
+}
+
+void MainWindow::sensorChanged()
+{
+    _ui.commonGroupBox->setVisible(_ui.hyperionCheckBox->isChecked() || _ui.avirisCheckBox->isChecked());
+    _ui.hyperionGroupBox->setVisible(_ui.hyperionCheckBox->isChecked() && !_ui.avirisCheckBox->isChecked());
+    _ui.avirisGroupBox->setVisible(!_ui.hyperionCheckBox->isChecked() && _ui.avirisCheckBox->isChecked());
 }
 
 void MainWindow::executeQuery()
@@ -559,6 +595,9 @@ void MainWindow::executeQuery()
 
     settings.setValue("Query/hyperionChecked", _ui.hyperionCheckBox->isChecked());
     settings.setValue("Query/avirisChecked", _ui.avirisCheckBox->isChecked());
+
+    settings.setValue("Query/sceneIdEnabled", _ui.sceneIdCheckBox->isChecked());
+    settings.setValue("Query/sceneIdText", _ui.sceneIdLineEdit->text());
     
     settings.setValue("Query/dateEnabled", _ui.dateGroupBox->isChecked());
     settings.setValue("Query/dateFrom", _ui.dateTimeEditFrom->dateTime());
@@ -570,7 +609,18 @@ void MainWindow::executeQuery()
 
     settings.setValue("Query/sunElevationEnabled", _ui.sunElevationGroupBox->isChecked());
     settings.setValue("Query/sunElevationFrom", _ui.sunElevationFromSpinBox->value());
-    settings.setValue("Query/sunElevationTo", _ui.sunElevationFromSpinBox->value());
+    settings.setValue("Query/sunElevationTo", _ui.sunElevationToSpinBox->value());
+
+    settings.setValue("Query/pixelSizeEnabled", _ui.pixelSizeGroupBox->isChecked());
+    settings.setValue("Query/pixelSizeFrom", _ui.pixelSizeFromSpinBox->value());
+    settings.setValue("Query/pixelSizeTo", _ui.pixelSizeToSpinBox->value());
+
+    settings.setValue("Query/distanceEnabled", _ui.distanceGroupBox->isChecked());
+    settings.setValue("Query/centerLongitude", _ui.longitudeSpinBox->value());
+    settings.setValue("Query/centerLatitude", _ui.latitudeSpinBox->value());
+    settings.setValue("Query/distanceValue", _ui.distanceSpinBox->value());
+
+    //-- Hyperion
 
     settings.setValue("Query/inclinationEnabled", _ui.inclinationGroupBox->isChecked());
     settings.setValue("Query/inclinationFrom", _ui.inclinationFromSpinBox->value());
@@ -613,104 +663,192 @@ void MainWindow::executeQuery()
     settings.setValue("Query/targetRowEnabled", _ui.targetRowCheckBox->isChecked());
     settings.setValue("Query/targetRowValue", _ui.targetRowSpinBox->value());
 
-    settings.setValue("Query/distanceEnabled", _ui.distanceGroupBox->isChecked());
-    settings.setValue("Query/centerLongitude", _ui.longitudeSpinBox->value());
-    settings.setValue("Query/centerLatitude", _ui.latitudeSpinBox->value());
-    settings.setValue("Query/distanceValue", _ui.distanceSpinBox->value());
+    //-- AVIRIS
 
-    //-----------------------------------------------------    
+    settings.setValue("Query/siteNameEnabled", _ui.siteNameCheckBox->isChecked());
+    settings.setValue("Query/siteNameText", _ui.siteNameLineEdit->text());
 
-    _dataset = std::make_shared<DataSet>();
+    settings.setValue("Query/rotationEnabled", _ui.rotationGroupBox->isChecked());
+    settings.setValue("Query/rotationFrom", _ui.rotationFromSpinBox->value());
+    settings.setValue("Query/rotationTo", _ui.rotationToSpinBox->value());
 
-    if (_ui.hyperionCheckBox->isChecked())
-    {
-        _dataset->addSensor("Hyperion");
-    }
-    else if (_ui.avirisCheckBox->isChecked())
-    {
-        _dataset->addSensor("AVIRIS");
-    }
+    settings.setValue("Query/meanElevationEnabled", _ui.meanElevationGroupBox->isChecked());
+    settings.setValue("Query/meanElevationFrom", _ui.meanElevationFromSpinBox->value());
+    settings.setValue("Query/meanElevationTo", _ui.meanElevationToSpinBox->value());
 
-    if (_ui.dateGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("scenetime>='%0'::timestamp without time zone and scenetime<='%1'::timestamp without time zone").arg(_ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate)).arg(_ui.dateTimeEditTo->dateTime().toString(Qt::ISODate)));
-    }
-
-    if (_ui.sunAzimuthGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("sunazimuth>=%0 and sunazimuth<=%1").arg(_ui.sunAzimuthFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunAzimuthToSpinBox->value(), 0, 'f', 7));
-    }
-
-    if (_ui.sunElevationGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("sunelevation>=%0 and sunelevation<=%1").arg(_ui.sunElevationFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunElevationToSpinBox->value(), 0, 'f', 7));
-    }
-
-    if (_ui.inclinationGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("satelliteinclination>=%0 and satelliteinclination<=%1").arg(_ui.inclinationFromSpinBox->value(), 0, 'f', 7).arg(_ui.inclinationToSpinBox->value(), 0, 'f', 7));
-    }
-
-    if (_ui.lookAngleGroupBox->isChecked())
-    {
-        _dataset->addCondition(QString("lookangle>=%0 and lookangle<=%1").arg(_ui.lookAngleFromSpinBox->value(), 0, 'f', 7).arg(_ui.lookAngleToSpinBox->value(), 0, 'f', 7));
-    }
-
-    if (_ui.processingLevelGroupBox->isChecked())
-    {
-        if (_ui.l1RRadioButton->isChecked())
-        {
-            _dataset->addCondition("processinglevel='L1R Product Available'");
-        }
-        else if (_ui.l1GstRadioButton->isChecked())
-        {
-            _dataset->addCondition("processinglevel='L1Gst Product Available'");
-        }
-        else if (_ui.l1TRadioButton->isChecked())
-        {
-            _dataset->addCondition("processinglevel='L1T Product Available'");
-        }
-        else
-        {
-            qDebug() << "Wrong processing level";
-        }
-    }
-
-    if (_ui.cloudnessCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("cloudmax<=%0").arg(_ui.cloudnessComboBox->currentText().toInt()));
-    }
-
-    if (_ui.orbitPathCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("orbitpath=%0").arg(_ui.orbitPathSpinBox->value()));
-    }
-
-    if (_ui.orbitRowCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("orbitrow=%0").arg(_ui.orbitRowSpinBox->value()));
-    }
-
-    if (_ui.targetPathCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("targetpath=%0").arg(_ui.targetPathSpinBox->value()));
-    }
-
-    if (_ui.targetRowCheckBox->isChecked())
-    {
-        _dataset->addCondition(QString("targetrow=%0").arg(_ui.targetRowSpinBox->value()));
-    }
+    //-----------------------------------------------------
 
     if (_ui.distanceGroupBox->isChecked())
     {
-        _dataset->addCondition(QString("ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'),%3)").arg(_ui.longitudeSpinBox->value(), 0, 'f', 12).arg(_ui.latitudeSpinBox->value(), 0, 'f', 12).arg(_ui.distanceSpinBox->value() * 1000));
-
         _dataManager->setCircleNode(GeoPoint(_dataManager->mapNode()->getMapSRS(), _ui.longitudeSpinBox->value(), _ui.latitudeSpinBox->value(), 0.0, osgEarth::ALTMODE_ABSOLUTE), _ui.distanceSpinBox->value() * 1000);
     }
     else
     {
         _dataManager->removeCircleNode();
     }
+
+    //-----------------------------------------------------    
+
+    _dataset = std::make_shared<DataSet>();
+
+    SensorQueryPtr hyperionQuery, avirisQuery;
+    std::vector<SensorQueryPtr> activeQueries;
+
+    if (_ui.hyperionCheckBox->isChecked())
+    {
+        hyperionQuery = std::make_shared<HyperionQuery>();
+        activeQueries.push_back(hyperionQuery);
+
+        _dataset->addSensor(hyperionQuery);
+    }
+    if (_ui.avirisCheckBox->isChecked())
+    {
+        avirisQuery = std::make_shared<AvirisQuery>();
+        activeQueries.push_back(avirisQuery);
+
+        _dataset->addSensor(avirisQuery);
+    }
+
+    //-- Common
+
+    if (_ui.sceneIdCheckBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("sceneid='%0'").arg(_ui.sceneIdLineEdit->text()));
+        }
+    }
+
+    if (_ui.dateGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("scenetime>='%0'::timestamp without time zone and scenetime<='%1'::timestamp without time zone").arg(_ui.dateTimeEditFrom->dateTime().toString(Qt::ISODate)).arg(_ui.dateTimeEditTo->dateTime().toString(Qt::ISODate)));
+        }
+    }
+
+    if (_ui.sunAzimuthGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("sunazimuth>=%0 and sunazimuth<=%1").arg(_ui.sunAzimuthFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunAzimuthToSpinBox->value(), 0, 'f', 7));
+        }
+    }
+
+    if (_ui.sunElevationGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("sunelevation>=%0 and sunelevation<=%1").arg(_ui.sunElevationFromSpinBox->value(), 0, 'f', 7).arg(_ui.sunElevationToSpinBox->value(), 0, 'f', 7));
+        }
+    }
+
+    if (_ui.pixelSizeGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("pixelsize>=%0 and pixelsize<=%1").arg(_ui.pixelSizeFromSpinBox->value(), 0, 'f', 7).arg(_ui.pixelSizeToSpinBox->value(), 0, 'f', 7));
+        }
+    }
+
+    if (_ui.distanceGroupBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("ST_DWithin(bounds,ST_GeographyFromText('SRID=4326;POINT(%0 %1)'),%3)").arg(_ui.longitudeSpinBox->value(), 0, 'f', 12).arg(_ui.latitudeSpinBox->value(), 0, 'f', 12).arg(_ui.distanceSpinBox->value() * 1000));
+        }
+    }
+
+    //-- Hyperion
+
+    if (hyperionQuery && activeQueries.size() == 1)
+    {
+        if (_ui.inclinationGroupBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("satelliteinclination>=%0 and satelliteinclination<=%1").arg(_ui.inclinationFromSpinBox->value(), 0, 'f', 7).arg(_ui.inclinationToSpinBox->value(), 0, 'f', 7));
+        }
+
+        if (_ui.lookAngleGroupBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("lookangle>=%0 and lookangle<=%1").arg(_ui.lookAngleFromSpinBox->value(), 0, 'f', 7).arg(_ui.lookAngleToSpinBox->value(), 0, 'f', 7));
+        }
+
+        if (_ui.processingLevelGroupBox->isChecked())
+        {
+            if (_ui.l1RRadioButton->isChecked())
+            {
+                hyperionQuery->addCondition("(processinglevel='L1R Product Available' OR processinglevel='L1Gst Product Available' OR processinglevel='L1T Product Available')");
+            }
+            else if (_ui.l1GstRadioButton->isChecked())
+            {
+                hyperionQuery->addCondition("(processinglevel='L1Gst Product Available' OR processinglevel='L1T Product Available')");
+            }
+            else if (_ui.l1TRadioButton->isChecked())
+            {
+                hyperionQuery->addCondition("processinglevel='L1T Product Available'");
+            }
+            else
+            {
+                qDebug() << "Wrong processing level";
+            }
+        }
+
+        if (_ui.cloudnessCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("cloudmax<=%0").arg(_ui.cloudnessComboBox->currentText().toInt()));
+        }
+
+        if (_ui.orbitPathCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("orbitpath=%0").arg(_ui.orbitPathSpinBox->value()));
+        }
+
+        if (_ui.orbitRowCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("orbitrow=%0").arg(_ui.orbitRowSpinBox->value()));
+        }
+
+        if (_ui.targetPathCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("targetpath=%0").arg(_ui.targetPathSpinBox->value()));
+        }
+
+        if (_ui.targetRowCheckBox->isChecked())
+        {
+            hyperionQuery->addCondition(QString("targetrow=%0").arg(_ui.targetRowSpinBox->value()));
+        }
+    }
+
+    //-- AVIRIS
+
+    if (avirisQuery && activeQueries.size() == 1)
+    {
+        if (_ui.siteNameCheckBox->isChecked())
+        {
+            for (const auto& q : activeQueries)
+            {
+                q->addCondition(QString("upper(sitename) LIKE upper('%%0%')").arg(_ui.siteNameLineEdit->text()));
+            }
+        }
+
+        if (_ui.rotationGroupBox->isChecked())
+        {
+            for (const auto& q : activeQueries)
+            {
+                q->addCondition(QString("scenerotation>=%0 and scenerotation<=%1").arg(_ui.rotationFromSpinBox->value(), 0, 'f', 7).arg(_ui.rotationToSpinBox->value(), 0, 'f', 7));
+            }
+        }
+
+        if (_ui.meanElevationGroupBox->isChecked())
+        {
+            for (const auto& q : activeQueries)
+            {
+                q->addCondition(QString("meansceneelev>=%0 and meansceneelev<=%1").arg(_ui.meanElevationFromSpinBox->value(), 0, 'f', 7).arg(_ui.meanElevationToSpinBox->value(), 0, 'f', 7));
+            }
+        }
+    }
+
+    //--
 
     QtConcurrent::run(this, &MainWindow::loadScenes);
 }
@@ -753,7 +891,7 @@ void MainWindow::finishLoadBands(const ScenePtr& scene, bool result, const QStri
     }
 }
 
-void MainWindow::finishGetSceneFromUsgs(const ScenePtr& scene, bool result, const QString& message)
+void MainWindow::finishImport(const ScenePtr& scene, bool result, const QString& message)
 {
     _progressBar->reset();
 

@@ -1,5 +1,7 @@
 #include "Downloader.hpp"
 
+#include <AvirisCsvRow.hpp>
+
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -21,6 +23,12 @@
 
 int main(int argc, char** argv)
 {
+    if (argc != 2)
+    {
+        std::cout << "Usage: " << argv[0] << " <csv filename>\n";
+        return 1;
+    }
+
     QCoreApplication::setOrganizationName("Bobkov");
     QCoreApplication::setOrganizationDomain("alexander-bobkov.ru");
     QCoreApplication::setApplicationName("GeoPortal");
@@ -54,8 +62,39 @@ int main(int argc, char** argv)
     }
 
     //------------------------------------------
+
+    std::map<QString, QString> overviewMap;
+
+    std::ifstream fin(argv[1]);
+    if (!fin)
+    {
+        std::cerr << "Failed to open file " << argv[1] << std::endl;
+        return 1;
+    }
+
+    std::string str;
+    std::getline(fin, str); //first line
+
+    while (true)
+    {
+        std::string str;
+        std::getline(fin, str);
+        if (str.empty())
+        {
+            break; //end of file
+        }
+
+        CsvRow row(str);
+
+        QString flightScene = row.as<QString>(5);
+        QString sceneUrl = row.as<QString>(37);
+
+        overviewMap[flightScene] = sceneUrl;
+    }
+
+    //------------------------------------------
         
-    QString queryStr = "select sceneid from scenes where sensor='Hyperion' and not hasoverview limit 1000;";
+    QString queryStr = "select sceneid from scenes where sensor='AVIRIS' and not hasoverview limit 1000;";
 
     QSqlQuery query;
     if (!query.exec(queryStr))
@@ -80,7 +119,7 @@ int main(int argc, char** argv)
 
     std::cout << "Scenes found: " << scenes.size() << std::endl;
 
-    downloader.setQueue(scenes);
+    downloader.setQueue(scenes, overviewMap);
 
     int result = app.exec();
     return result;

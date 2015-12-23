@@ -18,6 +18,7 @@ SET(HEADER_FILES
 	ProxyModel.hpp
 	Scene.hpp
 	SceneOperationsWidget.hpp
+	SensorQuery.hpp
 	SettingsWidget.hpp
 	Storage.hpp
 	TableModel.hpp
@@ -33,6 +34,7 @@ SET(SRC_FILES
 	ProxyModel.cpp
 	Scene.cpp
 	SceneOperationsWidget.cpp
+	SensorQuery.cpp
 	SettingsWidget.cpp
 	Storage.cpp
 	TableModel.cpp

@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
 
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
-#if 1
+#if 0
     db.setHostName("localhost");
     db.setDatabaseName("GeoPortal");
     db.setUserName("user");
@@ -92,12 +92,10 @@ int main(int argc, char** argv)
     {
         settings.setValue("StoragePath", QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
     }
+    
+    appWin.restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
+    //appWin.restoreState(settings.value("MainWindow/windowState").toByteArray());
 
-    QSize size = settings.value("MainWindow/size", QSize(1500, 900)).toSize();
-    QPoint pos = settings.value("MainWindow/pos", QPoint(0, 0)).toPoint();
-
-    appWin.move(pos);
-    appWin.resize(size);
     appWin.show();
 
     int result = app.exec();

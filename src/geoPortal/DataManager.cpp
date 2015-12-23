@@ -105,8 +105,7 @@ void DataManager::setDataSet(const DataSetPtr& dataset)
 {
     if (_dataset)
     {
-        _mapNode->getMap()->removeModelLayer(_dataset->layer());
-        _dataset = nullptr;
+        _mapNode->getMap()->removeModelLayer(_dataset->getOrCreateLayer());
     }
 
     _dataset = dataset;
@@ -115,7 +114,7 @@ void DataManager::setDataSet(const DataSetPtr& dataset)
     {
         osg::Timer_t startTick = osg::Timer::instance()->tick();
 
-        _mapNode->getMap()->addModelLayer(_dataset->layer());
+        _mapNode->getMap()->addModelLayer(_dataset->getOrCreateLayer());
 
         osg::Timer_t endTick = osg::Timer::instance()->tick();
         qDebug() << "Loading time " << osg::Timer::instance()->delta_s(startTick, endTick);
@@ -155,7 +154,7 @@ void DataManager::zoomToScene(const ScenePtr& scene)
         return;
     }
 
-    osg::Vec3d center = (scene->neCorner + scene->nwCorner + scene->seCorner + scene->swCorner) * 0.25;
+    osg::Vec3d center = scene->geometry->getBounds().center();//(scene->neCorner + scene->nwCorner + scene->seCorner + scene->swCorner) * 0.25;
 
     osgEarth::Viewpoint viewpoint;
     viewpoint.focalPoint() = GeoPoint(_mapNode->getMapSRS(), center.x(), center.y(), 0.0, osgEarth::ALTMODE_ABSOLUTE);
@@ -235,18 +234,26 @@ void DataManager::showOverview(const ScenePtr& scene, const QString& filepath)
         _overlayNode = nullptr;
     }
 
-    osg::Image* image = osgDB::readImageFile(filepath.toLocal8Bit().constData());
-    if (image)
+    if (scene->geometry->getType() == Geometry::TYPE_POLYGON && scene->geometry->size() >= 4)
     {
-        ImageOverlay* imageOverlay = new ImageOverlay(_mapNode, image);
-        imageOverlay->setLowerLeft(scene->swCorner.x(), scene->swCorner.y());
-        imageOverlay->setLowerRight(scene->seCorner.x(), scene->seCorner.y());
-        imageOverlay->setUpperRight(scene->neCorner.x(), scene->neCorner.y());
-        imageOverlay->setUpperLeft(scene->nwCorner.x(), scene->nwCorner.y());
-        imageOverlay->getOrCreateStateSet()->setRenderBinDetails(20, "RenderBin");
-        _mapNode->addChild(imageOverlay);
+        osg::Image* image = osgDB::readImageFile(filepath.toLocal8Bit().constData());
+        if (image)
+        {
+            osg::Vec3d swCorner = scene->geometry->at(3);
+            osg::Vec3d seCorner = scene->geometry->at(0);
+            osg::Vec3d neCorner = scene->geometry->at(1);
+            osg::Vec3d nwCorner = scene->geometry->at(2);
 
-        _overlayNode = imageOverlay;
+            ImageOverlay* imageOverlay = new ImageOverlay(_mapNode, image);
+            imageOverlay->setLowerLeft(swCorner.x(), swCorner.y());
+            imageOverlay->setLowerRight(seCorner.x(), seCorner.y());
+            imageOverlay->setUpperRight(neCorner.x(), neCorner.y());
+            imageOverlay->setUpperLeft(nwCorner.x(), nwCorner.y());
+            imageOverlay->getOrCreateStateSet()->setRenderBinDetails(20, "RenderBin");
+            _mapNode->addChild(imageOverlay);
+
+            _overlayNode = imageOverlay;
+        }
     }
 }
 

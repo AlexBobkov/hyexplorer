@@ -6,7 +6,7 @@
 #include <QSettings>
 #include <QHttpMultiPart>
 
-const QString downdloadFolder = "temp_hyperion";
+const QString downdloadFolder = "temp_aviris";
 
 Downloader::Downloader(QObject* parent) :
 QObject(parent)
@@ -26,9 +26,10 @@ Downloader::~Downloader()
 {
 }
 
-void Downloader::setQueue(const std::queue<QString>& queue)
+void Downloader::setQueue(const std::queue<QString>& queue, const std::map<QString, QString>& overviewMap)
 {
     _queue = queue;
+    _overviewMap = overviewMap;
 
     if (!_queue.empty())
     {
@@ -40,41 +41,17 @@ void Downloader::setQueue(const std::queue<QString>& queue)
 
 void Downloader::processScene(const QString& sceneid)
 {
-    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/metadata/1854/%0/").arg(sceneid));
-    request.setAttribute(QNetworkRequest::User, QString("Metadata"));
+    auto url = _overviewMap.find(sceneid);
+    if (url == _overviewMap.end())
+    {
+        qDebug() << "Failed to find url for scene " << sceneid;
+        return;
+    }
+
+    QNetworkRequest request((*url).second);
+    request.setAttribute(QNetworkRequest::User, QString("Download"));
     request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), sceneid);    
     _networkManager.get(request);
-}
-
-void Downloader::processMetadata(const QString& sceneid, const QByteArray& data)
-{
-    int startIndex = data.indexOf("http://earthexplorer.usgs.gov/browse/eo-1/hyp");
-    if (startIndex != -1)
-    {
-        int endIndex = data.indexOf(".jpeg", startIndex);
-        if (endIndex != -1)
-        {
-            QByteArray overviewUrlName = data.mid(startIndex, endIndex - startIndex + 5);
-            QUrl url(overviewUrlName.constData());
-
-            QNetworkRequest request(url);
-            request.setAttribute(QNetworkRequest::User, QString("Download"));
-            request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), sceneid);
-            _networkManager.get(request);
-
-            return;
-        }
-    }
-    else
-    {
-        int index = data.indexOf(sceneid);
-        if (index != -1)
-        {
-            startNextScene();
-        }
-    }
-
-    qDebug() << "Failed to process metadata for scene " << sceneid;
 }
 
 void Downloader::processOverview(const QString& sceneid, const QString& filename, const QByteArray& data)
@@ -121,7 +98,7 @@ void Downloader::uploadOverview(const QString& sceneid, const QString& filepath)
 #elif 0
     QNetworkRequest request(QString("http://178.62.140.44:5000/overview/%0").arg(sceneid));
 #else
-    QNetworkRequest request(QString("http://virtualglobe.ru/geoportalapi/overview/%0").arg(sceneid));
+    QNetworkRequest request(QString("http://virtualglobe.ru/geoportalapi/overview/AVIRIS/%0").arg(sceneid));
 #endif
     request.setAttribute(QNetworkRequest::User, QString("Upload"));
     QNetworkReply* reply = _networkManager.post(request, multiPart);
@@ -148,11 +125,7 @@ void Downloader::onReplyReceived(QNetworkReply* reply)
         QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
         QString sceneid = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1)).toString();
 
-        if (requestType == "Metadata")
-        {
-            processMetadata(sceneid, data);
-        }
-        else if (requestType == "Download")
+        if (requestType == "Download")
         {
             processOverview(sceneid, reply->url().fileName(), data);
         }
