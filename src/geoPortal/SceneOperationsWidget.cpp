@@ -24,13 +24,17 @@ void SceneOperationsWidget::initUi()
     QSettings settings;
     _ui.fromSpinBox->setValue(settings.value("SceneOperationsWidget/fromValue", 1).toInt());
     _ui.toSpinBox->setValue(settings.value("SceneOperationsWidget/toValue", 1).toInt());
-    _ui.globeBandSpinBox->setValue(settings.value("SceneOperationsWidget/BandValue", 1).toInt());
+    _ui.globeBandSpinBox->setValue(settings.value("SceneOperationsWidget/GlobeBandValue", 1).toInt());
+    _ui.matlabBandSpinBox->setValue(settings.value("SceneOperationsWidget/MatlabBandValue", 1).toInt());
 
     _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
     _ui.toSpinBox->setMinimum(_ui.fromSpinBox->value());
 
     _ui.globeBandSpinBox->setMinimum(_ui.fromSpinBox->value());
     _ui.globeBandSpinBox->setMaximum(_ui.toSpinBox->value());
+
+    _ui.matlabBandSpinBox->setMinimum(_ui.fromSpinBox->value());
+    _ui.matlabBandSpinBox->setMaximum(_ui.toSpinBox->value());
 
     _dataManager->setActiveBand(_ui.globeBandSpinBox->value());
 
@@ -44,14 +48,17 @@ void SceneOperationsWidget::initUi()
     connect(_ui.fromSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMinimumBandChanged(int)));
     connect(_ui.toSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMaximumBandChanged(int)));
     connect(_ui.globeBandSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onGlobeBandChanged(int)));
+    connect(_ui.matlabBandSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMatlabBandChanged(int)));
 
     connect(_ui.fragmentRadioButton, SIGNAL(toggled(bool)), this, SLOT(onFragmentRadioButtonToggled(bool)));
         
     connect(_ui.selectFragmentButton, SIGNAL(toggled(bool)), this, SLOT(selectRectangle(bool)));
     connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
     connect(_ui.importButton, SIGNAL(clicked()), this, SLOT(importScene()));
+    connect(_ui.matlabButton, SIGNAL(clicked()), this, SLOT(startImageCorrection()));
         
     _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
+    _ui.matlabBandSpinBox->setValue(osg::clampBetween(_ui.matlabBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 
     boost::optional<osgEarth::Bounds> rect = _dataManager->rectangle();
     if (rect)
@@ -86,8 +93,12 @@ void SceneOperationsWidget::onMinimumBandChanged(int i)
     settings.setValue("SceneOperationsWidget/fromValue", _ui.fromSpinBox->value());
 
     _ui.toSpinBox->setMinimum(_ui.fromSpinBox->value());
+
     _ui.globeBandSpinBox->setMinimum(_ui.fromSpinBox->value());
     _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
+
+    _ui.matlabBandSpinBox->setMinimum(_ui.fromSpinBox->value());    
+    _ui.matlabBandSpinBox->setValue(osg::clampBetween(_ui.matlabBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 }
 
 void SceneOperationsWidget::onMaximumBandChanged(int i)
@@ -96,16 +107,26 @@ void SceneOperationsWidget::onMaximumBandChanged(int i)
     settings.setValue("SceneOperationsWidget/toValue", _ui.toSpinBox->value());
 
     _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
+
     _ui.globeBandSpinBox->setMaximum(_ui.toSpinBox->value());
     _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
+
+    _ui.matlabBandSpinBox->setMaximum(_ui.toSpinBox->value());
+    _ui.matlabBandSpinBox->setValue(osg::clampBetween(_ui.matlabBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 }
 
 void SceneOperationsWidget::onGlobeBandChanged(int i)
 {
     QSettings settings;
-    settings.setValue("SceneOperationsWidget/BandValue", _ui.globeBandSpinBox->value());
+    settings.setValue("SceneOperationsWidget/GlobeBandValue", _ui.globeBandSpinBox->value());
 
     _dataManager->setActiveBand(i);
+}
+
+void SceneOperationsWidget::onMatlabBandChanged(int i)
+{
+    QSettings settings;
+    settings.setValue("SceneOperationsWidget/MatlabBandValue", _ui.matlabBandSpinBox->value());
 }
 
 void SceneOperationsWidget::onFragmentRadioButtonToggled(bool b)
@@ -233,4 +254,33 @@ void SceneOperationsWidget::onSceneImported(const ScenePtr& scene)
     {
         _ui.importButton->setVisible(false);
     }
+}
+
+void SceneOperationsWidget::startImageCorrection()
+{
+    qDebug() << "Image correction started";
+
+    _ui.matlabButton->setEnabled(false);
+
+    QString program = "matlab/ImageCorrectionTools.exe";
+    QStringList arguments;
+    
+    QProcess* matlabProcess = new QProcess(this);
+    matlabProcess->setWorkingDirectory("matlab");
+
+    connect(matlabProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(onImageCorrectionFinished(int, QProcess::ExitStatus)));
+
+    matlabProcess->start(program, arguments);
+}
+
+void SceneOperationsWidget::onImageCorrectionFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    qDebug() << "Image correnction finished. Exit code" << exitCode << "exit status" << exitStatus;
+
+    _ui.matlabButton->setEnabled(true);
+
+    QProcess* process = qobject_cast<QProcess*>(sender());    
+    process->deleteLater();
+
+    QMessageBox::information(qApp->activeWindow(), tr("Обработка"), tr("Обработка завершена. Обработанный файл будет загружен на сервер"));    
 }

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>347</width>
+    <width>365</width>
     <height>511</height>
    </rect>
   </property>
@@ -14,9 +14,6 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="margin">
-    <number>9</number>
-   </property>
    <item>
     <widget class="QLabel" name="statusLabel">
      <property name="text">
@@ -86,7 +83,7 @@
       <string>Пространственный охват</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0" colspan="2">
+      <item row="0" column="0" colspan="4">
        <widget class="QRadioButton" name="fullSizeRadioButton">
         <property name="text">
          <string>Целиком</string>
@@ -96,14 +93,14 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="3">
+      <item row="1" column="0" colspan="4">
        <widget class="QRadioButton" name="fragmentRadioButton">
         <property name="text">
          <string>Прямоугольный фрагмент</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="0" colspan="2">
+      <item row="2" column="0" colspan="4">
        <widget class="QPushButton" name="selectFragmentButton">
         <property name="enabled">
          <bool>false</bool>
@@ -116,7 +113,7 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="3" column="1" colspan="2">
        <widget class="QDoubleSpinBox" name="topSpinBox">
         <property name="enabled">
          <bool>false</bool>
@@ -135,7 +132,7 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="4" column="0" colspan="2">
        <widget class="QDoubleSpinBox" name="leftSpinBox">
         <property name="enabled">
          <bool>false</bool>
@@ -154,7 +151,7 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="2">
+      <item row="4" column="2" colspan="2">
        <widget class="QDoubleSpinBox" name="rightSpinBox">
         <property name="enabled">
          <bool>false</bool>
@@ -173,7 +170,7 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="1">
+      <item row="5" column="1" colspan="2">
        <widget class="QDoubleSpinBox" name="bottomSpinBox">
         <property name="enabled">
          <bool>false</bool>
@@ -203,21 +200,68 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="label_3">
+    <widget class="QPushButton" name="openFolderButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="text">
-      <string>Показать на глобусе канал</string>
+      <string>Открыть папку с файлами</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QSpinBox" name="globeBandSpinBox">
-     <property name="minimum">
-      <number>1</number>
+    <widget class="QPushButton" name="processedTableButton">
+     <property name="enabled">
+      <bool>false</bool>
      </property>
-     <property name="maximum">
-      <number>242</number>
+     <property name="text">
+      <string>Показать таблицу с обработанными файлами</string>
      </property>
     </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout_2">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Показать на глобусе</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QSpinBox" name="globeBandSpinBox">
+       <property name="prefix">
+        <string>Канал </string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>242</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="matlabButton">
+       <property name="text">
+        <string>Обработать</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QSpinBox" name="matlabBandSpinBox">
+       <property name="prefix">
+        <string>Канал </string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>242</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <spacer name="verticalSpacer">
