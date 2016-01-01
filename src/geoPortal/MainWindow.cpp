@@ -491,18 +491,10 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     //--------------------------------------------
 
-    QSettings settings;
-    if (settings.contains("Rectangle/xMin") &&
-        settings.contains("Rectangle/xMax") &&
-        settings.contains("Rectangle/yMin") &&
-        settings.contains("Rectangle/yMax"))
+    if (_dataManager->clipInfo())
     {
-        osgEarth::Bounds bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
-
         SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setInitialRectangle(bounds);
-
-        _dataManager->setRectangle(bounds);
+        handler->setInitialRectangle(_dataManager->clipInfo()->bounds());
     }
 
     //--------------------------------------------
@@ -535,10 +527,10 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     connect(sceneOperationsWidget, SIGNAL(rectangleChanged(const osgEarth::Bounds&)), this, SLOT(onRectangleChanged(const osgEarth::Bounds&)));
 
-    connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));
-    connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishLoadBands(const ScenePtr&, bool, const QString&)));    
+    connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));    
     connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
 
+    connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneDownloaded(const ScenePtr&, bool, const QString&)));
     connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneImported(const ScenePtr&)));
 }
 
@@ -877,20 +869,6 @@ void MainWindow::finishLoadScenes()
     _ui.dockWidget->setEnabled(true);
 }
 
-void MainWindow::finishLoadBands(const ScenePtr& scene, bool result, const QString& message)
-{
-    if (result)
-    {
-        _dataManager->showScene(scene);
-
-        QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
-    }
-    else
-    {
-        QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), message);
-    }
-}
-
 void MainWindow::finishImport(const ScenePtr& scene, bool result, const QString& message)
 {
     _progressBar->reset();
@@ -1048,28 +1026,12 @@ void MainWindow::selectRectangle()
 
 void MainWindow::onRectangleChanged(const osgEarth::Bounds& bounds)
 {
-    QSettings settings;
-    settings.setValue("Rectangle/xMin", bounds.xMin());
-    settings.setValue("Rectangle/xMax", bounds.xMax());
-    settings.setValue("Rectangle/yMin", bounds.yMin());
-    settings.setValue("Rectangle/yMax", bounds.yMax());
-
-    _dataManager->setRectangle(bounds);
-
     SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
     handler->setInitialRectangle(bounds);
 }
 
 void MainWindow::onRectangleSelected(const osgEarth::Bounds& bounds)
-{
-    QSettings settings;
-    settings.setValue("Rectangle/xMin", bounds.xMin());
-    settings.setValue("Rectangle/xMax", bounds.xMax());
-    settings.setValue("Rectangle/yMin", bounds.yMin());
-    settings.setValue("Rectangle/yMax", bounds.yMax());
-
-    _dataManager->setRectangle(bounds);    
-    
+{   
     emit rectangleSelected(bounds);
 }
 

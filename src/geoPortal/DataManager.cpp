@@ -99,6 +99,17 @@ _clipMode(false)
         _coverageMap["OpenStreetMap"] = imageOpt;
         _coverageNames.push_back("OpenStreetMap");
     }
+
+    QSettings settings;
+    if (settings.contains("Rectangle/xMin") &&
+        settings.contains("Rectangle/xMax") &&
+        settings.contains("Rectangle/yMin") &&
+        settings.contains("Rectangle/yMax"))
+    {
+        osgEarth::Bounds bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
+
+        _clipInfo = std::make_shared<ClipInfo>(bounds);
+    }
 }
 
 void DataManager::setDataSet(const DataSetPtr& dataset)
@@ -324,4 +335,18 @@ void DataManager::showScene(const ScenePtr& scene)
     //    _mapNode->removeChild(_overlayNode);
     //    _overlayNode = nullptr;
     //}
+}
+
+void DataManager::setClipInfo(const ClipInfoPtr& ci)
+{
+    _clipInfo = ci;
+
+    if (_clipInfo)
+    {
+        QSettings settings;
+        settings.setValue("Rectangle/xMin", _clipInfo->bounds().xMin());
+        settings.setValue("Rectangle/xMax", _clipInfo->bounds().xMax());
+        settings.setValue("Rectangle/yMin", _clipInfo->bounds().yMin());
+        settings.setValue("Rectangle/yMax", _clipInfo->bounds().yMax());
+    }
 }

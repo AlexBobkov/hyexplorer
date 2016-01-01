@@ -54,7 +54,6 @@ namespace portal
         void onSecondTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
 
         void finishLoadScenes();
-        void finishLoadBands(const ScenePtr& scene, bool result, const QString& message);
 
         void finishImport(const ScenePtr& scene, bool result, const QString& message);
 

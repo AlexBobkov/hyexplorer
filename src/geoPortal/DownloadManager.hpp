@@ -47,7 +47,7 @@ namespace portal
         void processImportRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
         void processUploadReply(const ScenePtr& scene, QNetworkReply* reply);
 
-        void downloadNextSceneBand(const ScenePtr& scene);
+        void downloadNextSceneBand(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
         
         DataManagerPtr _dataManager;
 
@@ -55,8 +55,6 @@ namespace portal
                 
         QStringList _downloadPaths;
         int _downloadPathIndex;
-        bool _isClip;
-        int _clipNumber;
 
         QUrl _oldRedirectUrl;
 

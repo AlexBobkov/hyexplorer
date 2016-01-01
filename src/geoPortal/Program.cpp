@@ -31,6 +31,8 @@ using namespace portal;
 
 int main(int argc, char** argv)
 {
+    srand(time(NULL));
+
     QCoreApplication::setOrganizationName("Bobkov");
     QCoreApplication::setOrganizationDomain("alexander-bobkov.ru");
     QCoreApplication::setApplicationName("GeoPortal");

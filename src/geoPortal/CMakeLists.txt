@@ -10,6 +10,7 @@ QT5_WRAP_UI(LIB_UI_HDRS ${LIB_QT_UIS})
 
 SET(HEADER_FILES
 	${LIB_UI_HDRS}
+	ClipInfo.hpp
 	DataManager.hpp
 	DataSet.hpp
 	DownloadManager.hpp	
@@ -25,6 +26,7 @@ SET(HEADER_FILES
 )
 
 SET(SRC_FILES
+	ClipInfo.cpp
 	DataManager.cpp
 	DataSet.cpp
 	DownloadManager.cpp	

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "DataSet.hpp"
+#include "ClipInfo.hpp"
 
 #include <osgViewer/View>
 #include <osgEarth/Bounds>
@@ -40,8 +41,8 @@ namespace portal
 
         void showOverview(const ScenePtr& scene, const QString& filepath);
 
-        const boost::optional<osgEarth::Bounds>& rectangle() const { return _rectangle; }
-        void setRectangle(const osgEarth::Bounds& b) { _rectangle = b; }
+        ClipInfoPtr clipInfo() const { return _clipInfo; }
+        void setClipInfo(const ClipInfoPtr& ci);
 
         void showScene(const ScenePtr& scene);
         void setActiveBand(int band);
@@ -62,7 +63,7 @@ namespace portal
         osg::ref_ptr<osg::Node> _circleNode;
         osg::ref_ptr<osg::Node> _overlayNode;
 
-        boost::optional<osgEarth::Bounds> _rectangle;
+        ClipInfoPtr _clipInfo;
 
         QStringList _coverageNames;
         std::map<QString, osgEarth::ImageLayerOptions> _coverageMap;

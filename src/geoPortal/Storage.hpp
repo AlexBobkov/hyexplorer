@@ -12,10 +12,11 @@ namespace portal
         static QString overviewPath(const ScenePtr& scene, const QString& filename);
 
         static QString sceneBandPath(const ScenePtr& scene, const QString& filename);
+        static QString sceneBandDir(const ScenePtr& scene);
 
-        static QString sceneBandClipPath(const ScenePtr& scene, const QString& filename, int clipNumber);
-        static int nextClipNumber(const ScenePtr& scene);
-
+        static QString sceneBandClipPath(const ScenePtr& scene, const QString& filename, const QString& clipName);
+        static QString sceneBandClipDir(const ScenePtr& scene, const QString& clipName);
+        
         static QString tempPath(const QString& filename);
     };
 }

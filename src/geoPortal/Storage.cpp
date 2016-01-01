@@ -36,13 +36,22 @@ QString Storage::sceneBandPath(const ScenePtr& scene, const QString& filename)
     return dataDir.filePath(folderName + filename);
 }
 
-QString Storage::sceneBandClipPath(const ScenePtr& scene, const QString& filename, int clipNumber)
+QString Storage::sceneBandDir(const ScenePtr& scene)
 {
     QSettings settings;
     QString dataPath = settings.value("StoragePath").toString();
 
     QDir dataDir(dataPath);
-    QString folderName = QString("hyperion/clips/%0/clip%1/").arg(scene->sceneId).arg(clipNumber);
+    return dataDir.filePath(QString("hyperion/scenes/%0/").arg(scene->sceneId));
+}
+
+QString Storage::sceneBandClipPath(const ScenePtr& scene, const QString& filename, const QString& clipName)
+{
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
+
+    QDir dataDir(dataPath);
+    QString folderName = QString("hyperion/clips/%0/clip%1/").arg(scene->sceneId).arg(clipName);
     if (!dataDir.exists(folderName))
     {
         dataDir.mkpath(folderName);
@@ -51,29 +60,13 @@ QString Storage::sceneBandClipPath(const ScenePtr& scene, const QString& filenam
     return dataDir.filePath(folderName + filename);
 }
 
-int Storage::nextClipNumber(const ScenePtr& scene)
+QString Storage::sceneBandClipDir(const ScenePtr& scene, const QString& clipName)
 {
     QSettings settings;
     QString dataPath = settings.value("StoragePath").toString();
 
-    QDir clipsDir(dataPath + QString("/hyperion/clips/%0/").arg(scene->sceneId));
-    QStringList entries = clipsDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-
-    int clipNumber = 0;
-
-    for (const auto& s : entries)
-    {
-        bool ok = false;
-        int num = s.mid(4, s.size() - 4).toInt(&ok); //clip<num> pattern
-        if (ok && num > clipNumber)
-        {
-            clipNumber = num;
-        }
-    }
-
-    clipNumber++;
-
-    return clipNumber;
+    QDir dataDir(dataPath);
+    return dataDir.filePath(QString("hyperion/clips/%0/clip%1/").arg(scene->sceneId).arg(clipName));
 }
 
 QString Storage::tempPath(const QString& filename)

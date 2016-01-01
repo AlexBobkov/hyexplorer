@@ -14,8 +14,6 @@ DownloadManager::DownloadManager(const DataManagerPtr& dataManager, QObject* par
 QObject(parent),
 _dataManager(dataManager),
 _downloadPathIndex(0),
-_isClip(false),
-_clipNumber(0),
 _progressDialog(0),
 _longDownloadReply(0),
 _tempFile(0)
@@ -88,7 +86,7 @@ void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxB
         return;
     }
 
-    _isClip = false;
+    //_isClip = false;
 
     //QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0/%1/%2").arg(scene->sceneId).arg(minBand).arg(maxBand));
     QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2").arg(scene->sceneId).arg(minBand).arg(maxBand));
@@ -110,19 +108,19 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
         return;
     }
 
-    if (!_dataManager->rectangle())
+    if (!_dataManager->clipInfo())
     {
         emit sceneDownloadFinished(scene, false, tr("Не выбрана область для вырезания"));
         return;
     }
 
-    _isClip = true;
+    //_isClip = true;
         
-    _clipNumber = Storage::nextClipNumber(scene);
+    //_clipNumber = Storage::nextClipNumber(scene);
 
-    qDebug() << "Clip number " << _clipNumber;
+    qDebug() << "Clip name " << _dataManager->clipInfo()->uniqueName();
 
-    osgEarth::Bounds b = *_dataManager->rectangle();
+    osgEarth::Bounds b = _dataManager->clipInfo()->bounds();
         
     QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
                             .arg(scene->sceneId)
@@ -137,6 +135,10 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
     QVariant v;
     v.setValue(scene);
     request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+
+    QVariant v2;
+    v2.setValue(_dataManager->clipInfo());
+    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2), v2);
 
     _networkManager.get(request);
 }
@@ -241,6 +243,13 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* re
         return;
     }
 
+    ClipInfoPtr clipInfo;
+    QVariant attr2 = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2));
+    if (attr2.isValid())
+    {
+        clipInfo = attr2.value<ClipInfoPtr>();
+    }
+
     assert(_downloadPaths.size() == 0);
         
     QTextStream stream(data);
@@ -261,7 +270,7 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* re
     }
 
     _downloadPathIndex = 0;
-    downloadNextSceneBand(scene);
+    downloadNextSceneBand(scene, clipInfo);
 }
 
 void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply* reply)
@@ -283,9 +292,16 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
         return;
     }
 
+    ClipInfoPtr clipInfo;
+    QVariant attr2 = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2));
+    if (attr2.isValid())
+    {
+        clipInfo = attr2.value<ClipInfoPtr>();
+    }
+
     qDebug() << "SceneBand " << _downloadPathIndex;
         
-    QString path = _isClip ? Storage::sceneBandClipPath(scene, reply->url().fileName(), _clipNumber) : Storage::sceneBandPath(scene, reply->url().fileName());
+    QString path = clipInfo ? Storage::sceneBandClipPath(scene, reply->url().fileName(), clipInfo->uniqueName()) : Storage::sceneBandPath(scene, reply->url().fileName());
 
     QFile localFile(path);
     if (!localFile.open(QIODevice::WriteOnly))
@@ -307,7 +323,7 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
         return;
     }
 
-    downloadNextSceneBand(scene);
+    downloadNextSceneBand(scene, clipInfo);
 }
 
 void DownloadManager::processImportLoginReply(const ScenePtr& scene, QNetworkReply* reply)
@@ -496,7 +512,7 @@ void DownloadManager::processUploadReply(const ScenePtr& scene, QNetworkReply* r
     emit importFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS и загружена на наш сервер").arg(scene->sceneId));
 }
 
-void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)
+void DownloadManager::downloadNextSceneBand(const ScenePtr& scene, const ClipInfoPtr& clipInfo)
 {
     assert(_downloadPathIndex < _downloadPaths.size());
 
@@ -504,7 +520,7 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)
 
     QNetworkRequest request(_downloadPaths[_downloadPathIndex]);
 
-    QString path = _isClip ? Storage::sceneBandClipPath(scene, request.url().fileName(), _clipNumber) : Storage::sceneBandPath(scene, request.url().fileName());
+    QString path = clipInfo ? Storage::sceneBandClipPath(scene, request.url().fileName(), clipInfo->uniqueName()) : Storage::sceneBandPath(scene, request.url().fileName());
     if (QFile::exists(path))
     {
         _downloadPathIndex++;
@@ -515,7 +531,7 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)
             return;
         }
 
-        downloadNextSceneBand(scene);
+        downloadNextSceneBand(scene, clipInfo);
     }
     else
     {
@@ -524,6 +540,13 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene)
         QVariant v;
         v.setValue(scene);
         request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+
+        if (clipInfo)
+        {
+            QVariant v2;
+            v2.setValue(_dataManager->clipInfo());
+            request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2), v2);
+        }
 
         _networkManager.get(request);
     }

@@ -1,8 +1,11 @@
 #include "SceneOperationsWidget.hpp"
+#include "Storage.hpp"
 
 #include <QDebug>
 #include <QSettings>
 #include <QMessageBox>
+#include <QDesktopServices>
+#include <QUrl>
 
 using namespace portal;
 
@@ -50,16 +53,18 @@ void SceneOperationsWidget::initUi()
     connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
     connect(_ui.importButton, SIGNAL(clicked()), this, SLOT(importScene()));
     connect(_ui.processButton, SIGNAL(clicked()), this, SLOT(startImageCorrection()));
+    connect(_ui.showOnGlobeButton, SIGNAL(clicked()), this, SLOT(showBandOnGlobe()));
+    connect(_ui.openFolderButton, SIGNAL(clicked()), this, SLOT(openFolder()));
         
     _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 
-    boost::optional<osgEarth::Bounds> rect = _dataManager->rectangle();
-    if (rect)
+    ClipInfoPtr clipInfo = _dataManager->clipInfo();
+    if (clipInfo)
     {
-        _ui.leftSpinBox->setValue(rect->xMin());
-        _ui.rightSpinBox->setValue(rect->xMax());
-        _ui.topSpinBox->setValue(rect->yMax());
-        _ui.bottomSpinBox->setValue(rect->yMin());
+        _ui.leftSpinBox->setValue(clipInfo->bounds().xMin());
+        _ui.rightSpinBox->setValue(clipInfo->bounds().xMax());
+        _ui.topSpinBox->setValue(clipInfo->bounds().yMax());
+        _ui.bottomSpinBox->setValue(clipInfo->bounds().yMin());
 
         _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
         _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
@@ -127,14 +132,18 @@ void SceneOperationsWidget::download()
 {
     if (_ui.fullSizeRadioButton->isChecked())
     {
+        _ui.downloadButton->setEnabled(false);
+
         emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
     }
     else
     {
-        if (_dataManager->rectangle())
+        if (_dataManager->clipInfo())
         {
-            if (_dataManager->rectangle()->intersects(_scene->geometry->getBounds()))
+            if (_dataManager->clipInfo()->bounds().intersects(_scene->geometry->getBounds()))
             {
+                _ui.downloadButton->setEnabled(false);
+
                 emit downloadSceneClipRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
             }
             else
@@ -149,8 +158,31 @@ void SceneOperationsWidget::download()
     }
 }
 
+void SceneOperationsWidget::onSceneDownloaded(const ScenePtr& scene, bool result, const QString& message)
+{
+    _ui.downloadButton->setEnabled(true);
+
+    if (result)
+    {
+        //_dataManager->showScene(scene);
+
+        _ui.openFolderButton->setEnabled(true);
+
+        QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
+    }
+    else
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), message);
+    }
+}
+
 void SceneOperationsWidget::setScene(const ScenePtr& scene)
 {
+    if (_scene == scene)
+    {
+        return;
+    }
+
     _scene = scene;
 
     if (scene->hasScene)
@@ -186,11 +218,14 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
         _ui.bandOperationsGroupBox->setEnabled(false);
         _ui.processedTableButton->setEnabled(false);
     }
+
+    _ui.openFolderButton->setEnabled(false);
 }
 
 void SceneOperationsWidget::onRectangleSelected(const osgEarth::Bounds& b)
 {
     _ui.selectFragmentButton->setChecked(false);
+    _ui.openFolderButton->setEnabled(false);
 
     _ui.leftSpinBox->setMaximum(b.xMax());
     _ui.rightSpinBox->setMinimum(b.xMin());
@@ -200,7 +235,13 @@ void SceneOperationsWidget::onRectangleSelected(const osgEarth::Bounds& b)
     _ui.leftSpinBox->setValue(b.xMin());
     _ui.rightSpinBox->setValue(b.xMax());
     _ui.topSpinBox->setValue(b.yMax());
-    _ui.bottomSpinBox->setValue(b.yMin());    
+    _ui.bottomSpinBox->setValue(b.yMin());
+
+    ClipInfoPtr clipInfo = std::make_shared<ClipInfo>(b);
+    clipInfo->setMinBand(_ui.fromSpinBox->value());
+    clipInfo->setMaxBand(_ui.toSpinBox->value());
+
+    _dataManager->setClipInfo(clipInfo);
 }
 
 void SceneOperationsWidget::onRectangleSelectFailed()
@@ -210,29 +251,33 @@ void SceneOperationsWidget::onRectangleSelectFailed()
 
 void SceneOperationsWidget::onRectangleBoundsChanged(double d)
 {
+    _ui.openFolderButton->setEnabled(false);
+
     _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
     _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
     _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
     _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
+
+    osgEarth::Bounds b(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value());
+
+    ClipInfoPtr clipInfo = std::make_shared<ClipInfo>(b);
+    clipInfo->setMinBand(_ui.fromSpinBox->value());
+    clipInfo->setMaxBand(_ui.toSpinBox->value());
+
+    _dataManager->setClipInfo(clipInfo);
     
-    emit rectangleChanged(osgEarth::Bounds(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value()));
+    emit rectangleChanged(b);
 }
 
 void SceneOperationsWidget::importScene()
 {
-    _ui.importButton->setEnabled(false);
+    _ui.importButton->setVisible(false);
 
     emit importSceneRequested(_scene);
 }
 
 void SceneOperationsWidget::onSceneImported(const ScenePtr& scene)
 {
-    _ui.importButton->setEnabled(true);
-
-    if (_scene == scene)
-    {
-        _ui.importButton->setVisible(false);
-    }
 }
 
 void SceneOperationsWidget::startImageCorrection()
@@ -275,4 +320,26 @@ void SceneOperationsWidget::onImageCorrectionFinished(int exitCode, QProcess::Ex
     process->deleteLater();
 
     QMessageBox::information(qApp->activeWindow(), tr("Обработка"), tr("Обработка завершена. Обработанный файл будет загружен на сервер"));    
+}
+
+void SceneOperationsWidget::openFolder()
+{
+    qDebug() << "Open folder";
+    
+    if (_ui.fullSizeRadioButton->isChecked())
+    {
+        QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::sceneBandDir(_scene)));
+    }
+    else
+    {
+        if (_dataManager->clipInfo())
+        {
+            QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::sceneBandClipDir(_scene, _dataManager->clipInfo()->uniqueName())));
+        }
+    }
+}
+
+void SceneOperationsWidget::showBandOnGlobe()
+{
+    qDebug() << "Show on globe";
 }

@@ -30,6 +30,7 @@ namespace portal
         void onRectangleSelected(const osgEarth::Bounds& b);
         void onRectangleSelectFailed();
         void onSceneImported(const ScenePtr& scene);
+        void onSceneDownloaded(const ScenePtr& scene, bool result, const QString& message);
         
     private slots:
         void onMinimumBandChanged(int i);
@@ -41,6 +42,8 @@ namespace portal
         void importScene();
         void download();
         void startImageCorrection();
+        void openFolder();
+        void showBandOnGlobe();
 
         void onImageCorrectionError(QProcess::ProcessError error);
         void onImageCorrectionFinished(int exitCode, QProcess::ExitStatus exitStatus);
