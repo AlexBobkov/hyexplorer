@@ -16,7 +16,7 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 #######################################################################
 
 SET(GEOPORTAL_MAJOR_VERSION 0 CACHE STRING "Major version")
-SET(GEOPORTAL_MINOR_VERSION 1 CACHE STRING "Minor version")
+SET(GEOPORTAL_MINOR_VERSION 2 CACHE STRING "Minor version")
 SET(GEOPORTAL_PATCH_VERSION 0 CACHE STRING "Patch version")
 
 #######################################################################

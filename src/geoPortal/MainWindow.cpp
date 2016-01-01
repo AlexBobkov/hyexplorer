@@ -916,7 +916,11 @@ void MainWindow::showAbout()
     QVBoxLayout* vLayout = new QVBoxLayout;
     dialog.setLayout(vLayout);
 
-    QString text = QString::fromUtf8("<html><head/><body><p align='center'><span style='font-size:12pt;'>Геопортал</span></p><p>Разработчики:<br/>Александр Бобков<br/>Денис Учаев</p></body></html>");
+    QString text = QString::fromUtf8("<html><head/><body>"
+                                     "<p align='center'><span style='font-size:12pt;'>Геопортал</span></p>"
+                                     "<p>Разработчики:<br/>Александр Бобков<br/>Денис Учаев</p>"
+                                     "<p>Разработка поддержана грантом РФФИ №13-05-12086</p>"
+                                     "</body></html>");
 
     QLabel* aboutLabel = new QLabel(text);
     aboutLabel->setTextFormat(Qt::RichText);
