@@ -1,4 +1,5 @@
 #include "DataManager.hpp"
+#include "Storage.hpp"
 
 #include <osg/Image>
 #include <osgEarthAnnotation/ImageOverlay>
@@ -72,9 +73,7 @@ namespace
 
 DataManager::DataManager(osgViewer::View* view, osgEarth::MapNode* mapNode) :
 _view(view),
-_mapNode(mapNode),
-_activeBand(1),
-_clipMode(false)
+_mapNode(mapNode)
 {
     {
         GDALOptions sourceOpt;
@@ -268,21 +267,7 @@ void DataManager::showOverview(const ScenePtr& scene, const QString& filepath)
     }
 }
 
-void DataManager::setActiveBand(int band)
-{
-    qDebug() << "Set active band " << _activeBand;
-
-    _activeBand = band;
-    showScene(_scene);
-}
-
-void DataManager::setClipMode(bool b)
-{
-    _clipMode = b;
-    showScene(_scene);
-}
-
-void DataManager::showScene(const ScenePtr& scene)
+void DataManager::showScene(const ScenePtr& scene, int band, const ClipInfoPtr& clipInfo)
 {
     _scene = scene;
 
@@ -295,17 +280,17 @@ void DataManager::showScene(const ScenePtr& scene)
     QString dataPath = settings.value("StoragePath").toString();
         
     QString filepath;
-    if (_clipMode)
+    if (clipInfo)
     {
-        QDir dir(QString("%0/hyperion/clips/%1/").arg(dataPath).arg(scene->sceneId));
-        QStringList entries = dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+        QString filename = QString("%0B%1_L1T_clip.TIF").arg(scene->sceneId.mid(0, 23)).arg(band, 3, 10, QChar('0'));
 
-        int clipNumber = entries.size() - 1;
-        filepath = QString("%0/hyperion/clips/%1/clip%2/%3B%4_L1T_clip.TIF").arg(dataPath).arg(scene->sceneId).arg(clipNumber).arg(scene->sceneId.mid(0, 23)).arg(_activeBand, 3, 10, QChar('0'));
+        filepath = Storage::sceneBandClipPath(_scene, filename, clipInfo->uniqueName());
     }
     else
     {
-        filepath = QString("%0/hyperion/scenes/%1/%2B%3_L1T.TIF").arg(dataPath).arg(scene->sceneId).arg(scene->sceneId.mid(0, 23)).arg(_activeBand, 3, 10, QChar('0'));
+        QString filename = QString("%2B%3_L1T.TIF").arg(scene->sceneId.mid(0, 23)).arg(band, 3, 10, QChar('0'));
+
+        filepath = Storage::sceneBandPath(_scene, filename);
     }
 
     qDebug() << "Show band " << filepath;
@@ -330,11 +315,11 @@ void DataManager::showScene(const ScenePtr& scene)
     _sceneLayer = new ImageLayer(scene->sceneId.toUtf8().constData(), imageOpt);
     _mapNode->getMap()->addImageLayer(_sceneLayer);
 
-    //if (_overlayNode)
-    //{
-    //    _mapNode->removeChild(_overlayNode);
-    //    _overlayNode = nullptr;
-    //}
+    if (_overlayNode)
+    {
+        _mapNode->removeChild(_overlayNode);
+        _overlayNode = nullptr;
+    }
 }
 
 void DataManager::setClipInfo(const ClipInfoPtr& ci)

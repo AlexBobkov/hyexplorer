@@ -35,8 +35,6 @@ void SceneOperationsWidget::initUi()
     _ui.globeBandSpinBox->setMinimum(_ui.fromSpinBox->value());
     _ui.globeBandSpinBox->setMaximum(_ui.toSpinBox->value());
 
-    _dataManager->setActiveBand(_ui.globeBandSpinBox->value());
-
     _ui.statusLabel->setText(tr("Выберите сцену"));
     _ui.importButton->setVisible(false);
     _ui.bandDownloadGroupBox->setEnabled(false);
@@ -111,13 +109,10 @@ void SceneOperationsWidget::onGlobeBandChanged(int i)
 {
     QSettings settings;
     settings.setValue("SceneOperationsWidget/GlobeBandValue", _ui.globeBandSpinBox->value());
-
-    _dataManager->setActiveBand(i);
 }
 
 void SceneOperationsWidget::onFragmentRadioButtonToggled(bool b)
 {
-    _dataManager->setClipMode(b);
 }
 
 void SceneOperationsWidget::selectRectangle(bool b)
@@ -164,8 +159,6 @@ void SceneOperationsWidget::onSceneDownloaded(const ScenePtr& scene, bool result
 
     if (result)
     {
-        //_dataManager->showScene(scene);
-
         _ui.openFolderButton->setEnabled(true);
 
         QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
@@ -323,9 +316,7 @@ void SceneOperationsWidget::onImageCorrectionFinished(int exitCode, QProcess::Ex
 }
 
 void SceneOperationsWidget::openFolder()
-{
-    qDebug() << "Open folder";
-    
+{  
     if (_ui.fullSizeRadioButton->isChecked())
     {
         QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::sceneBandDir(_scene)));
@@ -341,5 +332,12 @@ void SceneOperationsWidget::openFolder()
 
 void SceneOperationsWidget::showBandOnGlobe()
 {
-    qDebug() << "Show on globe";
+    if (_ui.fullSizeRadioButton->isChecked())
+    {
+        _dataManager->showScene(_scene, _ui.globeBandSpinBox->value(), ClipInfoPtr());
+    }
+    else
+    {
+        _dataManager->showScene(_scene, _ui.globeBandSpinBox->value(), _dataManager->clipInfo());
+    }
 }

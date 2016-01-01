@@ -44,9 +44,7 @@ namespace portal
         ClipInfoPtr clipInfo() const { return _clipInfo; }
         void setClipInfo(const ClipInfoPtr& ci);
 
-        void showScene(const ScenePtr& scene);
-        void setActiveBand(int band);
-        void setClipMode(bool b);
+        void showScene(const ScenePtr& scene, int band, const ClipInfoPtr& clipInfo);
 
     protected:
         DataManager(const DataManager&) = delete;
@@ -69,9 +67,6 @@ namespace portal
         std::map<QString, osgEarth::ImageLayerOptions> _coverageMap;
 
         osg::ref_ptr<osgEarth::ImageLayer> _sceneLayer;
-
-        int _activeBand;
-        bool _clipMode;
     };
 
     typedef std::shared_ptr<DataManager> DataManagerPtr;

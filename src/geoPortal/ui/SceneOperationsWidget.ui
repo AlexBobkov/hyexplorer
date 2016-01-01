@@ -255,7 +255,7 @@
       <item>
        <widget class="QPushButton" name="showOnGlobeButton">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string>Показать на глобусе</string>
