@@ -75,3 +75,25 @@ WITH (
 );
 ALTER TABLE public.aviris
   OWNER TO "portal";
+  
+--
+
+CREATE TABLE public.processedimages
+(
+  ogc_fid integer NOT NULL,
+  band integer,
+  bounds geography(Polygon,4326),  
+  contrast double precision,
+  sharpness double precision,
+  blocksize integer,
+  filename character varying,  
+  CONSTRAINT processedimages_pk PRIMARY KEY (ogc_fid),
+  CONSTRAINT processedimages_fk FOREIGN KEY (ogc_fid)
+      REFERENCES public.scenes (ogc_fid) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE public.aviris
+  OWNER TO "portal";

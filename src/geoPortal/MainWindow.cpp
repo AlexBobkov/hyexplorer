@@ -233,7 +233,7 @@ namespace
                 pathStyle.getOrCreate<LineSymbol>()->stroke()->stipplePattern() = 0x0F0F;
                 pathStyle.getOrCreate<LineSymbol>()->tessellation() = 20;
                 pathStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
-                pathStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_GPU;
+                pathStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_SCENE;
 
                 _feature = new osgEarth::Features::Feature(_ring, _mapNode->getMapSRS(), pathStyle);
 

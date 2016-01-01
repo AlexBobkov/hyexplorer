@@ -35,13 +35,14 @@ namespace portal
         void onMinimumBandChanged(int i);
         void onMaximumBandChanged(int i);
         void onGlobeBandChanged(int i);
-        void onMatlabBandChanged(int i);
         void onFragmentRadioButtonToggled(bool b);
         void selectRectangle(bool b);
         void onRectangleBoundsChanged(double d);
         void importScene();
         void download();
         void startImageCorrection();
+
+        void onImageCorrectionError(QProcess::ProcessError error);
         void onImageCorrectionFinished(int exitCode, QProcess::ExitStatus exitStatus);
     
     private:
