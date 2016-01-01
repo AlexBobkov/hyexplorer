@@ -6,6 +6,7 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QFileInfo>
 
 using namespace portal;
 
@@ -275,20 +276,53 @@ void SceneOperationsWidget::onSceneImported(const ScenePtr& scene)
 
 void SceneOperationsWidget::startImageCorrection()
 {
+    QString program = "matlab/ImageCorrectionTool.exe";
+
+    if (!QFileInfo::exists(program))
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Программа для коррекции изображений matlab/ImageCorrectionTool.exe не найдена"));
+        return;
+    }
+       
+    QString filepath;
+    if (_ui.fullSizeRadioButton->isChecked())
+    {
+        QString filename = QString("%2B%3_L1T.TIF").arg(_scene->sceneId.mid(0, 23)).arg(_ui.globeBandSpinBox->value(), 3, 10, QChar('0'));
+
+        filepath = Storage::sceneBandPath(_scene, filename);
+    }
+    else
+    {
+        QString filename = QString("%0B%1_L1T_clip.TIF").arg(_scene->sceneId.mid(0, 23)).arg(_ui.globeBandSpinBox->value(), 3, 10, QChar('0'));
+
+        filepath = Storage::sceneBandClipPath(_scene, filename, _dataManager->clipInfo()->uniqueName());
+    }
+
+    if (!QFileInfo::exists(filepath))
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Файл для обработки %0 не найден").arg(filepath));
+        return;
+    }
+    
+    QFile data("matlab/data.txt");
+    data.open(QFile::WriteOnly);
+    
+    QTextStream out(&data);
+    out << filepath.toLocal8Bit() << "\n" << 11 << "\n" << 1.4 << "\n" << 128 << "\n";
+
+    data.close();
+
     qDebug() << "Image correction started";
 
     _ui.processButton->setEnabled(false);
-
-    QString program = "matlab/ImageCorrectionTools.exe";
-    QStringList arguments;
-    
+            
     QProcess* matlabProcess = new QProcess(this);
     matlabProcess->setWorkingDirectory("matlab");
 
     connect(matlabProcess, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onImageCorrectionError(QProcess::ProcessError)));
     connect(matlabProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(onImageCorrectionFinished(int, QProcess::ExitStatus)));
 
-    matlabProcess->start(program, arguments);
+    matlabProcess->start(program, QStringList());
 }
 
 void SceneOperationsWidget::onImageCorrectionError(QProcess::ProcessError error)
