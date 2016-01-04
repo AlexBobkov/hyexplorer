@@ -303,14 +303,34 @@ void SceneOperationsWidget::startImageCorrection()
         QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Файл для обработки %0 не найден").arg(filepath));
         return;
     }
-    
-    QFile data("matlab/data.txt");
-    data.open(QFile::WriteOnly);
-    
-    QTextStream out(&data);
-    out << filepath.toLocal8Bit() << "\n" << 11 << "\n" << 1.4 << "\n" << 128 << "\n";
 
-    data.close();
+    //------------------------------------
+    
+    {
+        QFile data("matlab/data.txt");
+        data.open(QFile::WriteOnly);
+
+        QTextStream out(&data);
+        out << filepath.toLocal8Bit() << "\n" << 11 << "\n" << 1.4 << "\n" << 128 << "\n";
+
+        data.close();
+    }
+
+    //------------------------------------
+
+    {
+        QString outputFilepath = Storage::processedFilePath(_scene, _ui.globeBandSpinBox->value(), genetrateRandomName());
+
+        QFile result("matlab/result.txt");
+        result.open(QFile::WriteOnly);
+
+        QTextStream out(&result);
+        out << outputFilepath.toLocal8Bit() << "\n";
+
+        result.close();
+    }
+
+    //------------------------------------
 
     qDebug() << "Image correction started";
 

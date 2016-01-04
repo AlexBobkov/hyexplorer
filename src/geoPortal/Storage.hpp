@@ -16,6 +16,8 @@ namespace portal
 
         static QString sceneBandClipPath(const ScenePtr& scene, const QString& filename, const QString& clipName);
         static QString sceneBandClipDir(const ScenePtr& scene, const QString& clipName);
+
+        static QString processedFilePath(const ScenePtr& scene, int band, const QString& processedId);
         
         static QString tempPath(const QString& filename);
     };

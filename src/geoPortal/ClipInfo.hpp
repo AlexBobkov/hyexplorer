@@ -9,6 +9,8 @@
 
 namespace portal
 {
+    QString genetrateRandomName();
+
     class ClipInfo
     {
     public:
