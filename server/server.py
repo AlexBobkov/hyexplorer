@@ -14,22 +14,27 @@ from werkzeug import secure_filename
 UPLOAD_FOLDER = os.environ['GEOPORTAL_UPLOAD_FOLDER']
 PUBLIC_FOLDER = os.environ['GEOPORTAL_PUBLIC_FOLDER']
 SCENES_FOLDER = os.environ['GEOPORTAL_SCENES_FOLDER']
-SCENES_EXTRACT_FOLDER = os.environ['GEOPORTAL_SCENES_EXTRACT_FOLDER']
-SCENES_CLIPS_FOLDER = os.environ['GEOPORTAL_SCENES_CLIPS_FOLDER']
+#SCENES_EXTRACT_FOLDER = os.environ['GEOPORTAL_SCENES_EXTRACT_FOLDER']
+#SCENES_CLIPS_FOLDER = os.environ['GEOPORTAL_SCENES_CLIPS_FOLDER']
 
 ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'ZIP'])
 
 tempfile.tempdir = UPLOAD_FOLDER
 
+###############################
 
 app = Flask(__name__)
 #app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024 #1Gb
 
+###############################
+
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+###############################
+        
 @app.route('/')
 def hello_world():
     app.logger.info('Hello World!')
@@ -37,10 +42,10 @@ def hello_world():
 
 @app.route('/overview/<sensor>/<sceneid>', methods=['GET', 'POST'])
 def overview(sensor, sceneid):
-    app.logger.info('Overview %s %s', sceneid, request.method)
+    app.logger.info('Upload overview %s method %s', sceneid, request.method)
     
     if sensor != 'Hyperion' and sensor != 'AVIRIS':
-	return 'Wrong sensor'
+        return 'Wrong sensor'
 
     if request.method == 'POST':
         file = request.files['file']
@@ -69,7 +74,7 @@ def overview(sensor, sceneid):
 
 @app.route('/scene/<sceneid>', methods=['GET', 'POST'])
 def scene_upload(sceneid):
-    app.logger.info('Scene %s %s', sceneid, request.method)
+    app.logger.info('Upload scene %s method %s', sceneid, request.method)
 
     if request.method == 'POST':
         file = request.files['file']
@@ -103,7 +108,7 @@ def extract_bands(sceneid, minband, maxband):
 
     app.logger.info('Filepath %s is found', zipfilepath)
 
-    extractfolder = SCENES_EXTRACT_FOLDER + "/" + sceneid
+    extractfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid
 
     with ZipFile(zipfilepath) as zip:
         for i in range(minband, maxband + 1):
@@ -116,7 +121,7 @@ def extract_bands(sceneid, minband, maxband):
 
 @app.route('/scene/<sceneid>/<int:minband>/<int:maxband>')
 def scene(sceneid, minband, maxband):
-    app.logger.info('Scene %s %d %d', sceneid, minband, maxband)
+    app.logger.info('Request scene %s min band %d max band %d', sceneid, minband, maxband)
 
     if minband < 1 or maxband > 242:
         app.logger.error('Wrong band')
@@ -135,7 +140,7 @@ def scene(sceneid, minband, maxband):
 
 @app.route('/sceneclip/<sceneid>/<int:minband>/<int:maxband>')
 def sceneclip(sceneid, minband, maxband):
-    app.logger.info('Scene clip %s %d %d', sceneid, minband, maxband)
+    app.logger.info('Request scene clip %s min band %d max band %d', sceneid, minband, maxband)
 
     if minband < 1 or maxband > 242:
         app.logger.error('Wrong band')
@@ -163,8 +168,8 @@ def sceneclip(sceneid, minband, maxband):
         app.logger.error('ZIP is not found')
         return 'NO FILE'
 
-    extractfolder = SCENES_EXTRACT_FOLDER + "/" + sceneid
-    clipsfolder = SCENES_CLIPS_FOLDER + "/" + sceneid
+    extractfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid
+    clipsfolder = PUBLIC_FOLDER + "/Hyperion/scenes/clips" + sceneid
 
     if not os.path.exists(clipsfolder):
         os.makedirs(clipsfolder)
@@ -223,6 +228,38 @@ def sceneclip(sceneid, minband, maxband):
         output += 'http://virtualglobe.ru/geoportal/Hyperion/scenes/clips/{0}/clip{1}/{2}\n'.format(sceneid, clipNum, outFilename)
 
     return output
+    
+@app.route('/processed/<sceneid>', methods=['GET', 'POST'])
+def processed_upload(sceneid):
+    app.logger.info('Upload processed file for scene %s method %s', sceneid, request.method)
+
+    if request.method == 'POST':
+        file = request.files['file']
+        app.logger.info('File %s ', file.filename)
+        
+        processedfolder = PUBLIC_FOLDER + "/Hyperion/scenes/processed" + sceneid
+        
+        if not os.path.exists(processedfolder):
+            os.makedirs(processedfolder)
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(processedfolder, filename))
+
+            #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
+            #conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
+
+            #cur = conn.cursor()
+            #cur.execute("update scenes set hasscene=TRUE where sceneid=%s;", (sceneid,))
+            #conn.commit()
+            #cur.close()
+            #conn.close()
+
+            app.logger.info('Processed is ready %s', sceneid)
+
+        return 'Success processed POST'
+    else:
+        return 'Success processed GET'
 
 if __name__ == '__main__':
     app.debug = False

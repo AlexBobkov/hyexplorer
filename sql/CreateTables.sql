@@ -80,16 +80,17 @@ ALTER TABLE public.aviris
 
 CREATE TABLE public.processedimages
 (
-  ogc_fid integer NOT NULL,
+  id serial,
+  sceneid character varying NOT NULL,
   band integer,
   bounds geography(Polygon,4326),  
   contrast double precision,
   sharpness double precision,
   blocksize integer,
   filename character varying,  
-  CONSTRAINT processedimages_pk PRIMARY KEY (ogc_fid),
-  CONSTRAINT processedimages_fk FOREIGN KEY (ogc_fid)
-      REFERENCES public.scenes (ogc_fid) MATCH SIMPLE
+  CONSTRAINT processedimages_pk PRIMARY KEY (id),
+  CONSTRAINT processedimages_fk FOREIGN KEY (sceneid)
+      REFERENCES public.scenes (sceneid) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION
 )
 WITH (
