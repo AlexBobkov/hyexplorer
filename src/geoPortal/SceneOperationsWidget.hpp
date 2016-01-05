@@ -25,13 +25,16 @@ namespace portal
         void selectRectangleRequested();
         void rectangleChanged(const osgEarth::Bounds& b);
 
+        void uploadProcessedFileRequested(const ScenePtr& scene, const QString& filepath, int band, double contrast, double sharpness, int blocksize);
+
     public slots:
         void setScene(const ScenePtr& scene);
         void onRectangleSelected(const osgEarth::Bounds& b);
         void onRectangleSelectFailed();
         void onSceneImported(const ScenePtr& scene);
         void onSceneDownloaded(const ScenePtr& scene, bool result, const QString& message);
-        
+        void onProcessedFileUploaded(const ScenePtr& scene, bool result, const QString& message);
+
     private slots:
         void onMinimumBandChanged(int i);
         void onMaximumBandChanged(int i);

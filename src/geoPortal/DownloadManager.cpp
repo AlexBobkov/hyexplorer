@@ -143,6 +143,75 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
     _networkManager.get(request);
 }
 
+void DownloadManager::uploadProcessedFile(const ScenePtr& scene, const QString& filepath, int band, double contrast, double sharpness, int blocksize)
+{
+    qDebug() << "Upload " << filepath;
+
+    QFileInfo fileInfo(filepath);
+
+    QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);    
+    
+    //------------------------------------
+
+    QHttpPart imagePart;
+    imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/octet-stream"));
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"file\";filename=\"%0\"").arg(fileInfo.fileName()));
+
+    QFile* file = new QFile(filepath);
+    file->open(QIODevice::ReadOnly);
+    imagePart.setBodyDevice(file);
+    file->setParent(multiPart); // we cannot delete the file now, so delete it with the multiPart
+
+    multiPart->append(imagePart);
+
+    //------------------------------------
+
+    QHttpPart bandPart;
+    bandPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"band\""));
+    bandPart.setBody(QByteArray::number(band));    
+
+    multiPart->append(bandPart);
+
+    //------------------------------------
+
+    QHttpPart contrastPart;
+    contrastPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"contrast\""));
+    contrastPart.setBody(QByteArray::number(contrast, 'f', 7));
+
+    multiPart->append(contrastPart);
+
+    //------------------------------------
+
+    QHttpPart sharpnessPart;
+    sharpnessPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"sharpness\""));
+    sharpnessPart.setBody(QByteArray::number(sharpness, 'f', 7));
+
+    multiPart->append(sharpnessPart);
+
+    //------------------------------------
+
+    QHttpPart blocksizePart;
+    blocksizePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"blocksize\""));
+    blocksizePart.setBody(QByteArray::number(blocksize));
+
+    multiPart->append(blocksizePart);
+
+    //------------------------------------
+
+    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/processed/%0").arg(scene->sceneId));
+    request.setAttribute(QNetworkRequest::User, QString("UploadProcessed"));
+
+    QVariant v;
+    v.setValue(scene);
+    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+
+    QNetworkReply* uploadReply = _networkManager.post(request, multiPart);
+
+    multiPart->setParent(uploadReply); // delete the multiPart with the reply
+
+    //connect(uploadReply, SIGNAL(uploadProgress(qint64, qint64)), this, SLOT(onDownloadProgress(qint64, qint64)));
+}
+
 void DownloadManager::onFileDownloaded(QNetworkReply* reply)
 {
     qDebug() << "Downloaded " << qPrintable(reply->url().url());
@@ -177,6 +246,10 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
     else if (requestType == "Upload")
     {
         processUploadReply(scene, reply);
+    }
+    else if (requestType == "UploadProcessed")
+    {
+        processUploadProcessedReply(scene, reply);
     }
     
     reply->deleteLater();
@@ -222,6 +295,8 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* re
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
 
+        _downloadPaths.clear();
+
         emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
         return;
     }
@@ -230,6 +305,8 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* re
     if (data.isNull() || data.isEmpty())
     {        
         qDebug() << "Reply is null or empty";
+
+        _downloadPaths.clear();
 
         emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId));
         return;
@@ -279,6 +356,8 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
 
+        _downloadPaths.clear();
+
         emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
         return;
     }
@@ -287,6 +366,8 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
     if (data.isNull() || data.isEmpty())
     {        
         qDebug() << "Reply is null or empty";
+
+        _downloadPaths.clear();
 
         emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId));
         return;
@@ -307,6 +388,8 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
     if (!localFile.open(QIODevice::WriteOnly))
     {
         qDebug() << "Failed to open file " << qPrintable(path);
+
+        _downloadPaths.clear();
 
         emit sceneDownloadFinished(scene, false, tr("Не удается открыть файл для записи канала сцены %0 %1").arg(scene->sceneId).arg(path));
         return;
@@ -510,6 +593,19 @@ void DownloadManager::processUploadReply(const ScenePtr& scene, QNetworkReply* r
     }
 
     emit importFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS и загружена на наш сервер").arg(scene->sceneId));
+}
+
+void DownloadManager::processUploadProcessedReply(const ScenePtr& scene, QNetworkReply* reply)
+{
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        qDebug() << "Error " << reply->error() << " " << reply->errorString();
+
+        emit uploadProcessedFileFinished(scene, false, tr("При загрузке файла на сервер произошла ошибка %1 %2").arg(reply->error()).arg(reply->errorString()));
+        return;
+    }
+
+    emit uploadProcessedFileFinished(scene, true, tr("Файл успешно загружен на сервер"));
 }
 
 void DownloadManager::downloadNextSceneBand(const ScenePtr& scene, const ClipInfoPtr& clipInfo)

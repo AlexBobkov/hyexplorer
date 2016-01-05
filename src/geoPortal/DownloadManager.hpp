@@ -22,6 +22,7 @@ namespace portal
     signals:
         void sceneDownloadFinished(const ScenePtr& scene, bool result, const QString& message);
         void importFinished(const ScenePtr& scene, bool result, const QString& message);
+        void uploadProcessedFileFinished(const ScenePtr& scene, bool result, const QString& message);
 
         void progressChanged(int);
         
@@ -30,6 +31,7 @@ namespace portal
         void downloadOverview(const ScenePtr& scene);
         void downloadScene(const ScenePtr& scene, int minBand, int maxBand);
         void downloadSceneClip(const ScenePtr& scene, int minBand, int maxBand);
+        void uploadProcessedFile(const ScenePtr& scene, const QString& filepath, int band, double contrast, double sharpness, int blocksize);
         
     private slots:        
         void onFileDownloaded(QNetworkReply* reply);
@@ -46,6 +48,7 @@ namespace portal
         void processImportFirstReply(const ScenePtr& scene, QNetworkReply* reply);
         void processImportRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
         void processUploadReply(const ScenePtr& scene, QNetworkReply* reply);
+        void processUploadProcessedReply(const ScenePtr& scene, QNetworkReply* reply);
 
         void downloadNextSceneBand(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
         

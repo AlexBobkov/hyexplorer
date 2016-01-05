@@ -369,14 +369,14 @@ void SceneOperationsWidget::onImageCorrectionError(QProcess::ProcessError error)
 void SceneOperationsWidget::onImageCorrectionFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     qDebug() << "Image correnction finished. Exit code" << exitCode << "exit status" << exitStatus;
-    
-    _ui.processButton->setEnabled(true);
 
     QProcess* process = qobject_cast<QProcess*>(sender());    
     process->deleteLater();
 
     if (!QFileInfo::exists(_proccessedOutputFilepath))
     {
+        _ui.processButton->setEnabled(true);
+
         _proccessedOutputFilepath.clear();
         _processingScene.reset();
 
@@ -385,9 +385,7 @@ void SceneOperationsWidget::onImageCorrectionFinished(int exitCode, QProcess::Ex
         return;
     }
 
-    uploadProccessedFile();
-
-    QMessageBox::information(qApp->activeWindow(), tr("Обработка"), tr("Обработка завершена. Обработанный файл будет загружен на сервер"));    
+    uploadProccessedFile();    
 }
 
 void SceneOperationsWidget::uploadProccessedFile()
@@ -403,6 +401,24 @@ void SceneOperationsWidget::uploadProccessedFile()
     //blocksize
     //filename
 
+    emit uploadProcessedFileRequested(_processingScene, _proccessedOutputFilepath, _processingBand, 123.0, 45.0, 666);
+}
+
+void SceneOperationsWidget::onProcessedFileUploaded(const ScenePtr& scene, bool result, const QString& message)
+{
+    _ui.processButton->setEnabled(true);
+
+    _proccessedOutputFilepath.clear();
+    _processingScene.reset();
+
+    if (result)
+    {
+        QMessageBox::information(qApp->activeWindow(), tr("Обработка"), tr("Обработка завершена. Обработанный файл был загружен на сервер"));
+    }
+    else
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Ошибка при загрузке файла на сервер. Сообщение: %0").arg(message));
+    }
 }
 
 void SceneOperationsWidget::openFolder()
