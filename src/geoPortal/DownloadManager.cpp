@@ -301,7 +301,7 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
 
     qDebug() << "SceneBand " << _downloadPathIndex;
         
-    QString path = clipInfo ? Storage::sceneBandClipPath(scene, reply->url().fileName(), clipInfo->uniqueName()) : Storage::sceneBandPath(scene, reply->url().fileName());
+    QString path = Storage::sceneBandPath(scene, reply->url().fileName(), clipInfo);
 
     QFile localFile(path);
     if (!localFile.open(QIODevice::WriteOnly))
@@ -520,7 +520,7 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene, const ClipInf
 
     QNetworkRequest request(_downloadPaths[_downloadPathIndex]);
 
-    QString path = clipInfo ? Storage::sceneBandClipPath(scene, request.url().fileName(), clipInfo->uniqueName()) : Storage::sceneBandPath(scene, request.url().fileName());
+    QString path = Storage::sceneBandPath(scene, request.url().fileName(), clipInfo);
     if (QFile::exists(path))
     {
         _downloadPathIndex++;

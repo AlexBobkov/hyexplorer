@@ -12,7 +12,8 @@ using namespace portal;
 
 SceneOperationsWidget::SceneOperationsWidget(const DataManagerPtr& dataManager, QWidget* parent) :
 QWidget(parent),
-_dataManager(dataManager)
+_dataManager(dataManager),
+_processingBand(-1)
 {
     initUi();
 }
@@ -276,6 +277,12 @@ void SceneOperationsWidget::onSceneImported(const ScenePtr& scene)
 
 void SceneOperationsWidget::startImageCorrection()
 {
+    if (_processingScene)
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Дождитесь завершения обработки предыдущей сцены"));
+        return;
+    }
+
     QString program = "matlab/ImageCorrectionTool.exe";
 
     if (!QFileInfo::exists(program))
@@ -287,15 +294,11 @@ void SceneOperationsWidget::startImageCorrection()
     QString filepath;
     if (_ui.fullSizeRadioButton->isChecked())
     {
-        QString filename = QString("%2B%3_L1T.TIF").arg(_scene->sceneId.mid(0, 23)).arg(_ui.globeBandSpinBox->value(), 3, 10, QChar('0'));
-
-        filepath = Storage::sceneBandPath(_scene, filename);
+        filepath = Storage::sceneBandPath(_scene, _ui.globeBandSpinBox->value());
     }
     else
     {
-        QString filename = QString("%0B%1_L1T_clip.TIF").arg(_scene->sceneId.mid(0, 23)).arg(_ui.globeBandSpinBox->value(), 3, 10, QChar('0'));
-
-        filepath = Storage::sceneBandClipPath(_scene, filename, _dataManager->clipInfo()->uniqueName());
+        filepath = Storage::sceneBandPath(_scene, _ui.globeBandSpinBox->value(), _dataManager->clipInfo());
     }
 
     if (!QFileInfo::exists(filepath))
@@ -319,18 +322,21 @@ void SceneOperationsWidget::startImageCorrection()
     //------------------------------------
 
     {
-        QString outputFilepath = Storage::processedFilePath(_scene, _ui.globeBandSpinBox->value(), genetrateRandomName());
+        _proccessedOutputFilepath = Storage::processedFilePath(_scene, _ui.globeBandSpinBox->value(), genetrateRandomName());
 
         QFile result("matlab/result.txt");
         result.open(QFile::WriteOnly);
 
         QTextStream out(&result);
-        out << outputFilepath.toLocal8Bit() << "\n";
+        out << _proccessedOutputFilepath.toLocal8Bit() << "\n";
 
         result.close();
     }
 
     //------------------------------------
+
+    _processingScene = _scene;
+    _processingBand = _ui.globeBandSpinBox->value();
 
     qDebug() << "Image correction started";
 
@@ -354,19 +360,49 @@ void SceneOperationsWidget::onImageCorrectionError(QProcess::ProcessError error)
     QProcess* process = qobject_cast<QProcess*>(sender());
     process->deleteLater();
 
+    _proccessedOutputFilepath.clear();
+    _processingScene.reset();
+
     QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Ошибка при выполнении обработки. Код %0").arg(error));
 }
 
 void SceneOperationsWidget::onImageCorrectionFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     qDebug() << "Image correnction finished. Exit code" << exitCode << "exit status" << exitStatus;
-
+    
     _ui.processButton->setEnabled(true);
 
     QProcess* process = qobject_cast<QProcess*>(sender());    
     process->deleteLater();
 
+    if (!QFileInfo::exists(_proccessedOutputFilepath))
+    {
+        _proccessedOutputFilepath.clear();
+        _processingScene.reset();
+
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Обработка прервана пользователем"));
+
+        return;
+    }
+
+    uploadProccessedFile();
+
     QMessageBox::information(qApp->activeWindow(), tr("Обработка"), tr("Обработка завершена. Обработанный файл будет загружен на сервер"));    
+}
+
+void SceneOperationsWidget::uploadProccessedFile()
+{
+    assert(!_proccessedOutputFilepath.isNull() && !_proccessedOutputFilepath.isEmpty());
+    assert(QFileInfo::exists(_proccessedOutputFilepath));
+
+    //sceneid
+    //band
+    //bounds
+    //contrast
+    //sharpness
+    //blocksize
+    //filename
+
 }
 
 void SceneOperationsWidget::openFolder()
@@ -379,7 +415,7 @@ void SceneOperationsWidget::openFolder()
     {
         if (_dataManager->clipInfo())
         {
-            QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::sceneBandClipDir(_scene, _dataManager->clipInfo()->uniqueName())));
+            QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::sceneBandDir(_scene, _dataManager->clipInfo())));
         }
     }
 }

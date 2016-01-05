@@ -275,31 +275,15 @@ void DataManager::showScene(const ScenePtr& scene, int band, const ClipInfoPtr& 
     {
         return;
     }
-
-    QSettings settings;
-    QString dataPath = settings.value("StoragePath").toString();
         
-    QString filepath;
-    if (clipInfo)
-    {
-        QString filename = QString("%0B%1_L1T_clip.TIF").arg(scene->sceneId.mid(0, 23)).arg(band, 3, 10, QChar('0'));
-
-        filepath = Storage::sceneBandClipPath(_scene, filename, clipInfo->uniqueName());
-    }
-    else
-    {
-        QString filename = QString("%2B%3_L1T.TIF").arg(scene->sceneId.mid(0, 23)).arg(band, 3, 10, QChar('0'));
-
-        filepath = Storage::sceneBandPath(_scene, filename);
-    }
-
-    qDebug() << "Show band " << filepath;
-
+    QString filepath = Storage::sceneBandPath(_scene, band, clipInfo);
     if (!QFileInfo::exists(filepath))
     {
         qDebug() << "File is not found " << filepath;
         return;
     }
+
+    qDebug() << "Show band " << filepath;
 
     GDALOptions sourceOpt;
     sourceOpt.url() = filepath.toLocal8Bit().constData();

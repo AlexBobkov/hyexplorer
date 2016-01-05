@@ -50,11 +50,16 @@ namespace portal
     
     private:
         void initUi();
+        void uploadProccessedFile();
 
         Ui::SceneOperationsWidget _ui;
 
         ScenePtr _scene;
 
         DataManagerPtr _dataManager;
+                
+        QString _proccessedOutputFilepath;
+        ScenePtr _processingScene;
+        int _processingBand;
     };
 }
