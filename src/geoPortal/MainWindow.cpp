@@ -520,7 +520,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneClipRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadSceneClip(const ScenePtr&, int, int)));
-    connect(sceneOperationsWidget, SIGNAL(uploadProcessedFileRequested(const ScenePtr&, const QString&)), _downloadManager, SLOT(uploadProcessedFile(const ScenePtr&, const QString&)));
+    connect(sceneOperationsWidget, SIGNAL(uploadProcessedFileRequested(const ScenePtr&, const QString&, int, double, double, int)), _downloadManager, SLOT(uploadProcessedFile(const ScenePtr&, const QString&, int, double, double, int)));
     connect(sceneOperationsWidget, SIGNAL(selectRectangleRequested()), this, SLOT(selectRectangle()));
 
     connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(onRectangleSelected(const osgEarth::Bounds&)));

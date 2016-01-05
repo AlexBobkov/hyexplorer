@@ -229,6 +229,12 @@ def sceneclip(sceneid, minband, maxband):
 
     return output
     
+def ConvertToGeo(transform, adfGeoTransform, x, y):
+    dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x + adfGeoTransform[2] * y
+    dfGeoY = adfGeoTransform[3] + adfGeoTransform[4] * x + adfGeoTransform[5] * y
+    pnt = transform.TransformPoint(dfGeoX, dfGeoY, 0)
+    return pnt
+    
 @app.route('/processed/<sceneid>', methods=['GET', 'POST'])
 def processed_upload(sceneid):
     app.logger.info('Upload processed file for scene %s method %s', sceneid, request.method)
@@ -256,11 +262,47 @@ def processed_upload(sceneid):
             
             app.logger.info('Params %s %s %s %s', band, contrast, sharpness, blocksize)
             
+            dataset = gdal.Open(os.path.join(processedfolder, filename), gdal.GA_ReadOnly)
+            if dataset is None:
+                app.logger.error('Failed to open file %s', filename)
+                return 'FAILED OPEN FILE'
+
+            projection = dataset.GetProjectionRef()
+            if projection is None or len(projection) == 0:
+                app.logger.error('Projection is null for file %s', filename)
+                return 'PROJECTION IS NULL'
+
+            srs = osr.SpatialReference()
+            if srs.ImportFromWkt(projection) != gdal.CE_None:
+                app.logger.error('Failed to import srs from file %s', filename)
+                return 'FAILED IMPORT SRS'
+            
+            srsLatLong = srs.CloneGeogCS()
+            if srsLatLong is None:
+                app.logger.error('Failed to create latlong srs from file %s', filename)
+                return 'LATLONG IS NULL'               
+                    
+            transform = osr.CoordinateTransformation(srs, srsLatLong)
+                    
+            adfGeoTransform = dataset.GetGeoTransform(can_return_null = True)
+            if adfGeoTransform is None:
+                app.logger.error('GeoTransform is null from file %s', filename)
+                return 'GEOTRANSFORM IS NULL'    
+            
+            ul = ConvertToGeo(transform, adfGeoTransform, 0, 0) #upper left
+            ll = ConvertToGeo(transform, adfGeoTransform, 0, hDataset.RasterYSize) #lower left
+            ur = ConvertToGeo(transform, adfGeoTransform, hDataset.RasterXSize, 0) #upper right
+            lr = ConvertToGeo(transform, adfGeoTransform, hDataset.RasterXSize, hDataset.RasterYSize) #lower right
+            
+            app.logger.info('Coords (%s %s) (%s %s) (%s %s) (%s %s)', ul[0], ul[1], ll[0], ll[1], ur[0], ur[1], lr[0], lr[1])
+            
+            polystr = "SRID=4326;POLYGON(({0} {1}, {2} {3}, {4} {5}, {6} {7}, {0} {1}))".format(ll[0], ll[1], lr[0], lr[1], ur[0], ur[1], ul[0], ul[1])
+            
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
             conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
 
             cur = conn.cursor()
-            cur.execute("insert into public.processedimages (sceneid, band, contrast, sharpness, blocksize, filename) values (%s, %s, %s, %s, %s, %s);", (sceneid, band, contrast, sharpness, blocksize, filename))
+            cur.execute("insert into public.processedimages (sceneid, bounds, band, contrast, sharpness, blocksize, filename) values (%s, ST_GeographyFromText(%s), %s, %s, %s, %s);", (sceneid, polystr, band, contrast, sharpness, blocksize, filename))
             conn.commit()
             cur.close()
             conn.close()

@@ -96,5 +96,5 @@ CREATE TABLE public.processedimages
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE public.aviris
+ALTER TABLE public.processedimages
   OWNER TO "portal";
