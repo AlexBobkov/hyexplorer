@@ -252,6 +252,8 @@ def processed_upload(sceneid):
             filename = secure_filename(file.filename)
             file.save(os.path.join(processedfolder, filename))
             
+            ####################
+            
             try:
                 band = int(request.form['band'])
                 contrast = float(request.form['contrast'])
@@ -261,6 +263,8 @@ def processed_upload(sceneid):
                 return 'Failed to parse params'
             
             app.logger.info('Params %s %s %s %s', band, contrast, sharpness, blocksize)
+            
+            ####################
             
             dataset = gdal.Open(os.path.join(processedfolder, filename), gdal.GA_ReadOnly)
             if dataset is None:
@@ -290,19 +294,21 @@ def processed_upload(sceneid):
                 return 'GEOTRANSFORM IS NULL'    
             
             ul = ConvertToGeo(transform, adfGeoTransform, 0, 0) #upper left
-            ll = ConvertToGeo(transform, adfGeoTransform, 0, hDataset.RasterYSize) #lower left
-            ur = ConvertToGeo(transform, adfGeoTransform, hDataset.RasterXSize, 0) #upper right
-            lr = ConvertToGeo(transform, adfGeoTransform, hDataset.RasterXSize, hDataset.RasterYSize) #lower right
+            ll = ConvertToGeo(transform, adfGeoTransform, 0, dataset.RasterYSize) #lower left
+            ur = ConvertToGeo(transform, adfGeoTransform, dataset.RasterXSize, 0) #upper right
+            lr = ConvertToGeo(transform, adfGeoTransform, dataset.RasterXSize, dataset.RasterYSize) #lower right
             
-            app.logger.info('Coords (%s %s) (%s %s) (%s %s) (%s %s)', ul[0], ul[1], ll[0], ll[1], ur[0], ur[1], lr[0], lr[1])
+            polystr = "SRID=4326;POLYGON(({0:.12f} {1:.12f}, {2:.12f} {3:.12f}, {4:.12f} {5:.12f}, {6:.12f} {7:.12f}, {0:.12f} {1:.12f}))".format(ll[0], ll[1], lr[0], lr[1], ur[0], ur[1], ul[0], ul[1])
             
-            polystr = "SRID=4326;POLYGON(({0} {1}, {2} {3}, {4} {5}, {6} {7}, {0} {1}))".format(ll[0], ll[1], lr[0], lr[1], ur[0], ur[1], ul[0], ul[1])
+            app.logger.info(polystr)
+            
+            ####################
             
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
             conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
 
             cur = conn.cursor()
-            cur.execute("insert into public.processedimages (sceneid, bounds, band, contrast, sharpness, blocksize, filename) values (%s, ST_GeographyFromText(%s), %s, %s, %s, %s);", (sceneid, polystr, band, contrast, sharpness, blocksize, filename))
+            cur.execute("insert into public.processedimages (sceneid, bounds, band, contrast, sharpness, blocksize, filename) values (%s, ST_GeographyFromText(%s), %s, %s, %s, %s, %s);", (sceneid, polystr, band, contrast, sharpness, blocksize, filename))
             conn.commit()
             cur.close()
             conn.close()
