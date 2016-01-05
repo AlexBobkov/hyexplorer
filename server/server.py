@@ -17,7 +17,7 @@ SCENES_FOLDER = os.environ['GEOPORTAL_SCENES_FOLDER']
 #SCENES_EXTRACT_FOLDER = os.environ['GEOPORTAL_SCENES_EXTRACT_FOLDER']
 #SCENES_CLIPS_FOLDER = os.environ['GEOPORTAL_SCENES_CLIPS_FOLDER']
 
-ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'ZIP'])
+ALLOWED_EXTENSIONS = set(['jpg', 'jpeg', 'ZIP', 'TIF'])
 
 tempfile.tempdir = UPLOAD_FOLDER
 
@@ -169,7 +169,7 @@ def sceneclip(sceneid, minband, maxband):
         return 'NO FILE'
 
     extractfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid
-    clipsfolder = PUBLIC_FOLDER + "/Hyperion/scenes/clips" + sceneid
+    clipsfolder = PUBLIC_FOLDER + "/Hyperion/scenes/clips/" + sceneid
 
     if not os.path.exists(clipsfolder):
         os.makedirs(clipsfolder)
@@ -237,7 +237,7 @@ def processed_upload(sceneid):
         file = request.files['file']
         app.logger.info('File %s ', file.filename)
         
-        processedfolder = PUBLIC_FOLDER + "/Hyperion/scenes/processed" + sceneid
+        processedfolder = PUBLIC_FOLDER + "/Hyperion/scenes/processed/" + sceneid
         
         if not os.path.exists(processedfolder):
             os.makedirs(processedfolder)
@@ -245,6 +245,13 @@ def processed_upload(sceneid):
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(processedfolder, filename))
+            
+            contrast = request.form['contrast']
+            sharpness = request.form['sharpness']
+            blocksize = request.form['blocksize']
+            
+            app.logger.info('Params %s %s %s', contrast, sharpness, blocksize)
+            
 
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
             #conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
