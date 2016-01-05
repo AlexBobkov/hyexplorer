@@ -246,21 +246,24 @@ def processed_upload(sceneid):
             filename = secure_filename(file.filename)
             file.save(os.path.join(processedfolder, filename))
             
-            contrast = request.form['contrast']
-            sharpness = request.form['sharpness']
-            blocksize = request.form['blocksize']
+            try:
+                band = int(request.form['band'])
+                contrast = float(request.form['contrast'])
+                sharpness = float(request.form['sharpness'])
+                blocksize = int(request.form['blocksize'])
+            except ValueError:
+                return 'Failed to parse params'
             
-            app.logger.info('Params %s %s %s', contrast, sharpness, blocksize)
+            app.logger.info('Params %s %s %s %s', band, contrast, sharpness, blocksize)
             
-
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
-            #conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
+            conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
 
-            #cur = conn.cursor()
-            #cur.execute("update scenes set hasscene=TRUE where sceneid=%s;", (sceneid,))
-            #conn.commit()
-            #cur.close()
-            #conn.close()
+            cur = conn.cursor()
+            cur.execute("insert into public.processedimages (sceneid, band, contrast, sharpness, blocksize, filename) values (%s, %s, %s, %s, %s, %s);", (sceneid, band, contrast, sharpness, blocksize, filename))
+            conn.commit()
+            cur.close()
+            conn.close()
 
             app.logger.info('Processed is ready %s', sceneid)
 
