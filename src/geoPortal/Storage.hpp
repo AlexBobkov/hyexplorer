@@ -4,6 +4,7 @@
 #include "ClipInfo.hpp"
 
 #include <QString>
+#include <QDir>
 
 namespace portal
 {
@@ -17,7 +18,7 @@ namespace portal
         static QString sceneBandDir(const ScenePtr& scene, const ClipInfoPtr& clipInfo = ClipInfoPtr());
 
         static QString processedFilePath(const ScenePtr& scene, int band, const QString& processedId);
-        static QString processedFileDir(const ScenePtr& scene);
+        static QDir processedFileDir(const ScenePtr& scene);
         
         static QString tempPath(const QString& filename);
     };

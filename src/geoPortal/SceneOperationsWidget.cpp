@@ -16,6 +16,21 @@
 
 using namespace portal;
 
+namespace
+{
+    void openExplorer(const QString& path)
+    {
+        if (QFileInfo(path).isDir())
+        {
+            QDesktopServices::openUrl(QUrl(QString("file:///") + path.toLocal8Bit()));
+        }
+        else
+        {            
+            QProcess::startDetached(QString("explorer.exe /select,\"%0\"").arg(QDir::toNativeSeparators(path.toLocal8Bit())));
+        }
+    }
+}
+
 SceneOperationsWidget::SceneOperationsWidget(const DataManagerPtr& dataManager, QWidget* parent) :
 QWidget(parent),
 _dataManager(dataManager),
@@ -424,13 +439,13 @@ void SceneOperationsWidget::openFolder()
 {
     if (_ui.fullSizeRadioButton->isChecked())
     {
-        QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::sceneBandDir(_scene)));
+        openExplorer(Storage::sceneBandDir(_scene));
     }
     else
     {
         if (_dataManager->clipInfo())
         {
-            QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::sceneBandDir(_scene, _dataManager->clipInfo())));
+            openExplorer(Storage::sceneBandDir(_scene, _dataManager->clipInfo()));
         }
     }
 }
@@ -498,10 +513,18 @@ void SceneOperationsWidget::downloadProcessedFile()
 
     int row = view->currentIndex().row();    
     QString filename = model->record(row).value("filename").toString();
-    QString url = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/processed/%0/%1").arg(_scene->sceneId).arg(filename);
+    QString filepath = Storage::processedFileDir(_scene).filePath(filename);
 
-    qDebug() << "Row" << row << filename;
-    qDebug() << "Path" << url;
+    if (QFileInfo::exists(filepath))
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Файл уже получен"));
+
+        openExplorer(filepath);
+
+        return;
+    }
+
+    QUrl url = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/processed/%0/%1").arg(_scene->sceneId).arg(filename);
                 
     QNetworkReply* reply = _dataManager->networkAccessManager().get(QNetworkRequest(url));
     connect(reply, &QNetworkReply::finished, this, [reply, this]()
@@ -509,6 +532,7 @@ void SceneOperationsWidget::downloadProcessedFile()
         if (reply->error() != QNetworkReply::NoError)
         {
             qDebug() << "Error " << reply->error() << " " << reply->errorString();
+            QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Не удалось скачать файл. Ошибка %0 %1").arg(reply->error()).arg(reply->errorString()));
             return;
         }
 
@@ -516,10 +540,11 @@ void SceneOperationsWidget::downloadProcessedFile()
         if (data.isNull() || data.isEmpty())
         {
             qDebug() << "Reply is null or empty";
+            QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Не удалось скачать файл. Пустой ответ от сервера"));
             return;
         }
 
-        QString path = Storage::processedFileDir(_scene) + reply->url().fileName();
+        QString path = Storage::processedFileDir(_scene).filePath(reply->url().fileName());
 
         QFile localFile(path);
         localFile.open(QIODevice::WriteOnly);
@@ -528,6 +553,6 @@ void SceneOperationsWidget::downloadProcessedFile()
 
         QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Файл был успешно получен"));
 
-        QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::processedFileDir(_scene)));
+        openExplorer(path);
     });
 }
