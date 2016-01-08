@@ -186,6 +186,8 @@ void SceneOperationsWidget::onSceneDownloaded(const ScenePtr& scene, bool result
         _ui.openFolderButton->setEnabled(true);
 
         QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
+
+        openFolder();
     }
     else
     {
