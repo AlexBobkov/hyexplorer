@@ -439,13 +439,13 @@ void SceneOperationsWidget::openFolder()
 {
     if (_ui.fullSizeRadioButton->isChecked())
     {
-        openExplorer(Storage::sceneBandDir(_scene));
+        openExplorer(Storage::sceneBandDir(_scene).path());
     }
     else
     {
         if (_dataManager->clipInfo())
         {
-            openExplorer(Storage::sceneBandDir(_scene, _dataManager->clipInfo()));
+            openExplorer(Storage::sceneBandDir(_scene, _dataManager->clipInfo()).path());
         }
     }
 }
