@@ -108,7 +108,7 @@ def extract_bands(sceneid, minband, maxband):
 
     app.logger.info('Filepath %s is found', zipfilepath)
 
-    extractfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid
+    extractfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid + "/original"
 
     with ZipFile(zipfilepath) as zip:
         for i in range(minband, maxband + 1):
@@ -134,7 +134,7 @@ def scene(sceneid, minband, maxband):
     output = 'SUCCESS\n'
     for i in range(minband, maxband + 1):
         filename = sceneid[:23] + "B{0:0>3}_L1T.TIF".format(i)
-        output += 'http://virtualglobe.ru/geoportal/Hyperion/scenes/' + sceneid + '/' + filename + '\n'
+        output += 'http://virtualglobe.ru/geoportal/Hyperion/scenes/' + sceneid + '/original/' + filename + '\n'
 
     return output
 
@@ -168,8 +168,8 @@ def sceneclip(sceneid, minband, maxband):
         app.logger.error('ZIP is not found')
         return 'NO FILE'
 
-    extractfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid
-    clipsfolder = PUBLIC_FOLDER + "/Hyperion/scenes/clips/" + sceneid
+    extractfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid + "/original"
+    clipsfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid + "/clips"
 
     if not os.path.exists(clipsfolder):
         os.makedirs(clipsfolder)
@@ -225,7 +225,7 @@ def sceneclip(sceneid, minband, maxband):
 
         subprocess.call(["gdal_translate", "-projwin", '{0}'.format(left), '{0}'.format(up), '{0}'.format(right), '{0}'.format(down), inFilepath, outFilepath])
 
-        output += 'http://virtualglobe.ru/geoportal/Hyperion/scenes/clips/{0}/clip{1}/{2}\n'.format(sceneid, clipNum, outFilename)
+        output += 'http://virtualglobe.ru/geoportal/Hyperion/scenes/{0}/clips/clip{1}/{2}\n'.format(sceneid, clipNum, outFilename)
 
     return output
     
@@ -243,7 +243,7 @@ def processed_upload(sceneid):
         file = request.files['file']
         app.logger.info('File %s ', file.filename)
         
-        processedfolder = PUBLIC_FOLDER + "/Hyperion/scenes/processed/" + sceneid
+        processedfolder = PUBLIC_FOLDER + "/Hyperion/scenes/" + sceneid + "/processed"
         
         if not os.path.exists(processedfolder):
             os.makedirs(processedfolder)
