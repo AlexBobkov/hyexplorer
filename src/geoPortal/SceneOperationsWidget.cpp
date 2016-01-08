@@ -524,7 +524,7 @@ void SceneOperationsWidget::downloadProcessedFile()
         return;
     }
 
-    QUrl url = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/processed/%0/%1").arg(_scene->sceneId()).arg(filename);
+    QUrl url = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/%0/processed/%1").arg(_scene->sceneId()).arg(filename);
                 
     QNetworkReply* reply = _dataManager->networkAccessManager().get(QNetworkRequest(url));
     connect(reply, &QNetworkReply::finished, this, [reply, this]()
