@@ -7,6 +7,10 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QFileInfo>
+#include <QSqlQueryModel>
+#include <QTableView>
+#include <QSqlQuery>
+#include <QSqlRecord>
 
 using namespace portal;
 
@@ -25,7 +29,7 @@ SceneOperationsWidget::~SceneOperationsWidget()
 void SceneOperationsWidget::initUi()
 {
     _ui.setupUi(this);
-    
+
     QSettings settings;
     _ui.fromSpinBox->setValue(settings.value("SceneOperationsWidget/fromValue", 1).toInt());
     _ui.toSpinBox->setValue(settings.value("SceneOperationsWidget/toValue", 1).toInt());
@@ -42,20 +46,21 @@ void SceneOperationsWidget::initUi()
     _ui.bandDownloadGroupBox->setEnabled(false);
     _ui.bandOperationsGroupBox->setEnabled(false);
     _ui.processedTableButton->setEnabled(false);
-        
+
     connect(_ui.fromSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMinimumBandChanged(int)));
     connect(_ui.toSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMaximumBandChanged(int)));
     connect(_ui.globeBandSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onGlobeBandChanged(int)));
 
     connect(_ui.fragmentRadioButton, SIGNAL(toggled(bool)), this, SLOT(onFragmentRadioButtonToggled(bool)));
-        
+
     connect(_ui.selectFragmentButton, SIGNAL(toggled(bool)), this, SLOT(selectRectangle(bool)));
     connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
     connect(_ui.importButton, SIGNAL(clicked()), this, SLOT(importScene()));
     connect(_ui.processButton, SIGNAL(clicked()), this, SLOT(startImageCorrection()));
     connect(_ui.showOnGlobeButton, SIGNAL(clicked()), this, SLOT(showBandOnGlobe()));
     connect(_ui.openFolderButton, SIGNAL(clicked()), this, SLOT(openFolder()));
-        
+    connect(_ui.processedTableButton, SIGNAL(clicked()), this, SLOT(showTableWithProcessedFiles()));
+
     _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
 
     ClipInfoPtr clipInfo = _dataManager->clipInfo();
@@ -187,19 +192,19 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
         _ui.importButton->setVisible(false);
         _ui.bandDownloadGroupBox->setEnabled(true);
         _ui.bandOperationsGroupBox->setEnabled(true);
-        //_ui.processedTableButton->setEnabled(true);  
+        _ui.processedTableButton->setEnabled(true);  
     }
     else
     {
         if (scene->sceneUrl && scene->sceneUrl->size() > 0)
-        {            
+        {
             _ui.statusLabel->setText(QString::fromUtf8("Сцена отсутствует на нашем сервере, но вы можете <a href='%0'>скачать</a> сцену вручную").arg(*scene->sceneUrl));
         }
         else
         {
             _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере и не доступна для работы"));
         }
-        
+
         if (scene->sensor == "Hyperion" && *scene->processingLevel == "L1T Product Available")
         {
             _ui.importButton->setVisible(true);
@@ -260,7 +265,7 @@ void SceneOperationsWidget::onRectangleBoundsChanged(double d)
     clipInfo->setMaxBand(_ui.toSpinBox->value());
 
     _dataManager->setClipInfo(clipInfo);
-    
+
     emit rectangleChanged(b);
 }
 
@@ -290,7 +295,7 @@ void SceneOperationsWidget::startImageCorrection()
         QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Программа для коррекции изображений matlab/ImageCorrectionTool.exe не найдена"));
         return;
     }
-       
+
     QString filepath;
     if (_ui.fullSizeRadioButton->isChecked())
     {
@@ -308,7 +313,7 @@ void SceneOperationsWidget::startImageCorrection()
     }
 
     //------------------------------------
-    
+
     {
         QFile data("matlab/data.txt");
         data.open(QFile::WriteOnly);
@@ -341,7 +346,7 @@ void SceneOperationsWidget::startImageCorrection()
     qDebug() << "Image correction started";
 
     _ui.processButton->setEnabled(false);
-            
+
     QProcess* matlabProcess = new QProcess(this);
     matlabProcess->setWorkingDirectory("matlab");
 
@@ -370,7 +375,7 @@ void SceneOperationsWidget::onImageCorrectionFinished(int exitCode, QProcess::Ex
 {
     qDebug() << "Image correnction finished. Exit code" << exitCode << "exit status" << exitStatus;
 
-    QProcess* process = qobject_cast<QProcess*>(sender());    
+    QProcess* process = qobject_cast<QProcess*>(sender());
     process->deleteLater();
 
     if (!QFileInfo::exists(_proccessedOutputFilepath))
@@ -385,21 +390,13 @@ void SceneOperationsWidget::onImageCorrectionFinished(int exitCode, QProcess::Ex
         return;
     }
 
-    uploadProccessedFile();    
+    uploadProccessedFile();
 }
 
 void SceneOperationsWidget::uploadProccessedFile()
 {
     assert(!_proccessedOutputFilepath.isNull() && !_proccessedOutputFilepath.isEmpty());
     assert(QFileInfo::exists(_proccessedOutputFilepath));
-
-    //sceneid
-    //band
-    //bounds
-    //contrast
-    //sharpness
-    //blocksize
-    //filename
 
     emit uploadProcessedFileRequested(_processingScene, _proccessedOutputFilepath, _processingBand, 123.0, 45.0, 666);
 }
@@ -422,7 +419,7 @@ void SceneOperationsWidget::onProcessedFileUploaded(const ScenePtr& scene, bool 
 }
 
 void SceneOperationsWidget::openFolder()
-{  
+{
     if (_ui.fullSizeRadioButton->isChecked())
     {
         QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::sceneBandDir(_scene)));
@@ -446,4 +443,61 @@ void SceneOperationsWidget::showBandOnGlobe()
     {
         _dataManager->showScene(_scene, _ui.globeBandSpinBox->value(), _dataManager->clipInfo());
     }
+}
+
+void SceneOperationsWidget::showTableWithProcessedFiles()
+{
+    QDialog tableWindow;
+
+    QVBoxLayout* layout = new QVBoxLayout;
+    
+    QSqlQueryModel* model = new QSqlQueryModel(&tableWindow);
+    model->setQuery(QString("SELECT band, contrast, sharpness, blocksize, filename FROM public.processedimages where sceneid='%0'").arg(_scene->sceneId));    
+    model->setHeaderData(0, Qt::Horizontal, tr("Канал"));
+    model->setHeaderData(1, Qt::Horizontal, tr("Контраст"));
+    model->setHeaderData(2, Qt::Horizontal, tr("Резкость"));
+    model->setHeaderData(3, Qt::Horizontal, tr("Размер блока"));
+
+    QTableView* view = new QTableView(&tableWindow);    
+    view->setModel(model);
+    view->resizeColumnToContents(4);
+    layout->addWidget(view);
+        
+    QPushButton* button = new QPushButton(tr("Скачать"), &tableWindow);
+    button->setMaximumWidth(100);
+    layout->addWidget(button);
+    connect(button, SIGNAL(clicked()), this, SLOT(downloadProcessedFile()));
+
+    tableWindow.setLayout(layout);
+    tableWindow.setWindowTitle(tr("Обработанные файлы для сцены %0").arg(_scene->sceneId));
+    tableWindow.resize(600, 300);
+    tableWindow.exec();
+}
+
+void SceneOperationsWidget::downloadProcessedFile()
+{
+    QPushButton* button = qobject_cast<QPushButton*>(sender());
+    assert(button);
+
+    QDialog* tableWindow = qobject_cast<QDialog*>(button->parent());
+    assert(tableWindow);
+
+    QTableView* view = qobject_cast<QTableView*>(tableWindow->layout()->itemAt(0)->widget());
+    assert(view);
+        
+    QSqlQueryModel* model = qobject_cast<QSqlQueryModel*>(view->model());
+    assert(model);
+
+    if (!view->currentIndex().isValid())
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Выберите строчку в таблице"));
+        return;
+    }
+
+    int row = view->currentIndex().row();    
+    QString filename = model->record(row).value("filename").toString();
+    QString filepath = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/processed/%0/%1").arg(_scene->sceneId).arg(filename);
+
+    qDebug() << "Row" << row << filename;
+    qDebug() << "Path" << filepath;
 }

@@ -47,6 +47,8 @@ namespace portal
         void startImageCorrection();
         void openFolder();
         void showBandOnGlobe();
+        void showTableWithProcessedFiles();
+        void downloadProcessedFile();
 
         void onImageCorrectionError(QProcess::ProcessError error);
         void onImageCorrectionFinished(int exitCode, QProcess::ExitStatus exitStatus);
