@@ -3,7 +3,6 @@
 #include "DataManager.hpp"
 #include "Scene.hpp"
 
-#include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QProgressDialog>
@@ -53,9 +52,7 @@ namespace portal
         void downloadNextSceneBand(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
         
         DataManagerPtr _dataManager;
-
-        QNetworkAccessManager _networkManager;
-                
+                                
         QStringList _downloadPaths;
         int _downloadPathIndex;
 

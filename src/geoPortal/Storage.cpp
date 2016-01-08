@@ -107,6 +107,21 @@ QString Storage::processedFilePath(const ScenePtr& scene, int band, const QStrin
     return dataDir.filePath(folderName + outputFilename);
 }
 
+QString Storage::processedFileDir(const ScenePtr& scene)
+{
+    QSettings settings;
+    QString dataPath = settings.value("StoragePath").toString();
+
+    QDir dataDir(dataPath);
+    QString folderName = QString("Hyperion/scenes/%0/processed/").arg(scene->sceneId);
+    if (!dataDir.exists(folderName))
+    {
+        dataDir.mkpath(folderName);
+    }
+
+    return dataDir.filePath(folderName);
+}
+
 QString Storage::tempPath(const QString& filename)
 {
     QSettings settings;

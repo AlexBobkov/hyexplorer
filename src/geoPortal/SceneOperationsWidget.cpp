@@ -11,6 +11,8 @@
 #include <QTableView>
 #include <QSqlQuery>
 #include <QSqlRecord>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 
 using namespace portal;
 
@@ -496,8 +498,36 @@ void SceneOperationsWidget::downloadProcessedFile()
 
     int row = view->currentIndex().row();    
     QString filename = model->record(row).value("filename").toString();
-    QString filepath = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/processed/%0/%1").arg(_scene->sceneId).arg(filename);
+    QString url = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/processed/%0/%1").arg(_scene->sceneId).arg(filename);
 
     qDebug() << "Row" << row << filename;
-    qDebug() << "Path" << filepath;
+    qDebug() << "Path" << url;
+                
+    QNetworkReply* reply = _dataManager->networkAccessManager().get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, [reply, this]()
+    {
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            qDebug() << "Error " << reply->error() << " " << reply->errorString();
+            return;
+        }
+
+        QByteArray data = reply->readAll();
+        if (data.isNull() || data.isEmpty())
+        {
+            qDebug() << "Reply is null or empty";
+            return;
+        }
+
+        QString path = Storage::processedFileDir(_scene) + reply->url().fileName();
+
+        QFile localFile(path);
+        localFile.open(QIODevice::WriteOnly);
+        localFile.write(data);
+        localFile.close();
+
+        QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Файл был успешно получен"));
+
+        QDesktopServices::openUrl(QUrl(QString("file:///") + Storage::processedFileDir(_scene)));
+    });
 }

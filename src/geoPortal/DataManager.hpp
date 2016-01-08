@@ -9,6 +9,7 @@
 #include <osgEarthUtil/Sky>
 
 #include <QStringList>
+#include <QNetworkAccessManager>
 
 #include <boost/optional.hpp>
 
@@ -46,6 +47,8 @@ namespace portal
 
         void showScene(const ScenePtr& scene, int band, const ClipInfoPtr& clipInfo);
 
+        QNetworkAccessManager& networkAccessManager() { return _networkManager; }
+
     protected:
         DataManager(const DataManager&) = delete;
         DataManager& operator=(const DataManager&) = delete;
@@ -67,6 +70,8 @@ namespace portal
         std::map<QString, osgEarth::ImageLayerOptions> _coverageMap;
 
         osg::ref_ptr<osgEarth::ImageLayer> _sceneLayer;
+
+        QNetworkAccessManager _networkManager;
     };
 
     typedef std::shared_ptr<DataManager> DataManagerPtr;

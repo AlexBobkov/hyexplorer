@@ -18,8 +18,8 @@ _progressDialog(0),
 _longDownloadReply(0),
 _tempFile(0)
 {
-    connect(&_networkManager, SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
-    connect(&_networkManager, SIGNAL(authenticationRequired(QNetworkReply*, QAuthenticator*)), SLOT(onAuthenticationRequired(QNetworkReply*, QAuthenticator*)));    
+    connect(&dataManager->networkAccessManager(), SIGNAL(finished(QNetworkReply*)), SLOT(onFileDownloaded(QNetworkReply*)));
+    connect(&dataManager->networkAccessManager(), SIGNAL(authenticationRequired(QNetworkReply*, QAuthenticator*)), SLOT(onAuthenticationRequired(QNetworkReply*, QAuthenticator*)));    
 }
 
 DownloadManager::~DownloadManager()
@@ -45,7 +45,7 @@ void DownloadManager::importScene(const ScenePtr& scene)
 
     QString options = "username=AlexBobkov&password=1qaz2wsx";
     
-    QNetworkReply* reply = _networkManager.post(request, options.toLocal8Bit());
+    QNetworkReply* reply = _dataManager->networkAccessManager().post(request, options.toLocal8Bit());
 
     connect(reply, SIGNAL(sslErrors(QList<QSslError>)), reply, SLOT(ignoreSslErrors()));
 }
@@ -72,7 +72,7 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
             v.setValue(scene);
             request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
 
-            _networkManager.get(request);
+            _dataManager->networkAccessManager().get(request);
         }
     }
 }
@@ -96,7 +96,7 @@ void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxB
     v.setValue(scene);
     request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
 
-    _networkManager.get(request);
+    _dataManager->networkAccessManager().get(request);
 }
 
 void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int maxBand)
@@ -140,7 +140,7 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
     v2.setValue(_dataManager->clipInfo());
     request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2), v2);
 
-    _networkManager.get(request);
+    _dataManager->networkAccessManager().get(request);
 }
 
 void DownloadManager::uploadProcessedFile(const ScenePtr& scene, const QString& filepath, int band, double contrast, double sharpness, int blocksize)
@@ -205,7 +205,7 @@ void DownloadManager::uploadProcessedFile(const ScenePtr& scene, const QString& 
     v.setValue(scene);
     request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
 
-    QNetworkReply* uploadReply = _networkManager.post(request, multiPart);
+    QNetworkReply* uploadReply = _dataManager->networkAccessManager().post(request, multiPart);
 
     multiPart->setParent(uploadReply); // delete the multiPart with the reply
 
@@ -428,7 +428,7 @@ void DownloadManager::processImportLoginReply(const ScenePtr& scene, QNetworkRep
     v.setValue(scene);
     request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
 
-    _networkManager.get(request);
+    _dataManager->networkAccessManager().get(request);
 }
 
 void DownloadManager::processImportFirstReply(const ScenePtr& scene, QNetworkReply* reply)
@@ -471,7 +471,7 @@ void DownloadManager::processImportFirstReply(const ScenePtr& scene, QNetworkRep
     v.setValue(scene);
     request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
 
-    _longDownloadReply = _networkManager.get(request);
+    _longDownloadReply = _dataManager->networkAccessManager().get(request);
 
     connect(_longDownloadReply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(onDownloadProgress(qint64, qint64)));
     connect(_longDownloadReply, SIGNAL(readyRead()), this, SLOT(readDataChunk()));
@@ -561,7 +561,7 @@ void DownloadManager::processImportRedirectReply(const ScenePtr& scene, QNetwork
     v.setValue(scene);
     request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
 
-    QNetworkReply* uploadReply = _networkManager.post(request, multiPart);
+    QNetworkReply* uploadReply = _dataManager->networkAccessManager().post(request, multiPart);
 
     multiPart->setParent(uploadReply); // delete the multiPart with the reply
 
@@ -644,7 +644,7 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene, const ClipInf
             request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2), v2);
         }
 
-        _networkManager.get(request);
+        _dataManager->networkAccessManager().get(request);
     }
 }
 
