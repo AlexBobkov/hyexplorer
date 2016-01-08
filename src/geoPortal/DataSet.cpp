@@ -59,7 +59,7 @@ void DataSet::selectScenesUnderPointer(const osgEarth::GeoPoint& point)
         throw std::runtime_error("DataSet is not initialized");
     }
 
-    std::set<std::size_t> ids;
+    std::set<int> ids;
 
     for (const auto& s : _sensors)
     {
@@ -83,7 +83,7 @@ bool DataSet::isSceneUnderPointer(const ScenePtr& scene) const
         return false;
     }
 
-    if (_sceneIdsUnderPointer.find(scene->id) != _sceneIdsUnderPointer.end())
+    if (_sceneIdsUnderPointer.find(scene->id()) != _sceneIdsUnderPointer.end())
     {
         return true;
     }
@@ -107,7 +107,7 @@ osg::ref_ptr<osgEarth::ModelLayer> DataSet::getOrCreateLayer()
 
     for (const auto& s : _scenes)
     {
-        featureSource->getFeatures().push_back(new Feature(s->geometry, _srs, Style(), s->id));
+        featureSource->getFeatures().push_back(new Feature(s->geometry(), _srs, Style(), s->id()));
     }
 
     Style style;

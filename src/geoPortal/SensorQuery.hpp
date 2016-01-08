@@ -37,11 +37,9 @@ namespace portal
         /**
         Выполняет запрос к БД, запрашивает какие сцены содержат данную точку
         */
-        virtual void selectScenesUnderPointer(std::set<std::size_t>& ids, const osgEarth::GeoPoint& point) = 0;
+        virtual void selectScenesUnderPointer(std::set<int>& ids, const osgEarth::GeoPoint& point) = 0;
 
     protected:
-        bool parseCommonAttributes(const ScenePtr& scene, const QSqlQuery& query, int& column) const;
-
         QString _fullCondition;
     };
 
@@ -51,13 +49,13 @@ namespace portal
     {
         void selectScenes(std::vector<ScenePtr>& scenes, const ProgressCallbackType& cb = ProgressCallbackType()) override;
 
-        void selectScenesUnderPointer(std::set<std::size_t>& ids, const osgEarth::GeoPoint& point) override;
+        void selectScenesUnderPointer(std::set<int>& ids, const osgEarth::GeoPoint& point) override;
     };
 
     class AvirisQuery : public SensorQuery
     {
         void selectScenes(std::vector<ScenePtr>& scenes, const ProgressCallbackType& cb = ProgressCallbackType()) override;
 
-        void selectScenesUnderPointer(std::set<std::size_t>& ids, const osgEarth::GeoPoint& point) override;
+        void selectScenesUnderPointer(std::set<int>& ids, const osgEarth::GeoPoint& point) override;
     };
 }

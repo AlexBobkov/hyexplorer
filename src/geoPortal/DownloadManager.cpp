@@ -28,7 +28,7 @@ DownloadManager::~DownloadManager()
 
 void DownloadManager::importScene(const ScenePtr& scene)
 {
-    if (scene->hasScene)
+    if (scene->hasScene())
     {
         qDebug() << "Scene is already on the server";
         return;
@@ -52,9 +52,9 @@ void DownloadManager::importScene(const ScenePtr& scene)
 
 void DownloadManager::downloadOverview(const ScenePtr& scene)
 {
-    if (scene->hasOverview)
+    if (scene->hasOverview())
     {
-        QString path = Storage::overviewPath(scene, *scene->overviewName);
+        QString path = Storage::overviewPath(scene, scene->overviewName());
 
         if (QFile::exists(path))
         {
@@ -64,7 +64,7 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
         }
         else
         {
-            QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportal/%0/overviews/%1").arg(scene->sensor).arg(*scene->overviewName));
+            QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportal/%0/overviews/%1").arg(scene->sensor()).arg(scene->overviewName()));
 
             request.setAttribute(QNetworkRequest::User, QString("Overview"));
 
@@ -82,14 +82,14 @@ void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxB
     //Нельзя скачивать одновременно 2 сцены
     if (_downloadPaths.size() > 0)
     {
-        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не может быть получена, пока происходит получение другой сцены").arg(scene->sceneId));
+        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не может быть получена, пока происходит получение другой сцены").arg(scene->sceneId()));
         return;
     }
 
     //_isClip = false;
 
-    //QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0/%1/%2").arg(scene->sceneId).arg(minBand).arg(maxBand));
-    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2").arg(scene->sceneId).arg(minBand).arg(maxBand));
+    //QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0/%1/%2").arg(scene->sceneId()).arg(minBand).arg(maxBand));
+    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2").arg(scene->sceneId()).arg(minBand).arg(maxBand));
     request.setAttribute(QNetworkRequest::User, QString("Scene"));
 
     QVariant v;
@@ -104,7 +104,7 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
     //Нельзя скачивать одновременно 2 сцены
     if (_downloadPaths.size() > 0)
     {
-        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не может быть получена, пока происходит получение другой сцены").arg(scene->sceneId));
+        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не может быть получена, пока происходит получение другой сцены").arg(scene->sceneId()));
         return;
     }
 
@@ -123,7 +123,7 @@ void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int 
     osgEarth::Bounds b = _dataManager->clipInfo()->bounds();
         
     QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
-                            .arg(scene->sceneId)
+                            .arg(scene->sceneId())
                             .arg(minBand)
                             .arg(maxBand)
                             .arg(b.xMin(), 0, 'f', 10)
@@ -198,7 +198,7 @@ void DownloadManager::uploadProcessedFile(const ScenePtr& scene, const QString& 
 
     //------------------------------------
 
-    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/processed/%0").arg(scene->sceneId));
+    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/processed/%0").arg(scene->sceneId()));
     request.setAttribute(QNetworkRequest::User, QString("UploadProcessed"));
 
     QVariant v;
@@ -297,7 +297,7 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* re
 
         _downloadPaths.clear();
 
-        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
@@ -308,7 +308,7 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* re
 
         _downloadPaths.clear();
 
-        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId));
+        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId()));
         return;
     }
 
@@ -316,7 +316,7 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* re
     {
         _downloadPaths.clear();
 
-        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не найдена на сервере").arg(scene->sceneId));
+        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не найдена на сервере").arg(scene->sceneId()));
         return;
     }
 
@@ -342,7 +342,7 @@ void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* re
 
     if (_downloadPaths.size() == 0)
     {
-        emit sceneDownloadFinished(scene, false, tr("Каналы для сцены %0 не найдены").arg(scene->sceneId));
+        emit sceneDownloadFinished(scene, false, tr("Каналы для сцены %0 не найдены").arg(scene->sceneId()));
         return;
     }
 
@@ -358,7 +358,7 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
 
         _downloadPaths.clear();
 
-        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
@@ -369,7 +369,7 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
 
         _downloadPaths.clear();
 
-        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId));
+        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId()));
         return;
     }
 
@@ -391,7 +391,7 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
 
         _downloadPaths.clear();
 
-        emit sceneDownloadFinished(scene, false, tr("Не удается открыть файл для записи канала сцены %0 %1").arg(scene->sceneId).arg(path));
+        emit sceneDownloadFinished(scene, false, tr("Не удается открыть файл для записи канала сцены %0 %1").arg(scene->sceneId()).arg(path));
         return;
     }
     localFile.write(data);
@@ -402,7 +402,7 @@ void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply
     {
         _downloadPaths.clear();
 
-        emit sceneDownloadFinished(scene, true, tr("Сцена %0 успешно получена").arg(scene->sceneId));
+        emit sceneDownloadFinished(scene, true, tr("Сцена %0 успешно получена").arg(scene->sceneId()));
         return;
     }
 
@@ -415,12 +415,12 @@ void DownloadManager::processImportLoginReply(const ScenePtr& scene, QNetworkRep
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
 
-        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
-    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/L1T/EE").arg(scene->sceneId));
-    //QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/GRB/EE").arg(scene->sceneId));
+    QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/L1T/EE").arg(scene->sceneId()));
+    //QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/GRB/EE").arg(scene->sceneId()));
 
     request.setAttribute(QNetworkRequest::User, QString("UsgsFirst"));
 
@@ -437,7 +437,7 @@ void DownloadManager::processImportFirstReply(const ScenePtr& scene, QNetworkRep
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
         
-        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
@@ -446,7 +446,7 @@ void DownloadManager::processImportFirstReply(const ScenePtr& scene, QNetworkRep
     {
         qDebug() << "Wrong status code " << statusCode;
 
-        emit importFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: неверный код ответа %1").arg(scene->sceneId).arg(statusCode));
+        emit importFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: неверный код ответа %1").arg(scene->sceneId()).arg(statusCode));
         return;
     }
 
@@ -455,7 +455,7 @@ void DownloadManager::processImportFirstReply(const ScenePtr& scene, QNetworkRep
     {
         qDebug() << "Wrong url " << redirectUrl;
 
-        emit importFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: ошибка перенаправления").arg(scene->sceneId));
+        emit importFinished(scene, true, tr("Невозможно получить сцену %0 с сервера USGS: ошибка перенаправления").arg(scene->sceneId()));
         return;
     }
 
@@ -483,7 +483,7 @@ void DownloadManager::processImportFirstReply(const ScenePtr& scene, QNetworkRep
     {
         qDebug() << "Failed to open file ";
 
-        emit importFinished(scene, true, tr("Невозможно создать файл для записи сцены %0 с сервера USGS").arg(scene->sceneId));
+        emit importFinished(scene, true, tr("Невозможно создать файл для записи сцены %0 с сервера USGS").arg(scene->sceneId()));
         return;
     }
 
@@ -499,7 +499,7 @@ void DownloadManager::processImportFirstReply(const ScenePtr& scene, QNetworkRep
         connect(_progressDialog, SIGNAL(canceled()), this, SLOT(cancelDownload()));
     }
 
-    _progressDialog->setLabelText(tr("Скачивание сцены %0 с сервера USGS").arg(scene->sceneId));
+    _progressDialog->setLabelText(tr("Скачивание сцены %0 с сервера USGS").arg(scene->sceneId()));
     _progressDialog->reset();
     _progressDialog->show();
 }
@@ -517,7 +517,7 @@ void DownloadManager::processImportRedirectReply(const ScenePtr& scene, QNetwork
         delete _tempFile;
         _tempFile = 0;
 
-        emit importFinished(scene, false, tr("Получение сцены %0 отменено пользователем").arg(scene->sceneId));
+        emit importFinished(scene, false, tr("Получение сцены %0 отменено пользователем").arg(scene->sceneId()));
         return;
     }
     else if (reply->error() != QNetworkReply::NoError)
@@ -527,7 +527,7 @@ void DownloadManager::processImportRedirectReply(const ScenePtr& scene, QNetwork
         delete _tempFile;
         _tempFile = 0;
 
-        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit importFinished(scene, false, tr("При получении сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
@@ -553,7 +553,7 @@ void DownloadManager::processImportRedirectReply(const ScenePtr& scene, QNetwork
 
     multiPart->append(imagePart);
 
-    QNetworkRequest request(QString("http://virtualglobe.ru/geoportalapi/scene/%0").arg(scene->sceneId));
+    QNetworkRequest request(QString("http://virtualglobe.ru/geoportalapi/scene/%0").arg(scene->sceneId()));
 
     request.setAttribute(QNetworkRequest::User, QString("Upload"));
 
@@ -569,7 +569,7 @@ void DownloadManager::processImportRedirectReply(const ScenePtr& scene, QNetwork
 
     //-----------------------------------
 
-    _progressDialog->setLabelText(tr("Загрузка сцены %0 на сервер").arg(scene->sceneId));
+    _progressDialog->setLabelText(tr("Загрузка сцены %0 на сервер").arg(scene->sceneId()));
     _progressDialog->show();
 }
 
@@ -581,18 +581,18 @@ void DownloadManager::processUploadReply(const ScenePtr& scene, QNetworkReply* r
     {
         qDebug() << "Cancelled";
         
-        emit importFinished(scene, false, tr("Загрузка сцены %0 на сервер отменена пользователем").arg(scene->sceneId));
+        emit importFinished(scene, false, tr("Загрузка сцены %0 на сервер отменена пользователем").arg(scene->sceneId()));
         return;
     }
     else if (reply->error() != QNetworkReply::NoError)
     {
         qDebug() << "Error " << reply->error() << " " << reply->errorString();
         
-        emit importFinished(scene, false, tr("При загрузке сцены %0 на сервер произошла ошибка %1 %2").arg(scene->sceneId).arg(reply->error()).arg(reply->errorString()));
+        emit importFinished(scene, false, tr("При загрузке сцены %0 на сервер произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
         return;
     }
 
-    emit importFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS и загружена на наш сервер").arg(scene->sceneId));
+    emit importFinished(scene, true, tr("Сцена %0 успешно получена с сервера USGS и загружена на наш сервер").arg(scene->sceneId()));
 }
 
 void DownloadManager::processUploadProcessedReply(const ScenePtr& scene, QNetworkReply* reply)
@@ -623,7 +623,7 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene, const ClipInf
         if (_downloadPathIndex >= _downloadPaths.size())
         {
             _downloadPaths.clear();
-            emit sceneDownloadFinished(scene, true, tr("Сцена %0 успешно получена").arg(scene->sceneId));
+            emit sceneDownloadFinished(scene, true, tr("Сцена %0 успешно получена").arg(scene->sceneId()));
             return;
         }
 

@@ -34,64 +34,6 @@ void SensorQuery::addCondition(const QString& str)
     _fullCondition += " AND " + str;
 }
 
-bool SensorQuery::parseCommonAttributes(const ScenePtr& scene, const QSqlQuery& query, int& c) const
-{
-    c = 0;
-    scene->id = query.value(c).toInt();
-
-    c++;
-    scene->sensor = query.value(c).toString();
-
-    c++;
-    scene->sceneId = query.value(c).toString();
-
-    c++;
-    if (query.value(c).isValid())
-    {
-        scene->sceneTime = query.value(c).toDateTime();
-    }
-
-    c++;
-    scene->pixelSize = query.value(c).toDouble();
-
-    c++;
-    QString polygonStr = query.value(c).toString();
-    
-    scene->geometry = GeometryUtils::geometryFromWKT(polygonStr.toUtf8().constData());
-
-    c++;
-    if (query.value(c).isValid())
-    {
-        scene->sunAzimuth = query.value(c).toDouble();
-    }
-
-    c++;
-    if (query.value(c).isValid())
-    {
-        scene->sunElevation = query.value(c).toDouble();
-    }
-
-    c++;
-    scene->hasOverview = query.value(c).toBool();
-
-    c++;
-    scene->hasScene = query.value(c).toBool();
-
-    c++;
-    if (query.value(c).isValid())
-    {
-        scene->overviewName = query.value(c).toString();
-    }
-
-    c++;
-    if (query.value(c).isValid())
-    {
-        scene->sceneUrl = query.value(c).toString();
-    }
-
-    return true;
-}
-
 //==============================================================
 
 void HyperionQuery::selectScenes(std::vector<ScenePtr>& scenes, const ProgressCallbackType& cb)
@@ -120,76 +62,26 @@ void HyperionQuery::selectScenes(std::vector<ScenePtr>& scenes, const ProgressCa
 
     qDebug() << "Size " << query.size();
 
+    QStringList columns;
+    columns << "ogc_fid" << "sensor" << "sceneid" << "scenetime" << "pixelsize" << "bounds" << "sunazimuth" << "sunelevation" << "hasoverview" << "hasscene" << "overviewname" << "sceneurl" << "orbitpath" << "orbitrow" << "targetpath" << "targetrow" << "processinglevel" << "satelliteinclination" << "lookangle" << "cloudmin" << "cloudmax";
+
     while (query.next())
     {
         ScenePtr scene = std::make_shared<Scene>();
 
-        int c = 0;
-        
-        if (!parseCommonAttributes(scene, query, c))
+        for (int i = 0; i < columns.size(); i++)
         {
-            continue;
-        }
-                
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->orbitPath = query.value(c).toInt();
+            scene->setAttrib(columns[i], query.value(i));
         }
 
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->orbitRow = query.value(c).toInt();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->targetPath = query.value(c).toInt();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->targetRow = query.value(c).toInt();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->processingLevel = query.value(c).toString();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->inclination = query.value(c).toDouble();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->lookAngle = query.value(c).toDouble();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->cloundMin = query.value(c).toInt();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->cloundMax = query.value(c).toInt();
-        }
+        QString polygonStr = scene->attrib("bounds").toString();
+        scene->setGeometry(GeometryUtils::geometryFromWKT(polygonStr.toUtf8().constData()));
 
         scenes.push_back(scene);
     }
 }
 
-void HyperionQuery::selectScenesUnderPointer(std::set<std::size_t>& ids, const osgEarth::GeoPoint& point)
+void HyperionQuery::selectScenesUnderPointer(std::set<int>& ids, const osgEarth::GeoPoint& point)
 {
     QString baseStr = "SELECT scenes.ogc_fid FROM scenes INNER JOIN hyperion ON (scenes.ogc_fid = hyperion.ogc_fid)";
 
@@ -242,95 +134,26 @@ void AvirisQuery::selectScenes(std::vector<ScenePtr>& scenes, const ProgressCall
         return;
     }
 
+    QStringList columns;
+    columns << "ogc_fid" << "sensor" << "sceneid" << "scenetime" << "pixelsize" << "bounds" << "sunazimuth" << "sunelevation" << "hasoverview" << "hasscene" << "overviewname" << "sceneurl" << "sitename" << "comments" << "investigator" << "scenerotation" << "tape" << "geover" << "rdnver" << "meansceneelev" << "minsceneelev" << "maxsceneelev" << "flight" << "run";
+
     while (query.next())
     {
         ScenePtr scene = std::make_shared<Scene>();
 
-        int c = 0;
-
-        if (!parseCommonAttributes(scene, query, c))
+        for (int i = 0; i < columns.size(); i++)
         {
-            continue;
+            scene->setAttrib(columns[i], query.value(i));
         }
 
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->sitename = query.value(c).toString();
-        }
+        QString polygonStr = scene->attrib("bounds").toString();
+        scene->setGeometry(GeometryUtils::geometryFromWKT(polygonStr.toUtf8().constData()));
 
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->comments = query.value(c).toString();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->investigator = query.value(c).toString();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->scenerotation = query.value(c).toDouble();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->tape = query.value(c).toString();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->geover = query.value(c).toString();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->rdnver = query.value(c).toString();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->meansceneelev = query.value(c).toDouble();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->minsceneelev = query.value(c).toDouble();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->maxsceneelev = query.value(c).toDouble();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->flight = query.value(c).toInt();
-        }
-
-        c++;
-        if (query.value(c).isValid())
-        {
-            scene->run = query.value(c).toInt();
-        }
-
-        scenes.push_back(scene);
-        //_featureSource->getFeatures().push_back(scene->feature);
+        scenes.push_back(scene);        
     }
 }
 
-void AvirisQuery::selectScenesUnderPointer(std::set<std::size_t>& ids, const osgEarth::GeoPoint& point)
+void AvirisQuery::selectScenesUnderPointer(std::set<int>& ids, const osgEarth::GeoPoint& point)
 {
     QString baseStr = "SELECT scenes.ogc_fid FROM scenes INNER JOIN aviris ON (scenes.ogc_fid = aviris.ogc_fid)";
 

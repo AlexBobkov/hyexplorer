@@ -159,7 +159,7 @@ void SceneOperationsWidget::download()
     {
         if (_dataManager->clipInfo())
         {
-            if (_dataManager->clipInfo()->bounds().intersects(_scene->geometry->getBounds()))
+            if (_dataManager->clipInfo()->bounds().intersects(_scene->geometry()->getBounds()))
             {
                 _ui.downloadButton->setEnabled(false);
 
@@ -202,7 +202,7 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
 
     _scene = scene;
 
-    if (scene->hasScene)
+    if (scene->hasScene())
     {
         _ui.statusLabel->setText(tr("Сцена находится на нашем сервере и доступна для работы"));
 
@@ -213,16 +213,16 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
     }
     else
     {
-        if (scene->sceneUrl && scene->sceneUrl->size() > 0)
+        if (!scene->sceneUrl().isNull() && !scene->sceneUrl().isEmpty())
         {
-            _ui.statusLabel->setText(QString::fromUtf8("Сцена отсутствует на нашем сервере, но вы можете <a href='%0'>скачать</a> сцену вручную").arg(*scene->sceneUrl));
+            _ui.statusLabel->setText(QString::fromUtf8("Сцена отсутствует на нашем сервере, но вы можете <a href='%0'>скачать</a> сцену вручную").arg(scene->sceneUrl()));
         }
         else
         {
             _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере и не доступна для работы"));
         }
 
-        if (scene->sensor == "Hyperion" && *scene->processingLevel == "L1T Product Available")
+        if (scene->sensor() == "Hyperion" && scene->attrib("processinglevel") == "L1T Product Available")
         {
             _ui.importButton->setVisible(true);
         }
@@ -469,7 +469,7 @@ void SceneOperationsWidget::showTableWithProcessedFiles()
     QVBoxLayout* layout = new QVBoxLayout;
     
     QSqlQueryModel* model = new QSqlQueryModel(&tableWindow);
-    model->setQuery(QString("SELECT band, contrast, sharpness, blocksize, filename FROM public.processedimages where sceneid='%0'").arg(_scene->sceneId));    
+    model->setQuery(QString("SELECT band, contrast, sharpness, blocksize, filename FROM public.processedimages where sceneid='%0'").arg(_scene->sceneId()));    
     model->setHeaderData(0, Qt::Horizontal, tr("Канал"));
     model->setHeaderData(1, Qt::Horizontal, tr("Контраст"));
     model->setHeaderData(2, Qt::Horizontal, tr("Резкость"));
@@ -486,7 +486,7 @@ void SceneOperationsWidget::showTableWithProcessedFiles()
     connect(button, SIGNAL(clicked()), this, SLOT(downloadProcessedFile()));
 
     tableWindow.setLayout(layout);
-    tableWindow.setWindowTitle(tr("Обработанные файлы для сцены %0").arg(_scene->sceneId));
+    tableWindow.setWindowTitle(tr("Обработанные файлы для сцены %0").arg(_scene->sceneId()));
     tableWindow.resize(600, 300);
     tableWindow.exec();
 }
@@ -524,7 +524,7 @@ void SceneOperationsWidget::downloadProcessedFile()
         return;
     }
 
-    QUrl url = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/processed/%0/%1").arg(_scene->sceneId).arg(filename);
+    QUrl url = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/processed/%0/%1").arg(_scene->sceneId()).arg(filename);
                 
     QNetworkReply* reply = _dataManager->networkAccessManager().get(QNetworkRequest(url));
     connect(reply, &QNetworkReply::finished, this, [reply, this]()

@@ -877,7 +877,7 @@ void MainWindow::finishImport(const ScenePtr& scene, bool result, const QString&
 
     if (result)
     {
-        scene->hasScene = true;
+        scene->setSceneExistence(true);
 
         QMessageBox::information(qApp->activeWindow(), tr("Cцена получена"), message);
     }

@@ -61,7 +61,7 @@ namespace portal
         std::vector<SensorQueryPtr> _sensors;
 
         std::vector<ScenePtr> _scenes;
-        std::set<std::size_t> _sceneIdsUnderPointer;
+        std::set<int> _sceneIdsUnderPointer;
 
         osg::ref_ptr<osgEarth::SpatialReference> _srs;
         osg::ref_ptr<osgEarth::ModelLayer> _layer;        

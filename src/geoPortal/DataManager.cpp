@@ -164,7 +164,7 @@ void DataManager::zoomToScene(const ScenePtr& scene)
         return;
     }
 
-    osg::Vec3d center = scene->geometry->getBounds().center();//(scene->neCorner + scene->nwCorner + scene->seCorner + scene->swCorner) * 0.25;
+    osg::Vec3d center = scene->geometry()->getBounds().center();//(scene->neCorner + scene->nwCorner + scene->seCorner + scene->swCorner) * 0.25;
 
     osgEarth::Viewpoint viewpoint;
     viewpoint.focalPoint() = GeoPoint(_mapNode->getMapSRS(), center.x(), center.y(), 0.0, osgEarth::ALTMODE_ABSOLUTE);
@@ -244,15 +244,15 @@ void DataManager::showOverview(const ScenePtr& scene, const QString& filepath)
         _overlayNode = nullptr;
     }
 
-    if (scene->geometry->getType() == Geometry::TYPE_POLYGON && scene->geometry->size() >= 4)
+    if (scene->geometry()->getType() == Geometry::TYPE_POLYGON && scene->geometry()->size() >= 4)
     {
         osg::Image* image = osgDB::readImageFile(filepath.toLocal8Bit().constData());
         if (image)
         {
-            osg::Vec3d swCorner = scene->geometry->at(3);
-            osg::Vec3d seCorner = scene->geometry->at(0);
-            osg::Vec3d neCorner = scene->geometry->at(1);
-            osg::Vec3d nwCorner = scene->geometry->at(2);
+            osg::Vec3d swCorner = scene->geometry()->at(3);
+            osg::Vec3d seCorner = scene->geometry()->at(0);
+            osg::Vec3d neCorner = scene->geometry()->at(1);
+            osg::Vec3d nwCorner = scene->geometry()->at(2);
 
             ImageOverlay* imageOverlay = new ImageOverlay(_mapNode, image);
             imageOverlay->setLowerLeft(swCorner.x(), swCorner.y());
@@ -296,7 +296,7 @@ void DataManager::showScene(const ScenePtr& scene, int band, const ClipInfoPtr& 
         _mapNode->getMap()->removeImageLayer(_sceneLayer);
     }
 
-    _sceneLayer = new ImageLayer(scene->sceneId.toUtf8().constData(), imageOpt);
+    _sceneLayer = new ImageLayer(scene->sceneId().toUtf8().constData(), imageOpt);
     _mapNode->getMap()->addImageLayer(_sceneLayer);
 
     if (_overlayNode)

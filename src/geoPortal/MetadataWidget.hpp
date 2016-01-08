@@ -37,41 +37,7 @@ namespace portal
         QtAbstractPropertyBrowser* _browser;
         QtVariantPropertyManager* _variantManager;
 
-        QtVariantProperty* _sceneidProp;
-        QtVariantProperty* _datetimeProp;
-        QtVariantProperty* _pixelSizeProp;
-        QtVariantProperty* _sunAzimuthProp;
-        QtVariantProperty* _sunElevationProp;        
-        
-        //-- Hyperion
-
-        QtVariantProperty* _cloudnessProp;
-        QtVariantProperty* _orbitPathProp;
-        QtVariantProperty* _orbitRowProp;
-        QtVariantProperty* _targetPathProp;
-        QtVariantProperty* _targetRowProp;
-        QtVariantProperty* _processingLevelProp;        
-        QtVariantProperty* _inclinationProp;
-        QtVariantProperty* _lookAngleProp;
-
-        //-- AVIRIS
-
-        QtVariantProperty* _sitenameProp;
-        QtVariantProperty* _commentsProp;
-        QtVariantProperty* _investigatorProp;
-        QtVariantProperty* _scenerotationProp;
-        QtVariantProperty* _tapeProp;
-        QtVariantProperty* _geoverProp;
-        QtVariantProperty* _rdnverProp;
-        QtVariantProperty* _meanSceneElevProp;
-        QtVariantProperty* _minSceneElevProp;
-        QtVariantProperty* _maxSceneElevProp;
-        QtVariantProperty* _flightProp;
-        QtVariantProperty* _runProp;
-
-        //QLabel* _overviewDownloadLabel;
-        //QLabel* _sceneDownloadLabel;
-                                
-        //DataManagerPtr _dataManager; //Возможно он здесь не нужен
+        std::map<QString, QtVariantProperty*> _props;
+        std::map<QString, QString> _translations;
     };
 }

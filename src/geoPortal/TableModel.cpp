@@ -33,16 +33,13 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
     {
         if (index.column() == 0)
         {
-            return _dataset->scenes()[index.row()]->sceneId;
+            return _dataset->scenes()[index.row()]->sceneId();
         }
         else if (index.column() == 1)
         {
-            return _dataset->scenes()[index.row()]->sceneTime.date().toString(Qt::ISODate);
+            QVariant datatime = _dataset->scenes()[index.row()]->attrib("scenetime");
+            return datatime.toDateTime().date().toString(Qt::ISODate);
         }
-        //else if (index.column() == 2 && _dataset->scenes()[index.column()]->cloundMax)
-        //{
-        //    return _dataset->scenes()[index.row()]->cloundMax.get();
-        //}
 
         return QVariant();
     }
@@ -82,10 +79,6 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
         {
             return tr("Дата");
         }
-        //else if (section == 2)
-        //{
-        //    return tr("Макс. облачность");
-        //}
         
         return QVariant();
     }
