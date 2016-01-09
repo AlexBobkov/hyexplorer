@@ -5,6 +5,8 @@ import os.path
 import psycopg2
 import subprocess
 import tempfile
+import random
+import string
 from osgeo import gdal
 from osgeo import osr
 from zipfile import ZipFile
@@ -174,8 +176,11 @@ def sceneclip(sceneid, minband, maxband):
     if not os.path.exists(clipsfolder):
         os.makedirs(clipsfolder)
 
-    clipNum = len(os.listdir(clipsfolder)) #Количество клипов для этой сцены
-    clipsfolder += "/clip%d" % clipNum
+    #clipNum = len(os.listdir(clipsfolder)) #Количество клипов для этой сцены    
+    alphabet = string.letters + string.digits
+    clipNum = ''.join(random.choice(alphabet) for i in range(10))
+    
+    clipsfolder += "/clip%s" % clipNum
 
     if not os.path.exists(clipsfolder):
         os.makedirs(clipsfolder)
