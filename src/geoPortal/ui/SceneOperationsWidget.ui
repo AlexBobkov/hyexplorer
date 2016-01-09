@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="statusLabel">
      <property name="text">
-      <string>Статус сцены</string>
+      <string>Выберите сцену</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -136,6 +136,9 @@
            <property name="singleStep">
             <double>0.100000000000000</double>
            </property>
+           <property name="value">
+            <double>10.000000000000000</double>
+           </property>
           </widget>
          </item>
          <item row="4" column="0" colspan="2">
@@ -154,6 +157,9 @@
            </property>
            <property name="singleStep">
             <double>0.100000000000000</double>
+           </property>
+           <property name="value">
+            <double>-10.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -174,6 +180,9 @@
            <property name="singleStep">
             <double>0.100000000000000</double>
            </property>
+           <property name="value">
+            <double>10.000000000000000</double>
+           </property>
           </widget>
          </item>
          <item row="5" column="1" colspan="2">
@@ -192,6 +201,9 @@
            </property>
            <property name="singleStep">
             <double>0.100000000000000</double>
+           </property>
+           <property name="value">
+            <double>-10.000000000000000</double>
            </property>
           </widget>
          </item>

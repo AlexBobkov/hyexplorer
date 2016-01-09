@@ -47,6 +47,13 @@ void SceneOperationsWidget::initUi()
 {
     _ui.setupUi(this);
 
+    _ui.importButton->setVisible(false);
+    _ui.bandDownloadGroupBox->setEnabled(false);
+    _ui.bandOperationsGroupBox->setEnabled(false);
+    _ui.processedTableButton->setEnabled(false);
+
+    //---------------------------------------
+
     QSettings settings;
     _ui.fromSpinBox->setValue(settings.value("SceneOperationsWidget/fromValue", 1).toInt());
     _ui.toSpinBox->setValue(settings.value("SceneOperationsWidget/toValue", 1).toInt());
@@ -57,31 +64,59 @@ void SceneOperationsWidget::initUi()
 
     _ui.globeBandSpinBox->setMinimum(_ui.fromSpinBox->value());
     _ui.globeBandSpinBox->setMaximum(_ui.toSpinBox->value());
+        
+    connect(_ui.fromSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i)
+    {
+        QSettings settings;
+        settings.setValue("SceneOperationsWidget/fromValue", _ui.fromSpinBox->value());
 
-    _ui.statusLabel->setText(tr("Выберите сцену"));
-    _ui.importButton->setVisible(false);
-    _ui.bandDownloadGroupBox->setEnabled(false);
-    _ui.bandOperationsGroupBox->setEnabled(false);
-    _ui.processedTableButton->setEnabled(false);
+        _ui.toSpinBox->setMinimum(_ui.fromSpinBox->value());
+        _ui.globeBandSpinBox->setMinimum(_ui.fromSpinBox->value());
+    });
 
-    connect(_ui.fromSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMinimumBandChanged(int)));
-    connect(_ui.toSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onMaximumBandChanged(int)));
+    connect(_ui.toSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i)
+    {
+        QSettings settings;
+        settings.setValue("SceneOperationsWidget/toValue", _ui.toSpinBox->value());
+
+        _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
+        _ui.globeBandSpinBox->setMaximum(_ui.toSpinBox->value());
+    });
 
     connect(_ui.globeBandSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i)
     {
         QSettings settings;
-        settings.setValue("SceneOperationsWidget/GlobeBandValue", i);
+        settings.setValue("SceneOperationsWidget/GlobeBandValue", _ui.globeBandSpinBox->value());
     });
 
-    connect(_ui.selectFragmentButton, SIGNAL(clicked()), this, SIGNAL(selectRectangleRequested()));
-    connect(_ui.downloadButton, SIGNAL(clicked()), this, SLOT(download()));
-    connect(_ui.importButton, SIGNAL(clicked()), this, SLOT(importScene()));
-    connect(_ui.processButton, SIGNAL(clicked()), this, SLOT(startImageCorrection()));
-    connect(_ui.showOnGlobeButton, SIGNAL(clicked()), this, SLOT(showBandOnGlobe()));
-    connect(_ui.openFolderButton, SIGNAL(clicked()), this, SLOT(openFolder()));
-    connect(_ui.processedTableButton, SIGNAL(clicked()), this, SLOT(showTableWithProcessedFiles()));
+    //---------------------------------------
 
-    _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
+    connect(_ui.selectFragmentButton, SIGNAL(clicked()), this, SIGNAL(selectRectangleRequested()));
+    connect(_ui.downloadButton, &QPushButton::clicked, this, &SceneOperationsWidget::download);
+    connect(_ui.processButton, &QPushButton::clicked, this, &SceneOperationsWidget::startImageCorrection);
+    connect(_ui.openFolderButton, &QPushButton::clicked, this, &SceneOperationsWidget::openFolder);
+    connect(_ui.processedTableButton, &QPushButton::clicked, this, &SceneOperationsWidget::showTableWithProcessedFiles);
+
+    connect(_ui.importButton, &QPushButton::clicked, this, [this]()
+    {
+        _ui.importButton->setVisible(false);
+
+        emit importSceneRequested(_scene);
+    });    
+
+    connect(_ui.showOnGlobeButton, &QPushButton::clicked, this, [this]()
+    {
+        if (_ui.fullSizeRadioButton->isChecked())
+        {
+            _dataManager->showScene(_scene, _ui.globeBandSpinBox->value(), ClipInfoPtr());
+        }
+        else
+        {
+            _dataManager->showScene(_scene, _ui.globeBandSpinBox->value(), _dataManager->clipInfo());
+        }
+    });    
+
+    //---------------------------------------
 
     ClipInfoPtr clipInfo = _dataManager->clipInfo();
     if (clipInfo)
@@ -96,40 +131,31 @@ void SceneOperationsWidget::initUi()
         _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
         _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
     }
-    else
+
+    auto clipSpinBoxCB = [this](double d)
     {
-        _ui.leftSpinBox->setValue(-10.0);
-        _ui.rightSpinBox->setValue(10.0);
-        _ui.topSpinBox->setValue(10.0);
-        _ui.bottomSpinBox->setValue(-10.0);
-    }
+        _ui.openFolderButton->setEnabled(false);
 
-    connect(_ui.leftSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
-    connect(_ui.rightSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
-    connect(_ui.topSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
-    connect(_ui.bottomSpinBox, SIGNAL(valueChanged(double)), this, SLOT(onRectangleBoundsChanged(double)));
-}
+        _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
+        _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
+        _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
+        _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
 
-void SceneOperationsWidget::onMinimumBandChanged(int i)
-{
-    QSettings settings;
-    settings.setValue("SceneOperationsWidget/fromValue", _ui.fromSpinBox->value());
+        osgEarth::Bounds b(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value());
 
-    _ui.toSpinBox->setMinimum(_ui.fromSpinBox->value());
+        ClipInfoPtr clipInfo = std::make_shared<ClipInfo>(b);
+        clipInfo->setMinBand(_ui.fromSpinBox->value());
+        clipInfo->setMaxBand(_ui.toSpinBox->value());
 
-    _ui.globeBandSpinBox->setMinimum(_ui.fromSpinBox->value());
-    _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
-}
+        _dataManager->setClipInfo(clipInfo);
 
-void SceneOperationsWidget::onMaximumBandChanged(int i)
-{
-    QSettings settings;
-    settings.setValue("SceneOperationsWidget/toValue", _ui.toSpinBox->value());
+        emit rectangleChanged(b);
+    };
 
-    _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
-
-    _ui.globeBandSpinBox->setMaximum(_ui.toSpinBox->value());
-    _ui.globeBandSpinBox->setValue(osg::clampBetween(_ui.globeBandSpinBox->value(), _ui.fromSpinBox->value(), _ui.toSpinBox->value()));
+    connect(_ui.leftSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
+    connect(_ui.rightSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
+    connect(_ui.topSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
+    connect(_ui.bottomSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
 }
 
 void SceneOperationsWidget::download()
@@ -251,37 +277,6 @@ void SceneOperationsWidget::onRectangleSelected(const osgEarth::Bounds& b)
 void SceneOperationsWidget::onRectangleSelectFailed()
 {
     _ui.selectFragmentButton->setChecked(false);
-}
-
-void SceneOperationsWidget::onRectangleBoundsChanged(double d)
-{
-    _ui.openFolderButton->setEnabled(false);
-
-    _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
-    _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
-    _ui.topSpinBox->setMinimum(_ui.bottomSpinBox->value());
-    _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
-
-    osgEarth::Bounds b(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value());
-
-    ClipInfoPtr clipInfo = std::make_shared<ClipInfo>(b);
-    clipInfo->setMinBand(_ui.fromSpinBox->value());
-    clipInfo->setMaxBand(_ui.toSpinBox->value());
-
-    _dataManager->setClipInfo(clipInfo);
-
-    emit rectangleChanged(b);
-}
-
-void SceneOperationsWidget::importScene()
-{
-    _ui.importButton->setVisible(false);
-
-    emit importSceneRequested(_scene);
-}
-
-void SceneOperationsWidget::onSceneImported(const ScenePtr& scene)
-{
 }
 
 void SceneOperationsWidget::startImageCorrection()
@@ -434,18 +429,6 @@ void SceneOperationsWidget::openFolder()
         {
             openExplorer(Storage::sceneBandDir(_scene, _dataManager->clipInfo()).path());
         }
-    }
-}
-
-void SceneOperationsWidget::showBandOnGlobe()
-{
-    if (_ui.fullSizeRadioButton->isChecked())
-    {
-        _dataManager->showScene(_scene, _ui.globeBandSpinBox->value(), ClipInfoPtr());
-    }
-    else
-    {
-        _dataManager->showScene(_scene, _ui.globeBandSpinBox->value(), _dataManager->clipInfo());
     }
 }
 

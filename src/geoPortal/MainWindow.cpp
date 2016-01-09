@@ -532,7 +532,6 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
 
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneDownloaded(const ScenePtr&, bool, const QString&)));
-    connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneImported(const ScenePtr&)));
     connect(_downloadManager, SIGNAL(uploadProcessedFileFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onProcessedFileUploaded(const ScenePtr&, bool, const QString&)));
 }
 
