@@ -97,7 +97,7 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
     }
 }
 
-void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxBand)
+void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxBand, const ClipInfoPtr& clipInfo)
 {
     //Нельзя скачивать одновременно 2 сцены
     if (_downloadPaths.size() > 0)
@@ -106,61 +106,79 @@ void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxB
         return;
     }
 
-    //_isClip = false;
-
-    //QNetworkRequest request(QString::fromUtf8("http://localhost:5000/scene/%0/%1/%2").arg(scene->sceneId()).arg(minBand).arg(maxBand));
-    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2").arg(scene->sceneId()).arg(minBand).arg(maxBand));
-    request.setAttribute(QNetworkRequest::User, QString("Scene"));
-
-    QVariant v;
-    v.setValue(scene);
-    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
-
-    _dataManager->networkAccessManager().get(request);
-}
-
-void DownloadManager::downloadSceneClip(const ScenePtr& scene, int minBand, int maxBand)
-{
-    //Нельзя скачивать одновременно 2 сцены
-    if (_downloadPaths.size() > 0)
+    QUrl url;
+    if (clipInfo)
     {
-        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не может быть получена, пока происходит получение другой сцены").arg(scene->sceneId()));
-        return;
+        qDebug() << "Download clip name " << clipInfo->uniqueName();
+
+        osgEarth::Bounds b = clipInfo->bounds();
+
+        url = QString("http://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
+                                .arg(scene->sceneId())
+                                .arg(minBand)
+                                .arg(maxBand)
+                                .arg(b.xMin(), 0, 'f', 10)
+                                .arg(b.yMax(), 0, 'f', 10)
+                                .arg(b.xMax(), 0, 'f', 10)
+                                .arg(b.yMin(), 0, 'f', 10);
+    }
+    else
+    {
+        qDebug() << "Download full size";
+
+        url = QString("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2").arg(scene->sceneId()).arg(minBand).arg(maxBand);
     }
 
-    if (!_dataManager->clipInfo())
+    QNetworkReply* reply = _dataManager->networkAccessManager().get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, [reply, this, scene, clipInfo]()
     {
-        emit sceneDownloadFinished(scene, false, tr("Не выбрана область для вырезания"));
-        return;
-    }
+        reply->deleteLater();
 
-    //_isClip = true;
+        assert(_downloadPaths.size() == 0);
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            qDebug() << "Error " << reply->error() << " " << reply->errorString();
+
+            emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
+            return;
+        }
+
+        QByteArray data = reply->readAll();
+        if (data.isNull() || data.isEmpty())
+        {
+            qDebug() << "Reply is null or empty";
+
+            emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId()));
+            return;
+        }
+
+        if (!data.startsWith("SUCCESS"))
+        {
+            emit sceneDownloadFinished(scene, false, tr("Сцена %0 не найдена на сервере").arg(scene->sceneId()));
+            return;
+        }
         
-    //_clipNumber = Storage::nextClipNumber(scene);
+        QTextStream stream(data);
+        QString line = stream.readLine(); //SUCCESS line
+        while (!line.isNull())
+        {
+            line = stream.readLine();
+            if (!line.isNull() && !line.isEmpty())
+            {
+                _downloadPaths.push_back(line);
+            }
+        }
 
-    qDebug() << "Clip name " << _dataManager->clipInfo()->uniqueName();
+        if (_downloadPaths.size() == 0)
+        {
+            emit sceneDownloadFinished(scene, false, tr("Каналы для сцены %0 не найдены").arg(scene->sceneId()));
+            return;
+        }
 
-    osgEarth::Bounds b = _dataManager->clipInfo()->bounds();
-        
-    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
-                            .arg(scene->sceneId())
-                            .arg(minBand)
-                            .arg(maxBand)
-                            .arg(b.xMin(), 0, 'f', 10)
-                            .arg(b.yMax(), 0, 'f', 10)
-                            .arg(b.xMax(), 0, 'f', 10)
-                            .arg(b.yMin(), 0, 'f', 10));
-    request.setAttribute(QNetworkRequest::User, QString("Scene"));
-
-    QVariant v;
-    v.setValue(scene);
-    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
-
-    QVariant v2;
-    v2.setValue(_dataManager->clipInfo());
-    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2), v2);
-
-    _dataManager->networkAccessManager().get(request);
+        _downloadPathIndex = 0;
+        downloadNextSceneBand(scene, clipInfo);
+    });
 }
 
 void DownloadManager::onFileDownloaded(QNetworkReply* reply)
@@ -170,15 +188,7 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
     QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
     ScenePtr scene = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1)).value<ScenePtr>();
         
-    if (requestType == "Scene")
-    {
-        processSceneReply(scene, reply);
-    }
-    else if (requestType == "SceneBand")
-    {
-        processSceneBandReply(scene, reply);
-    }
-    else if (requestType == "UsgsLogin")
+    if (requestType == "UsgsLogin")
     {
         processImportLoginReply(scene, reply);
     }
@@ -201,126 +211,6 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
 void DownloadManager::onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator)
 {
     qDebug() << "authenticationRequired";
-}
-
-void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* reply)
-{
-    if (reply->error() != QNetworkReply::NoError)
-    {
-        qDebug() << "Error " << reply->error() << " " << reply->errorString();
-
-        _downloadPaths.clear();
-
-        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
-        return;
-    }
-
-    QByteArray data = reply->readAll();
-    if (data.isNull() || data.isEmpty())
-    {        
-        qDebug() << "Reply is null or empty";
-
-        _downloadPaths.clear();
-
-        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId()));
-        return;
-    }
-
-    if (!data.startsWith("SUCCESS"))
-    {
-        _downloadPaths.clear();
-
-        emit sceneDownloadFinished(scene, false, tr("Сцена %0 не найдена на сервере").arg(scene->sceneId()));
-        return;
-    }
-
-    ClipInfoPtr clipInfo;
-    QVariant attr2 = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2));
-    if (attr2.isValid())
-    {
-        clipInfo = attr2.value<ClipInfoPtr>();
-    }
-
-    assert(_downloadPaths.size() == 0);
-        
-    QTextStream stream(data);
-    QString line = stream.readLine(); //SUCCESS line
-    while (!line.isNull())
-    {
-        line = stream.readLine();
-        if (!line.isNull() && !line.isEmpty())
-        {
-            _downloadPaths.push_back(line);
-        }
-    }
-
-    if (_downloadPaths.size() == 0)
-    {
-        emit sceneDownloadFinished(scene, false, tr("Каналы для сцены %0 не найдены").arg(scene->sceneId()));
-        return;
-    }
-
-    _downloadPathIndex = 0;
-    downloadNextSceneBand(scene, clipInfo);
-}
-
-void DownloadManager::processSceneBandReply(const ScenePtr& scene, QNetworkReply* reply)
-{
-    if (reply->error() != QNetworkReply::NoError)
-    {
-        qDebug() << "Error " << reply->error() << " " << reply->errorString();
-
-        _downloadPaths.clear();
-
-        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
-        return;
-    }
-
-    QByteArray data = reply->readAll();
-    if (data.isNull() || data.isEmpty())
-    {        
-        qDebug() << "Reply is null or empty";
-
-        _downloadPaths.clear();
-
-        emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId()));
-        return;
-    }
-
-    ClipInfoPtr clipInfo;
-    QVariant attr2 = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2));
-    if (attr2.isValid())
-    {
-        clipInfo = attr2.value<ClipInfoPtr>();
-    }
-
-    qDebug() << "SceneBand " << _downloadPathIndex;
-        
-    QString path = Storage::sceneBandPath(scene, reply->url().fileName(), clipInfo);
-
-    QFile localFile(path);
-    if (!localFile.open(QIODevice::WriteOnly))
-    {
-        qDebug() << "Failed to open file " << qPrintable(path);
-
-        _downloadPaths.clear();
-
-        emit sceneDownloadFinished(scene, false, tr("Не удается открыть файл для записи канала сцены %0 %1").arg(scene->sceneId()).arg(path));
-        return;
-    }
-    localFile.write(data);
-    localFile.close();
-
-    _downloadPathIndex++;
-    if (_downloadPathIndex >= _downloadPaths.size())
-    {
-        _downloadPaths.clear();
-
-        emit sceneDownloadFinished(scene, true, tr("Сцена %0 успешно получена").arg(scene->sceneId()));
-        return;
-    }
-
-    downloadNextSceneBand(scene, clipInfo);
 }
 
 void DownloadManager::processImportLoginReply(const ScenePtr& scene, QNetworkReply* reply)
@@ -524,6 +414,7 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene, const ClipInf
         if (_downloadPathIndex >= _downloadPaths.size())
         {
             _downloadPaths.clear();
+
             emit sceneDownloadFinished(scene, true, tr("Сцена %0 успешно получена").arg(scene->sceneId()));
             return;
         }
@@ -532,20 +423,52 @@ void DownloadManager::downloadNextSceneBand(const ScenePtr& scene, const ClipInf
     }
     else
     {
-        request.setAttribute(QNetworkRequest::User, QString("SceneBand"));
-
-        QVariant v;
-        v.setValue(scene);
-        request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
-
-        if (clipInfo)
+        QNetworkReply* reply = _dataManager->networkAccessManager().get(request);
+        connect(reply, &QNetworkReply::finished, this, [reply, this, scene, clipInfo]()
         {
-            QVariant v2;
-            v2.setValue(_dataManager->clipInfo());
-            request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 2), v2);
-        }
+            reply->deleteLater();
 
-        _dataManager->networkAccessManager().get(request);
+            if (reply->error() != QNetworkReply::NoError)
+            {
+                qDebug() << "Error " << reply->error() << " " << reply->errorString();
+
+                _downloadPaths.clear();
+
+                emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
+                return;
+            }
+
+            QByteArray data = reply->readAll();
+            if (data.isNull() || data.isEmpty())
+            {
+                qDebug() << "Reply is null or empty";
+
+                _downloadPaths.clear();
+
+                emit sceneDownloadFinished(scene, false, tr("При скачивании сцены %0 получен пустой ответ").arg(scene->sceneId()));
+                return;
+            }
+
+            qDebug() << "SceneBand " << _downloadPathIndex;
+
+            QString path = Storage::sceneBandPath(scene, reply->url().fileName(), clipInfo);
+
+            QFile localFile(path);
+            localFile.open(QIODevice::WriteOnly);
+            localFile.write(data);
+            localFile.close();
+
+            _downloadPathIndex++;
+            if (_downloadPathIndex >= _downloadPaths.size())
+            {
+                _downloadPaths.clear();
+
+                emit sceneDownloadFinished(scene, true, tr("Сцена %0 успешно получена").arg(scene->sceneId()));
+                return;
+            }
+
+            downloadNextSceneBand(scene, clipInfo);
+        });
     }
 }
 

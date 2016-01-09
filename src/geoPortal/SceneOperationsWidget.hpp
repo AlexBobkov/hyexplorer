@@ -17,9 +17,7 @@ namespace portal
         virtual ~SceneOperationsWidget();
 
     signals:
-        void downloadSceneRequested(const ScenePtr& scene, int minBand, int maxBand);
-        void downloadSceneClipRequested(const ScenePtr& scene, int minBand, int maxBand);
-
+        void downloadSceneRequested(const ScenePtr& scene, int minBand, int maxBand, const ClipInfoPtr&);
         void importSceneRequested(const ScenePtr& scene);
 
         void selectRectangleRequested();

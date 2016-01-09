@@ -31,6 +31,4 @@ _minBand(0),
 _maxBand(0)
 {
     _name = genetrateRandomName();
-
-    qDebug() << "Name " << _name;
 }

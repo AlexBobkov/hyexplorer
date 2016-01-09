@@ -27,8 +27,7 @@ namespace portal
     public slots:
         void importScene(const ScenePtr& scene);
         void downloadOverview(const ScenePtr& scene);
-        void downloadScene(const ScenePtr& scene, int minBand, int maxBand);
-        void downloadSceneClip(const ScenePtr& scene, int minBand, int maxBand);
+        void downloadScene(const ScenePtr& scene, int minBand, int maxBand, const ClipInfoPtr& clipInfo = ClipInfoPtr());
         
     private slots:        
         void onFileDownloaded(QNetworkReply* reply);
@@ -38,8 +37,6 @@ namespace portal
         void readDataChunk();
                     
     private:
-        void processSceneReply(const ScenePtr& scene, QNetworkReply* reply);
-        void processSceneBandReply(const ScenePtr& scene, QNetworkReply* reply);
         void processImportLoginReply(const ScenePtr& scene, QNetworkReply* reply);
         void processImportFirstReply(const ScenePtr& scene, QNetworkReply* reply);
         void processImportRedirectReply(const ScenePtr& scene, QNetworkReply* reply);

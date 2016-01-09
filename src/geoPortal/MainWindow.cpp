@@ -518,18 +518,16 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
 
     connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
-    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int)));
-    connect(sceneOperationsWidget, SIGNAL(downloadSceneClipRequested(const ScenePtr&, int, int)), _downloadManager, SLOT(downloadSceneClip(const ScenePtr&, int, int)));
+    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int, const ClipInfoPtr&)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int, const ClipInfoPtr&)));
+    
     connect(sceneOperationsWidget, SIGNAL(selectRectangleRequested()), this, SLOT(selectRectangle()));
+    connect(sceneOperationsWidget, SIGNAL(rectangleChanged(const osgEarth::Bounds&)), this, SLOT(onRectangleChanged(const osgEarth::Bounds&)));
 
     connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(onRectangleSelected(const osgEarth::Bounds&)));
     connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(onRectangleSelectFailed()));
-
-    connect(sceneOperationsWidget, SIGNAL(rectangleChanged(const osgEarth::Bounds&)), this, SLOT(onRectangleChanged(const osgEarth::Bounds&)));
-
+    
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));    
     connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
-
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneDownloaded(const ScenePtr&, bool, const QString&)));
 }
 

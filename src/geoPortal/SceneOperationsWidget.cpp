@@ -165,7 +165,7 @@ void SceneOperationsWidget::download()
     {
         _ui.downloadButton->setEnabled(false);
 
-        emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+        emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value(), ClipInfoPtr());
     }
     else
     {
@@ -175,7 +175,7 @@ void SceneOperationsWidget::download()
             {
                 _ui.downloadButton->setEnabled(false);
 
-                emit downloadSceneClipRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value());
+                emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value(), _dataManager->clipInfo());
             }
             else
             {
