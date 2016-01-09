@@ -28,20 +28,10 @@ namespace portal
         void importScene(const ScenePtr& scene);
         void downloadOverview(const ScenePtr& scene);
         void downloadScene(const ScenePtr& scene, int minBand, int maxBand, const ClipInfoPtr& clipInfo = ClipInfoPtr());
-        
-    private slots:        
-        void onFileDownloaded(QNetworkReply* reply);
-        void onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator);        
-        void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-        void cancelDownload();
-        void readDataChunk();
-                    
-    private:
-        void processImportLoginReply(const ScenePtr& scene, QNetworkReply* reply);
-        void processImportFirstReply(const ScenePtr& scene, QNetworkReply* reply);
-        void processImportRedirectReply(const ScenePtr& scene, QNetworkReply* reply);
-        void processUploadReply(const ScenePtr& scene, QNetworkReply* reply);
-
+                   
+    private:        
+        void processRedirectReply();
+        void processDownloadReply();
         void downloadNextSceneBand(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
         
         DataManagerPtr _dataManager;
