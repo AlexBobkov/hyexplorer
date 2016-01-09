@@ -2,19 +2,10 @@
 
 #include "Scene.hpp"
 
-#include <osg/observer_ptr>
-#include <osgEarth/MapNode>
-#include <osgEarthFeatures/Feature>
-
 #define QT_QTPROPERTYBROWSER_IMPORT
 #include <QtVariantPropertyManager>
 #include <QtVariantEditorFactory>
 #include <QtTreePropertyBrowser>
-
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QLabel>
 
 namespace portal
 {

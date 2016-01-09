@@ -29,7 +29,6 @@ _variantManager(0)
     _translations["targetrow"] = QString::fromUtf8("Номер целевого ряда");
     _translations["processinglevel"] = QString::fromUtf8("Уровень обработки");
     _translations["cloudmax"] = QString::fromUtf8("Процент облачности");
-    //_translations["cloudmin"] = QString::fromUtf8("Минимальная облачность (%)");
     _translations["satelliteinclination"] = QString::fromUtf8("Наклонение орбиты спутника");
     _translations["lookangle"] = QString::fromUtf8("Угол между надиром и центром сцены");
 
@@ -96,12 +95,12 @@ void MetadataWidget::setScene(const ScenePtr& scene)
                 {
                     type = QVariant::String;
                 }
-                
+
                 QtVariantProperty* prop = _variantManager->addProperty(type, text);
                 prop->setAttribute("readOnly", true);
-                _props[kv.first] = prop;                
+                _props[kv.first] = prop;
             }
-            
+
             QtVariantProperty* prop = _props[kv.first];
 
             if (kv.second.type() == QVariant::DateTime)

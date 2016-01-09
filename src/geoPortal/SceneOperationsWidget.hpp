@@ -38,9 +38,6 @@ namespace portal
     private slots:
         void onMinimumBandChanged(int i);
         void onMaximumBandChanged(int i);
-        void onGlobeBandChanged(int i);
-        void onFragmentRadioButtonToggled(bool b);
-        void selectRectangle(bool b);
         void onRectangleBoundsChanged(double d);
         void importScene();
         void download();
