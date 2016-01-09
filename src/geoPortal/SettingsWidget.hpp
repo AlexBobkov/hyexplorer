@@ -12,12 +12,7 @@ namespace portal
     public:
         explicit SettingsWidget(const DataManagerPtr& dataManager, QWidget* parent = 0);
         virtual ~SettingsWidget();
-        
-    private slots:
-        void changeAtmoVisibility(int value);
-        void changeCoverage(const QString& text);
-        void browsePath();
-    
+
     private:
         void initUi();
 

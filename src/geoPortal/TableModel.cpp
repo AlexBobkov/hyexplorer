@@ -79,7 +79,7 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
         {
             return tr("Дата");
         }
-        
+
         return QVariant();
     }
 }

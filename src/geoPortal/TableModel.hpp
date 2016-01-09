@@ -20,7 +20,7 @@ namespace portal
         QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
         bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
-        
+
     private:
         DataSetPtr _dataset;
     };

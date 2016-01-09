@@ -465,14 +465,9 @@ void SceneOperationsWidget::uploadProccessedFile()
 
     //------------------------------------
 
-    QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportalapi/processed/%0").arg(_processingScene->sceneId()));
-    request.setAttribute(QNetworkRequest::User, QString("UploadProcessed"));
+    QUrl url = QString("http://virtualglobe.ru/geoportalapi/processed/%0").arg(_processingScene->sceneId());
 
-    QVariant v;
-    v.setValue(_processingScene);
-    request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
-
-    QNetworkReply* reply = _dataManager->networkAccessManager().post(request, multiPart);
+    QNetworkReply* reply = _dataManager->networkAccessManager().post(QNetworkRequest(url), multiPart);
 
     multiPart->setParent(reply); // delete the multiPart with the reply
 
