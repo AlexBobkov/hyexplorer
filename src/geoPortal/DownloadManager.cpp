@@ -64,15 +64,35 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
         }
         else
         {
-            QNetworkRequest request(QString::fromUtf8("http://virtualglobe.ru/geoportal/%0/overviews/%1").arg(scene->sensor()).arg(scene->overviewName()));
+            QNetworkRequest request(QString("http://virtualglobe.ru/geoportal/%0/overviews/%1").arg(scene->sensor()).arg(scene->overviewName()));
+                        
+            QNetworkReply* reply = _dataManager->networkAccessManager().get(request);
+            connect(reply, &QNetworkReply::finished, this, [reply, this, scene]()
+            {
+                reply->deleteLater();
 
-            request.setAttribute(QNetworkRequest::User, QString("Overview"));
+                if (reply->error() != QNetworkReply::NoError)
+                {
+                    qDebug() << "Error " << reply->error() << " " << reply->errorString();
+                    return;
+                }
 
-            QVariant v;
-            v.setValue(scene);
-            request.setAttribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1), v);
+                QByteArray data = reply->readAll();
+                if (data.isNull() || data.isEmpty())
+                {
+                    qDebug() << "Reply is null or empty";
+                    return;
+                }
 
-            _dataManager->networkAccessManager().get(request);
+                QString path = Storage::overviewPath(scene, reply->url().fileName());
+
+                QFile localFile(path);
+                localFile.open(QIODevice::WriteOnly);
+                localFile.write(data);
+                localFile.close();
+
+                _dataManager->showOverview(scene, path);
+            });
         }
     }
 }
@@ -150,11 +170,7 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
     QString requestType = reply->request().attribute(QNetworkRequest::User).toString();
     ScenePtr scene = reply->request().attribute((QNetworkRequest::Attribute)(QNetworkRequest::User + 1)).value<ScenePtr>();
         
-    if (requestType == "Overview")
-    {
-        processOverviewReply(scene, reply);
-    }
-    else if (requestType == "Scene")
+    if (requestType == "Scene")
     {
         processSceneReply(scene, reply);
     }
@@ -185,35 +201,6 @@ void DownloadManager::onFileDownloaded(QNetworkReply* reply)
 void DownloadManager::onAuthenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator)
 {
     qDebug() << "authenticationRequired";
-}
-
-void DownloadManager::processOverviewReply(const ScenePtr& scene, QNetworkReply* reply)
-{
-    if (reply->error() != QNetworkReply::NoError)
-    {
-        qDebug() << "Error " << reply->error() << " " << reply->errorString();        
-        return;
-    }
-
-    QByteArray data = reply->readAll();
-    if (data.isNull() || data.isEmpty())
-    {
-        qDebug() << "Reply is null or empty";
-        return;
-    }
-
-    QString path = Storage::overviewPath(scene, reply->url().fileName());
-
-    QFile localFile(path);
-    if (!localFile.open(QIODevice::WriteOnly))
-    {
-        qDebug() << "Failed to open file " << qPrintable(path);
-        return;
-    }
-    localFile.write(data);
-    localFile.close();
-
-    _dataManager->showOverview(scene, path);
 }
 
 void DownloadManager::processSceneReply(const ScenePtr& scene, QNetworkReply* reply)
