@@ -229,7 +229,7 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
     {
         if (!scene->sceneUrl().isNull() && !scene->sceneUrl().isEmpty())
         {
-            _ui.statusLabel->setText(QString::fromUtf8("Сцена отсутствует на нашем сервере, но вы можете <a href='%0'>скачать</a> сцену вручную").arg(scene->sceneUrl()));
+            _ui.statusLabel->setText(tr("Сцена отсутствует на нашем сервере, но вы можете <a href='%0'>скачать</a> сцену вручную").arg(scene->sceneUrl()));
         }
         else
         {

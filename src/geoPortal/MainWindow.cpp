@@ -305,9 +305,51 @@ void MainWindow::initUi()
 {
     _ui.setupUi(this);
 
-    connect(_ui.aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
-    connect(_ui.metadataAction, SIGNAL(triggered()), this, SLOT(showMetadataDescription()));
-    connect(_ui.settingsAction, SIGNAL(triggered()), this, SLOT(showSettings()));
+    connect(_ui.aboutAction, &QAction::triggered, this, [this]()
+    {
+        QDialog dialog(this);
+
+        dialog.setWindowTitle(tr("О программе"));
+
+        QVBoxLayout* vLayout = new QVBoxLayout;
+        dialog.setLayout(vLayout);
+
+        QString text = tr("<html><head/><body>"
+                          "<p align='center'><span style='font-size:12pt;'>Геопортал</span></p>"
+                          "<p>Разработчики:<br/>Александр Бобков<br/>Денис Учаев</p>"
+                          "<p>Разработка поддержана грантом РФФИ №13-05-12086</p>"
+                          "</body></html>");
+
+        QLabel* aboutLabel = new QLabel(text);
+        aboutLabel->setTextFormat(Qt::RichText);
+        aboutLabel->setOpenExternalLinks(true);
+        vLayout->addWidget(aboutLabel);
+
+        QHBoxLayout* hLayout = new QHBoxLayout;
+        hLayout->addStretch();
+
+        QPushButton* okButton = new QPushButton("OK");
+        hLayout->addWidget(okButton);
+
+        vLayout->addLayout(hLayout);
+
+        connect(okButton, SIGNAL(clicked()), &dialog, SLOT(accept()));
+
+        dialog.exec();
+    });
+
+    connect(_ui.settingsAction, &QAction::triggered, this, [this]()
+    {
+        SettingsWidget* widget = new SettingsWidget(_dataManager, this);
+        widget->setWindowFlags(Qt::Window);
+        widget->setAttribute(Qt::WA_DeleteOnClose);
+        widget->show();
+    });
+
+    connect(_ui.metadataAction, &QAction::triggered, this, [this]()
+    {
+        QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
+    });    
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
 
@@ -520,8 +562,17 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
     connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int, const ClipInfoPtr&)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int, const ClipInfoPtr&)));
     
-    connect(sceneOperationsWidget, SIGNAL(selectRectangleRequested()), this, SLOT(selectRectangle()));
-    connect(sceneOperationsWidget, SIGNAL(rectangleChanged(const osgEarth::Bounds&)), this, SLOT(onRectangleChanged(const osgEarth::Bounds&)));
+    connect(sceneOperationsWidget, &SceneOperationsWidget::selectRectangleRequested, this, [sceneOperationsWidget, this]()
+    {
+        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+        handler->setRectangleMode(true);
+    });
+
+    connect(sceneOperationsWidget, &SceneOperationsWidget::rectangleChanged, this, [sceneOperationsWidget, this](const osgEarth::Bounds& bounds)
+    {
+        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+        handler->setInitialRectangle(bounds);
+    });
 
     connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(onRectangleSelected(const osgEarth::Bounds&)));
     connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(onRectangleSelectFailed()));
@@ -882,51 +933,7 @@ void MainWindow::finishImport(const ScenePtr& scene, bool result, const QString&
     }
 }
 
-void MainWindow::showAbout()
-{
-    QDialog dialog(this);
-
-    dialog.setWindowTitle(tr("О программе"));
-
-    QVBoxLayout* vLayout = new QVBoxLayout;
-    dialog.setLayout(vLayout);
-
-    QString text = QString::fromUtf8("<html><head/><body>"
-                                     "<p align='center'><span style='font-size:12pt;'>Геопортал</span></p>"
-                                     "<p>Разработчики:<br/>Александр Бобков<br/>Денис Учаев</p>"
-                                     "<p>Разработка поддержана грантом РФФИ №13-05-12086</p>"
-                                     "</body></html>");
-
-    QLabel* aboutLabel = new QLabel(text);
-    aboutLabel->setTextFormat(Qt::RichText);
-    aboutLabel->setOpenExternalLinks(true);
-    vLayout->addWidget(aboutLabel);
-
-    QHBoxLayout* hLayout = new QHBoxLayout;
-    hLayout->addStretch();
-
-    QPushButton* okButton = new QPushButton("OK");
-    hLayout->addWidget(okButton);
-
-    vLayout->addLayout(hLayout);
-
-    connect(okButton, SIGNAL(clicked()), &dialog, SLOT(accept()));
-
-    dialog.exec();
-}
-
-void MainWindow::showMetadataDescription()
-{
-    QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
-}
-
-void MainWindow::showSettings()
-{
-    SettingsWidget* widget = new SettingsWidget(_dataManager, this);
-    widget->setWindowFlags(Qt::Window);
-    widget->setAttribute(Qt::WA_DeleteOnClose);
-    widget->show();
-}
+//-------------------------------------------------------
 
 void MainWindow::onMousePositionChanged(const osgEarth::GeoPoint& point)
 {
@@ -974,6 +981,18 @@ void MainWindow::onMouseClicked()
     }
 }
 
+void MainWindow::onRectangleSelected(const osgEarth::Bounds& bounds)
+{
+    emit rectangleSelected(bounds);
+}
+
+void MainWindow::onRectangleSelectionFailed()
+{
+    emit rectangleSelectFailed();
+}
+
+//-------------------------------------------------------
+
 void MainWindow::selectScene(const QModelIndex& index)
 {
     ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
@@ -1006,6 +1025,11 @@ void MainWindow::onMainTableViewSelectionChanged(const QItemSelection& selected,
 void MainWindow::onSecondTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
 {
     ProxyModel* proxyModel = dynamic_cast<ProxyModel*>(_scenesSecondView->model());
+    if (!proxyModel)
+    {
+        return;
+    }
+
     QItemSelection sourceSelection = proxyModel->mapSelectionToSource(selected);
 
     _scenesMainView->selectionModel()->select(sourceSelection, QItemSelectionModel::ClearAndSelect);
@@ -1013,26 +1037,4 @@ void MainWindow::onSecondTableViewSelectionChanged(const QItemSelection& selecte
     {
         _scenesMainView->scrollTo(sourceSelection.first().indexes()[0]);
     }
-}
-
-void MainWindow::selectRectangle()
-{
-    SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-    handler->setRectangleMode(true);
-}
-
-void MainWindow::onRectangleChanged(const osgEarth::Bounds& bounds)
-{
-    SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-    handler->setInitialRectangle(bounds);
-}
-
-void MainWindow::onRectangleSelected(const osgEarth::Bounds& bounds)
-{   
-    emit rectangleSelected(bounds);
-}
-
-void MainWindow::onRectangleSelectionFailed()
-{
-    emit rectangleSelectFailed();
 }

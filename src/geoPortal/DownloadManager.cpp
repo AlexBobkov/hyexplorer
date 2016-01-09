@@ -266,8 +266,8 @@ void DownloadManager::importScene(const ScenePtr& scene)
             return;
         }
 
-        QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/L1T/EE").arg(scene->sceneId()));
-        //QNetworkRequest request(QString::fromUtf8("http://earthexplorer.usgs.gov/download/1854/%0/GRB/EE").arg(scene->sceneId()));
+        QNetworkRequest request(QString("http://earthexplorer.usgs.gov/download/1854/%0/L1T/EE").arg(scene->sceneId()));
+        //QNetworkRequest request(QString("http://earthexplorer.usgs.gov/download/1854/%0/GRB/EE").arg(scene->sceneId()));
 
         QVariant v;
         v.setValue(scene);

@@ -17,33 +17,33 @@ _variantManager(0)
 {
     initUi();
 
-    _translations["sceneid"] = QString::fromUtf8("Идентификатор");
-    _translations["scenetime"] = QString::fromUtf8("Дата и время съемки");
-    _translations["pixelsize"] = QString::fromUtf8("Размер пикселя");
-    _translations["sunazimuth"] = QString::fromUtf8("Азимут Солнца");
-    _translations["sunelevation"] = QString::fromUtf8("Высота Солнца");
+    _translations["sceneid"] = tr("Идентификатор");
+    _translations["scenetime"] = tr("Дата и время съемки");
+    _translations["pixelsize"] = tr("Размер пикселя");
+    _translations["sunazimuth"] = tr("Азимут Солнца");
+    _translations["sunelevation"] = tr("Высота Солнца");
 
-    _translations["orbitpath"] = QString::fromUtf8("Номер витка");
-    _translations["orbitrow"] = QString::fromUtf8("Номер ряда");
-    _translations["targetpath"] = QString::fromUtf8("Номер целевого витка");
-    _translations["targetrow"] = QString::fromUtf8("Номер целевого ряда");
-    _translations["processinglevel"] = QString::fromUtf8("Уровень обработки");
-    _translations["cloudmax"] = QString::fromUtf8("Процент облачности");
-    _translations["satelliteinclination"] = QString::fromUtf8("Наклонение орбиты спутника");
-    _translations["lookangle"] = QString::fromUtf8("Угол между надиром и центром сцены");
+    _translations["orbitpath"] = tr("Номер витка");
+    _translations["orbitrow"] = tr("Номер ряда");
+    _translations["targetpath"] = tr("Номер целевого витка");
+    _translations["targetrow"] = tr("Номер целевого ряда");
+    _translations["processinglevel"] = tr("Уровень обработки");
+    _translations["cloudmax"] = tr("Процент облачности");
+    _translations["satelliteinclination"] = tr("Наклонение орбиты спутника");
+    _translations["lookangle"] = tr("Угол между надиром и центром сцены");
 
-    _translations["sitename"] = QString::fromUtf8("Имя объекта");
-    _translations["comments"] = QString::fromUtf8("Комментарии");
-    _translations["investigator"] = QString::fromUtf8("Исследователь");
-    _translations["scenerotation"] = QString::fromUtf8("Вращение сцены");
-    _translations["tape"] = QString::fromUtf8("Номер ленты");
-    _translations["geover"] = QString::fromUtf8("Геокоррекция");
-    _translations["rdnver"] = QString::fromUtf8("RDN");
-    _translations["meansceneelev"] = QString::fromUtf8("Средняя высота сцены");
-    _translations["minsceneelev"] = QString::fromUtf8("Минимальная высота сцены");
-    _translations["maxsceneelev"] = QString::fromUtf8("Максимальная высота сцены");
-    _translations["flight"] = QString::fromUtf8("Номер вылета");
-    _translations["run"] = QString::fromUtf8("Номер захода");
+    _translations["sitename"] = tr("Имя объекта");
+    _translations["comments"] = tr("Комментарии");
+    _translations["investigator"] = tr("Исследователь");
+    _translations["scenerotation"] = tr("Вращение сцены");
+    _translations["tape"] = tr("Номер ленты");
+    _translations["geover"] = tr("Геокоррекция");
+    _translations["rdnver"] = tr("RDN");
+    _translations["meansceneelev"] = tr("Средняя высота сцены");
+    _translations["minsceneelev"] = tr("Минимальная высота сцены");
+    _translations["maxsceneelev"] = tr("Максимальная высота сцены");
+    _translations["flight"] = tr("Номер вылета");
+    _translations["run"] = tr("Номер захода");
 }
 
 MetadataWidget::~MetadataWidget()

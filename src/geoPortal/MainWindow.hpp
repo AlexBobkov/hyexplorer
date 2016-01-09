@@ -43,10 +43,6 @@ namespace portal
     private slots:
         void executeQuery();
 
-        void showAbout();
-        void showMetadataDescription();
-        void showSettings();
-
         void selectScene(const QModelIndex& index);
         void zoomToScene(const QModelIndex& index);
 
@@ -56,10 +52,6 @@ namespace portal
         void finishLoadScenes();
 
         void finishImport(const ScenePtr& scene, bool result, const QString& message);
-
-        void selectRectangle();
-
-        void onRectangleChanged(const osgEarth::Bounds& bounds);
 
         void onRectangleSelected(const osgEarth::Bounds& bounds);
         void onRectangleSelectionFailed();
