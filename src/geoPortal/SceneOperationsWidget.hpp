@@ -25,25 +25,19 @@ namespace portal
         void selectRectangleRequested();
         void rectangleChanged(const osgEarth::Bounds& b);
 
-        void uploadProcessedFileRequested(const ScenePtr& scene, const QString& filepath, int band, double contrast, double sharpness, int blocksize);
-
     public slots:
         void setScene(const ScenePtr& scene);
         void onRectangleSelected(const osgEarth::Bounds& b);
         void onRectangleSelectFailed();
         void onSceneDownloaded(const ScenePtr& scene, bool result, const QString& message);
-        void onProcessedFileUploaded(const ScenePtr& scene, bool result, const QString& message);
 
     private slots:
         void download();
         void startImageCorrection();
         void openFolder();
         void showTableWithProcessedFiles();
-        void downloadProcessedFile();
-
-        void onImageCorrectionError(QProcess::ProcessError error);
-        void onImageCorrectionFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    
+        void downloadProcessedFile(const QString& filename);
+            
     private:
         void initUi();
         void uploadProccessedFile();
