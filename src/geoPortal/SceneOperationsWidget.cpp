@@ -333,7 +333,7 @@ void SceneOperationsWidget::startImageCorrection()
         data.open(QFile::WriteOnly);
 
         QTextStream out(&data);
-        out << filepath.toLocal8Bit() << "\n" << 11 << "\n" << 1.4 << "\n" << 128 << "\n";
+        out << filepath.toLocal8Bit() << "\n";
 
         data.close();
     }
@@ -408,6 +408,8 @@ void SceneOperationsWidget::uploadProccessedFile()
 {
     qDebug() << "Upload " << _proccessedOutputFilepath;
 
+    
+
     double contrast = 123.0;
     double sharpness = 45.0;
     int blocksize = 666;
@@ -415,6 +417,26 @@ void SceneOperationsWidget::uploadProccessedFile()
     //------------------------------------
 
     QFileInfo fileInfo(_proccessedOutputFilepath);
+
+    QString paramsFilepath = fileInfo.absolutePath() + "/" + fileInfo.completeBaseName() + ".txt";
+
+    if (!QFileInfo::exists(paramsFilepath))
+    {
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Не найден файл с параметрами обработки %0").arg(paramsFilepath));
+        return;
+    }
+
+    QFile paramsFile(paramsFilepath);
+    paramsFile.open(QIODevice::ReadOnly | QIODevice::Text);
+
+    QTextStream in(&paramsFile);
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+        qDebug() << "Read line" << line;
+    }
+
+    //------------------------------------
 
     QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
