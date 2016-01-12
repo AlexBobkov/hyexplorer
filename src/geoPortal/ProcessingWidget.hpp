@@ -34,10 +34,12 @@ namespace portal
 
         Ui::ProcessingWidget _ui;
 
-        ScenePtr _scene;
-        ClipInfoPtr _clipInfo;
-
         DataManagerPtr _dataManager;
+
+        QStringList _tools;
+
+        ScenePtr _scene;
+        ClipInfoPtr _clipInfo;        
                 
         QString _proccessedOutputFilepath;
     };

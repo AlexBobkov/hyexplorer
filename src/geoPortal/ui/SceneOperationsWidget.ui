@@ -218,6 +218,9 @@
        <property name="enabled">
         <bool>false</bool>
        </property>
+       <property name="toolTip">
+        <string>Открыть папку с последними скачанными файлами</string>
+       </property>
        <property name="text">
         <string>Открыть папку с файлами</string>
        </property>

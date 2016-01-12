@@ -15,6 +15,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QHttpMultiPart>
+#include <QDirIterator>
 
 using namespace portal;
 
@@ -22,6 +23,14 @@ ProcessingWidget::ProcessingWidget(const DataManagerPtr& dataManager, QWidget* p
 QWidget(parent),
 _dataManager(dataManager)
 {
+    QDirIterator itr("matlab", QDir::Files | QDir::Executable, QDirIterator::Subdirectories);
+    while (itr.hasNext())
+    {
+        _tools << itr.next();
+    }
+
+    qDebug() << _tools;
+
     initUi();
 }
 
@@ -46,6 +55,16 @@ void ProcessingWidget::initUi()
     });
 
     //---------------------------------------
+    
+    for (const auto& tool : _tools)
+    {
+        _ui.toolComboBox->addItem(QFileInfo(tool).fileName());
+    }
+
+    if (_ui.toolComboBox->count() == 0)
+    {
+        _ui.processButton->setEnabled(false);
+    }
         
     connect(_ui.processButton, &QPushButton::clicked, this, &ProcessingWidget::startImageCorrection);    
     connect(_ui.showProcessedTableButton, &QPushButton::clicked, this, &ProcessingWidget::showTableWithProcessedFiles);
@@ -64,7 +83,7 @@ void ProcessingWidget::setSceneAndClip(const ScenePtr& scene, const ClipInfoPtr&
 
     setEnabled(true);
 
-    QString text = QString("Сцена %0. ").arg(_scene->sceneId());
+    QString text = QString("Сцена %0.\n").arg(_scene->sceneId());
     if (!_clipInfo->isFullSize())
     {
         text += QString("Фрагмент %0").arg(_clipInfo->uniqueName());
@@ -82,13 +101,12 @@ void ProcessingWidget::setSceneAndClip(const ScenePtr& scene, const ClipInfoPtr&
 
 void ProcessingWidget::startImageCorrection()
 {
-    QString program = "matlab/ImageCorrectionTool/ImageCorrectionTool.exe";
-    if (!QFileInfo::exists(program))
-    {
-        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Программа для коррекции изображений matlab/ImageCorrectionTool.exe не найдена"));
-        return;
-    }
+    int toolIndex = _ui.toolComboBox->currentIndex();
+    QString program = _tools[toolIndex];
+    QString dir = QFileInfo(program).absolutePath();
 
+    qDebug() << "Program" << program;
+        
     QString filepath = Storage::sceneBandPath(_scene, _ui.bandSpinBox->value(), _clipInfo);
     if (!QFileInfo::exists(filepath))
     {
@@ -99,7 +117,7 @@ void ProcessingWidget::startImageCorrection()
     //------------------------------------
 
     {
-        QFile data("matlab/ImageCorrectionTool/data.txt");
+        QFile data(dir  + "/data.txt");
         data.open(QFile::WriteOnly);
 
         QTextStream out(&data);
@@ -113,7 +131,7 @@ void ProcessingWidget::startImageCorrection()
     {
         _proccessedOutputFilepath = Storage::processedFilePath(_scene, _ui.bandSpinBox->value(), genetrateRandomName());
 
-        QFile result("matlab/ImageCorrectionTool/result.txt");
+        QFile result(dir + "/result.txt");
         result.open(QFile::WriteOnly);
 
         QTextStream out(&result);
@@ -131,7 +149,7 @@ void ProcessingWidget::startImageCorrection()
     emit processingStarted();
     
     QProcess* matlabProcess = new QProcess(this);
-    matlabProcess->setWorkingDirectory("matlab/ImageCorrectionTool");
+    matlabProcess->setWorkingDirectory(dir);
 
     connect(matlabProcess, static_cast<void(QProcess::*)(QProcess::ProcessError)>(&QProcess::error), this, [matlabProcess, this](QProcess::ProcessError error)
     {
