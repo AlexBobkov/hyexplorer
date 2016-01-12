@@ -25,6 +25,7 @@ SET(HEADER_FILES
 	SettingsWidget.hpp
 	Storage.hpp
 	TableModel.hpp
+	Utils.hpp
 )
 
 SET(SRC_FILES
@@ -43,6 +44,7 @@ SET(SRC_FILES
 	SettingsWidget.cpp
 	Storage.cpp
 	TableModel.cpp
+	Utils.cpp
 )
 
 INCLUDE_DIRECTORIES(

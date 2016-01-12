@@ -1,5 +1,6 @@
 #include "ProcessingWidget.hpp"
 #include "Storage.hpp"
+#include "Utils.hpp"
 
 #include <QDebug>
 #include <QSettings>
@@ -16,21 +17,6 @@
 #include <QHttpMultiPart>
 
 using namespace portal;
-
-namespace
-{
-    void openExplorer(const QString& path)
-    {
-        if (QFileInfo(path).isDir())
-        {
-            QDesktopServices::openUrl(QUrl(QString("file:///") + path.toLocal8Bit()));
-        }
-        else
-        {            
-            QProcess::startDetached(QString("explorer.exe /select,\"%0\"").arg(QDir::toNativeSeparators(path.toLocal8Bit())));
-        }
-    }
-}
 
 ProcessingWidget::ProcessingWidget(const DataManagerPtr& dataManager, QWidget* parent) :
 QWidget(parent),
@@ -67,17 +53,19 @@ void ProcessingWidget::initUi()
 
 void ProcessingWidget::setSceneAndClip(const ScenePtr& scene, const ClipInfoPtr& clipInfo)
 {
-    if (!isEnabled())
-    {
-        qDebug() << "Attemp to change scene and clip during processing";
-        return;
-    }
+    //if (!isEnabled())
+    //{
+    //    qDebug() << "Attemp to change scene and clip during processing";
+    //    return;
+    //}
 
     _scene = scene;
     _clipInfo = clipInfo;
 
+    setEnabled(true);
+
     QString text = QString("Сцена %0. ").arg(_scene->sceneId());
-    if (_clipInfo)
+    if (!_clipInfo->isFullSize())
     {
         text += QString("Фрагмент %0").arg(_clipInfo->uniqueName());
     }
@@ -111,7 +99,7 @@ void ProcessingWidget::startImageCorrection()
     //------------------------------------
 
     {
-        QFile data("matlab/data.txt");
+        QFile data("matlab/ImageCorrectionTool/data.txt");
         data.open(QFile::WriteOnly);
 
         QTextStream out(&data);
@@ -125,7 +113,7 @@ void ProcessingWidget::startImageCorrection()
     {
         _proccessedOutputFilepath = Storage::processedFilePath(_scene, _ui.bandSpinBox->value(), genetrateRandomName());
 
-        QFile result("matlab/result.txt");
+        QFile result("matlab/ImageCorrectionTool/result.txt");
         result.open(QFile::WriteOnly);
 
         QTextStream out(&result);
@@ -143,7 +131,7 @@ void ProcessingWidget::startImageCorrection()
     emit processingStarted();
     
     QProcess* matlabProcess = new QProcess(this);
-    matlabProcess->setWorkingDirectory("matlab");
+    matlabProcess->setWorkingDirectory("matlab/ImageCorrectionTool");
 
     connect(matlabProcess, static_cast<void(QProcess::*)(QProcess::ProcessError)>(&QProcess::error), this, [matlabProcess, this](QProcess::ProcessError error)
     {

@@ -27,7 +27,7 @@ QString Storage::sceneBandPath(const ScenePtr& scene, int band, const ClipInfoPt
 
     QString folderName;
     QString filename;
-    if (clipInfo)
+    if (!clipInfo->isFullSize())
     {        
         folderName = QString("Hyperion/scenes/%0/clips/clip%1").arg(scene->sceneId()).arg(clipInfo->uniqueName());
         filename = QString("%0B%1_L1T_clip.TIF").arg(scene->sceneId().mid(0, 23)).arg(band, 3, 10, QChar('0'));
@@ -52,7 +52,7 @@ QString Storage::sceneBandPath(const ScenePtr& scene, const QString& filename, c
     QDir dataDir(settings.value("StoragePath").toString());
 
     QString folderName;
-    if (clipInfo)
+    if (!clipInfo->isFullSize())
     {
         folderName = QString("Hyperion/scenes/%0/clips/clip%1").arg(scene->sceneId()).arg(clipInfo->uniqueName());
     }
@@ -74,7 +74,7 @@ QDir Storage::sceneBandDir(const ScenePtr& scene, const ClipInfoPtr& clipInfo)
     QSettings settings;
     QDir dataDir(settings.value("StoragePath").toString());
 
-    if (clipInfo)
+    if (!clipInfo->isFullSize())
     {
         return dataDir.filePath(QString("Hyperion/scenes/%0/clips/clip%1").arg(scene->sceneId()).arg(clipInfo->uniqueName()));
     }

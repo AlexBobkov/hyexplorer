@@ -510,10 +510,10 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     //--------------------------------------------
 
-    if (_dataManager->clipInfo())
+    if (_dataManager->bounds())
     {
         SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setInitialRectangle(_dataManager->clipInfo()->bounds());
+        handler->setInitialRectangle(*_dataManager->bounds());
     }
 
     //--------------------------------------------
@@ -567,7 +567,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
 
     connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
-    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int, const ClipInfoPtr&)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int, const ClipInfoPtr&)));
+    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, const ClipInfoPtr&)), _downloadManager, SLOT(downloadScene(const ScenePtr&, const ClipInfoPtr&)));
     
     connect(sceneOperationsWidget, &SceneOperationsWidget::selectRectangleRequested, this, [sceneOperationsWidget, this]()
     {
@@ -587,6 +587,8 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));    
     connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneDownloaded(const ScenePtr&, bool, const QString&)));
+
+    connect(sceneOperationsWidget, &SceneOperationsWidget::sceneClipPrepared, processingWidget, &ProcessingWidget::setSceneAndClip);
 }
 
 void MainWindow::setScene(const ScenePtr& scene)

@@ -1,5 +1,6 @@
 #include "SceneOperationsWidget.hpp"
 #include "Storage.hpp"
+#include "Utils.hpp"
 
 #include <QDebug>
 #include <QSettings>
@@ -16,21 +17,6 @@
 #include <QHttpMultiPart>
 
 using namespace portal;
-
-namespace
-{
-    void openExplorer(const QString& path)
-    {
-        if (QFileInfo(path).isDir())
-        {
-            QDesktopServices::openUrl(QUrl(QString("file:///") + path.toLocal8Bit()));
-        }
-        else
-        {            
-            QProcess::startDetached(QString("explorer.exe /select,\"%0\"").arg(QDir::toNativeSeparators(path.toLocal8Bit())));
-        }
-    }
-}
 
 SceneOperationsWidget::SceneOperationsWidget(const DataManagerPtr& dataManager, QWidget* parent) :
 QWidget(parent),
@@ -52,6 +38,15 @@ void SceneOperationsWidget::initUi()
     _ui.boundsGroupBox->setEnabled(false);
     _ui.downloadButton->setEnabled(false);
     _ui.openFolderButton->setEnabled(false);
+
+    //---------------------------------------
+
+    connect(_ui.importButton, &QPushButton::clicked, this, [this]()
+    {
+        _ui.importButton->setVisible(false);
+
+        emit importSceneRequested(_scene);
+    });
 
     //---------------------------------------
 
@@ -81,25 +76,53 @@ void SceneOperationsWidget::initUi()
     //---------------------------------------
 
     connect(_ui.selectFragmentButton, &QPushButton::clicked, this, &SceneOperationsWidget::selectRectangleRequested);
-    connect(_ui.downloadButton, &QPushButton::clicked, this, &SceneOperationsWidget::download);    
-    connect(_ui.openFolderButton, &QPushButton::clicked, this, &SceneOperationsWidget::openFolder);    
-
-    connect(_ui.importButton, &QPushButton::clicked, this, [this]()
-    {
-        _ui.importButton->setVisible(false);
-
-        emit importSceneRequested(_scene);
-    });
 
     //---------------------------------------
 
-    ClipInfoPtr clipInfo = _dataManager->clipInfo();
-    if (clipInfo)
+    connect(_ui.downloadButton, &QPushButton::clicked, this, [this]()
     {
-        _ui.leftSpinBox->setValue(clipInfo->bounds().xMin());
-        _ui.rightSpinBox->setValue(clipInfo->bounds().xMax());
-        _ui.topSpinBox->setValue(clipInfo->bounds().yMax());
-        _ui.bottomSpinBox->setValue(clipInfo->bounds().yMin());
+        if (_ui.fragmentRadioButton->isChecked() && !_dataManager->bounds())
+        {
+            QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Сначала выделите фрагмент"));
+            return;
+        }
+
+        if (_ui.fragmentRadioButton->isChecked() && !_dataManager->bounds()->intersects(_scene->geometry()->getBounds()))
+        {
+            QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Фрагмент не пересекает границы сцены"));
+            return;
+        }
+
+        setEnabled(false);
+
+        if (_ui.fragmentRadioButton->isChecked())
+        {
+            _clipInfo = std::make_shared<ClipInfo>(_scene, *_dataManager->bounds());
+        }
+        else
+        {
+            _clipInfo = std::make_shared<ClipInfo>(_scene);
+        }
+        _clipInfo->setMinBand(_ui.fromSpinBox->value());
+        _clipInfo->setMaxBand(_ui.toSpinBox->value());
+
+        emit downloadSceneRequested(_scene, _clipInfo);
+    });
+    
+    connect(_ui.openFolderButton, &QPushButton::clicked, this, [this]()
+    {
+        openExplorer(Storage::sceneBandDir(_scene, _clipInfo).path());
+    });    
+
+    //---------------------------------------
+
+    boost::optional<osgEarth::Bounds> bounds = _dataManager->bounds();
+    if (bounds)
+    {
+        _ui.leftSpinBox->setValue(bounds->xMin());
+        _ui.rightSpinBox->setValue(bounds->xMax());
+        _ui.topSpinBox->setValue(bounds->yMax());
+        _ui.bottomSpinBox->setValue(bounds->yMin());
 
         _ui.leftSpinBox->setMaximum(_ui.rightSpinBox->value());
         _ui.rightSpinBox->setMinimum(_ui.leftSpinBox->value());
@@ -117,12 +140,8 @@ void SceneOperationsWidget::initUi()
         _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
 
         osgEarth::Bounds b(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value());
-
-        ClipInfoPtr clipInfo = std::make_shared<ClipInfo>(b);
-        clipInfo->setMinBand(_ui.fromSpinBox->value());
-        clipInfo->setMaxBand(_ui.toSpinBox->value());
-
-        _dataManager->setClipInfo(clipInfo);
+        
+        _dataManager->setBounds(b);
 
         emit rectangleChanged(b);
     };
@@ -133,39 +152,9 @@ void SceneOperationsWidget::initUi()
     connect(_ui.bottomSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
 }
 
-void SceneOperationsWidget::download()
-{
-    if (_ui.fullSizeRadioButton->isChecked())
-    {
-        _ui.downloadButton->setEnabled(false);
-
-        emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value(), ClipInfoPtr());
-    }
-    else
-    {
-        if (_dataManager->clipInfo())
-        {
-            if (_dataManager->clipInfo()->bounds().intersects(_scene->geometry()->getBounds()))
-            {
-                _ui.downloadButton->setEnabled(false);
-
-                emit downloadSceneRequested(_scene, _ui.fromSpinBox->value(), _ui.toSpinBox->value(), _dataManager->clipInfo());
-            }
-            else
-            {
-                QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Фрагмент не пересекает границы сцены"));
-            }
-        }
-        else
-        {
-            QMessageBox::warning(qApp->activeWindow(), tr("Предупреждение"), tr("Сначала выделите фрагмент"));
-        }
-    }
-}
-
 void SceneOperationsWidget::onSceneDownloaded(const ScenePtr& scene, bool result, const QString& message)
 {
-    _ui.downloadButton->setEnabled(true);
+    setEnabled(true);
 
     if (result)
     {
@@ -173,7 +162,9 @@ void SceneOperationsWidget::onSceneDownloaded(const ScenePtr& scene, bool result
 
         QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
 
-        openFolder();
+        openExplorer(Storage::sceneBandDir(_scene, _clipInfo).path());
+
+        emit sceneClipPrepared(_scene, _clipInfo);
     }
     else
     {
@@ -183,6 +174,12 @@ void SceneOperationsWidget::onSceneDownloaded(const ScenePtr& scene, bool result
 
 void SceneOperationsWidget::setScene(const ScenePtr& scene)
 {
+    if (!isEnabled())
+    {
+        qDebug() << "Attemp to change the scene during the downloading";
+        return;
+    }
+
     if (_scene == scene)
     {
         return;
@@ -230,7 +227,6 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
 void SceneOperationsWidget::onRectangleSelected(const osgEarth::Bounds& b)
 {
     _ui.selectFragmentButton->setChecked(false);
-    _ui.openFolderButton->setEnabled(false);
 
     _ui.leftSpinBox->setMaximum(b.xMax());
     _ui.rightSpinBox->setMinimum(b.xMin());
@@ -241,12 +237,8 @@ void SceneOperationsWidget::onRectangleSelected(const osgEarth::Bounds& b)
     _ui.rightSpinBox->setValue(b.xMax());
     _ui.topSpinBox->setValue(b.yMax());
     _ui.bottomSpinBox->setValue(b.yMin());
-
-    ClipInfoPtr clipInfo = std::make_shared<ClipInfo>(b);
-    clipInfo->setMinBand(_ui.fromSpinBox->value());
-    clipInfo->setMaxBand(_ui.toSpinBox->value());
-
-    _dataManager->setClipInfo(clipInfo);
+    
+    _dataManager->setBounds(b);
 }
 
 void SceneOperationsWidget::onRectangleSelectFailed()
@@ -254,17 +246,3 @@ void SceneOperationsWidget::onRectangleSelectFailed()
     _ui.selectFragmentButton->setChecked(false);
 }
 
-void SceneOperationsWidget::openFolder()
-{
-    if (_ui.fullSizeRadioButton->isChecked())
-    {
-        openExplorer(Storage::sceneBandDir(_scene).path());
-    }
-    else
-    {
-        if (_dataManager->clipInfo())
-        {
-            openExplorer(Storage::sceneBandDir(_scene, _dataManager->clipInfo()).path());
-        }
-    }
-}
