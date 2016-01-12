@@ -76,14 +76,8 @@ namespace portal
         DataManagerPtr _dataManager;
 
         osg::ref_ptr<osgGA::GUIEventHandler> _handler;
-
-        QDockWidget* _metadataWidgetDock;
-        QDockWidget* _operationsWidgetDock;
-
-        QDockWidget* _scenesMainDock;
+        
         QTableView* _scenesMainView;
-
-        QDockWidget* _scenesSecondDock;
         QTableView* _scenesSecondView;
 
         DownloadManager* _downloadManager;

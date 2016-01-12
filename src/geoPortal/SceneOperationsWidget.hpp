@@ -22,7 +22,7 @@ namespace portal
 
         void selectRectangleRequested();
         void rectangleChanged(const osgEarth::Bounds& b);
-
+        
     public slots:
         void setScene(const ScenePtr& scene);
         void onRectangleSelected(const osgEarth::Bounds& b);
@@ -30,24 +30,16 @@ namespace portal
         void onSceneDownloaded(const ScenePtr& scene, bool result, const QString& message);
 
     private slots:
-        void download();
-        void startImageCorrection();
+        void download();        
         void openFolder();
-        void showTableWithProcessedFiles();
-        void downloadProcessedFile(const QString& filename);
-            
+                    
     private:
         void initUi();
-        void uploadProccessedFile();
-
+        
         Ui::SceneOperationsWidget _ui;
 
         ScenePtr _scene;
 
         DataManagerPtr _dataManager;
-                
-        QString _proccessedOutputFilepath;
-        ScenePtr _processingScene;
-        int _processingBand;
     };
 }
