@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "Scene.hpp"
+
 #include <osgEarth/Bounds>
 
 #include <QString>
@@ -9,16 +11,16 @@
 
 namespace portal
 {
-    QString genetrateRandomName();
-
     class ClipInfo
     {
     public:
-        ClipInfo(const osgEarth::Bounds& bounds);
+        ClipInfo(const ScenePtr& scene);
+        ClipInfo(const ScenePtr& scene, const osgEarth::Bounds& bounds);
+
+        ScenePtr scene() const { return _scene; }
 
         bool valid() const { return _minBand > 0 && _maxBand > _minBand; }
-
-        const osgEarth::Bounds& bounds() const { return _bounds; }
+        bool isFullSize() const { return !_bounds.is_initialized(); }
 
         int minBand() const { return _minBand; }
         void setMinBand(int b) { _minBand = b; }
@@ -26,15 +28,18 @@ namespace portal
         int maxBand() const { return _maxBand; }
         void setMaxBand(int b) { _maxBand = b; }
 
-        QString uniqueName() const { return _name; }
+        QString uniqueName() const { return _uniqueName; }
+
+        const boost::optional<osgEarth::Bounds>& bounds() const { return _bounds; }
 
     protected:
-        osgEarth::Bounds _bounds;
+        ScenePtr _scene;
 
         int _minBand;
         int _maxBand;
 
-        QString _name;
+        boost::optional<osgEarth::Bounds> _bounds;
+        QString _uniqueName;
     };
 
     typedef std::shared_ptr<ClipInfo> ClipInfoPtr;

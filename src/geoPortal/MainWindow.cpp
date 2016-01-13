@@ -2,6 +2,7 @@
 #include "MetadataWidget.hpp"
 #include "Dataset.hpp"
 #include "TableModel.hpp"
+#include "ProcessingWidget.hpp"
 #include "ProxyModel.hpp"
 #include "SettingsWidget.hpp"
 #include "SceneOperationsWidget.hpp"
@@ -285,11 +286,7 @@ namespace
 MainWindow::MainWindow() :
 QMainWindow(),
 _progressBar(0),
-_metadataWidgetDock(0),
-_operationsWidgetDock(0),
-_scenesMainDock(0),
 _scenesMainView(0),
-_scenesSecondDock(0),
 _scenesSecondView(0),
 _downloadManager(0),
 _mousePosLabel(0)
@@ -448,55 +445,35 @@ void MainWindow::initUi()
 
     //--------------------------------------------
 
-    _scenesMainDock = new QDockWidget(tr("Результаты поиска"));
-    _scenesMainDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    //_scenesDock->setVisible(false);
-    addDockWidget(Qt::LeftDockWidgetArea, _scenesMainDock, Qt::Vertical);
+    QDockWidget* scenesMainDock = new QDockWidget(tr("Результаты поиска"));
+    scenesMainDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    addDockWidget(Qt::LeftDockWidgetArea, scenesMainDock, Qt::Vertical);
 
     _scenesMainView = new QTableView(this);
-    _scenesMainDock->setWidget(_scenesMainView);
+    scenesMainDock->setWidget(_scenesMainView);
 
     connect(_scenesMainView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
     connect(_scenesMainView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
 
-    _ui.toolsMenu->addAction(_scenesMainDock->toggleViewAction());
+    _ui.toolsMenu->addAction(scenesMainDock->toggleViewAction());
 
     //--------------------------------------------
 
-    _scenesSecondDock = new QDockWidget(tr("Сцены под указателем"));
-    _scenesSecondDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    //_scenes2Dock->setVisible(false);
-    addDockWidget(Qt::LeftDockWidgetArea, _scenesSecondDock);
-    tabifyDockWidget(_scenesSecondDock, _scenesMainDock);
+    QDockWidget* scenesSecondDock = new QDockWidget(tr("Сцены под указателем"));
+    scenesSecondDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    addDockWidget(Qt::LeftDockWidgetArea, scenesSecondDock);
+    tabifyDockWidget(scenesSecondDock, scenesMainDock);
 
     _scenesSecondView = new QTableView(this);
-    _scenesSecondDock->setWidget(_scenesSecondView);
+    scenesSecondDock->setWidget(_scenesSecondView);
 
     connect(_scenesSecondView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
     connect(_scenesSecondView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
 
-    _ui.toolsMenu->addAction(_scenesSecondDock->toggleViewAction());
-
+    _ui.toolsMenu->addAction(scenesSecondDock->toggleViewAction());
+        
     //--------------------------------------------
-
-    _metadataWidgetDock = new QDockWidget(tr("Метаданные сцены"));
-    _metadataWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    //_sceneWidgetDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _metadataWidgetDock);
-
-    _ui.toolsMenu->addAction(_metadataWidgetDock->toggleViewAction());
-
-    //--------------------------------------------
-
-    _operationsWidgetDock = new QDockWidget(tr("Операции со сценой"));
-    _operationsWidgetDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    //_sceneWidgetDock->setVisible(false);
-    addDockWidget(Qt::RightDockWidgetArea, _operationsWidgetDock);
-
-    _ui.toolsMenu->addAction(_operationsWidgetDock->toggleViewAction());
-
-    //--------------------------------------------
-
+                
     _progressBar = new QProgressBar(this);
     _progressBar->setMaximumWidth(200);
     _progressBar->setMinimum(0);
@@ -533,25 +510,55 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     //--------------------------------------------
 
-    if (_dataManager->clipInfo())
+    if (_dataManager->bounds())
     {
         SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setInitialRectangle(_dataManager->clipInfo()->bounds());
+        handler->setInitialRectangle(*_dataManager->bounds());
     }
 
     //--------------------------------------------
-    
+
+
     MetadataWidget* metadataWidget = new MetadataWidget(this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
 
-    _metadataWidgetDock->setWidget(metadataWidget);
+    {
+        QDockWidget* dock = new QDockWidget(tr("Метаданные сцены"));
+        dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+        dock->setWidget(metadataWidget);
+        addDockWidget(Qt::RightDockWidgetArea, dock);
+
+        _ui.toolsMenu->addAction(dock->toggleViewAction());
+    }
 
     //--------------------------------------------
+
 
     SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
 
-    _operationsWidgetDock->setWidget(sceneOperationsWidget);
+    {
+        QDockWidget* dock = new QDockWidget(tr("Операции со сценой"));
+        dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+        dock->setWidget(sceneOperationsWidget);
+        addDockWidget(Qt::RightDockWidgetArea, dock);
+
+        _ui.toolsMenu->addAction(dock->toggleViewAction());
+    }
+
+    //--------------------------------------------
+
+
+    ProcessingWidget* processingWidget = new ProcessingWidget(_dataManager, this);
+
+    {
+        QDockWidget* dock = new QDockWidget(tr("Обработка сцены"));
+        dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+        dock->setWidget(processingWidget);
+        addDockWidget(Qt::RightDockWidgetArea, dock);
+
+        _ui.toolsMenu->addAction(dock->toggleViewAction());
+    }
 
     //--------------------------------------------
 
@@ -560,7 +567,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
 
     connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
-    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, int, int, const ClipInfoPtr&)), _downloadManager, SLOT(downloadScene(const ScenePtr&, int, int, const ClipInfoPtr&)));
+    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, const ClipInfoPtr&)), _downloadManager, SLOT(downloadScene(const ScenePtr&, const ClipInfoPtr&)));
     
     connect(sceneOperationsWidget, &SceneOperationsWidget::selectRectangleRequested, this, [sceneOperationsWidget, this]()
     {
@@ -580,6 +587,8 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));    
     connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
     connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneDownloaded(const ScenePtr&, bool, const QString&)));
+
+    connect(sceneOperationsWidget, &SceneOperationsWidget::sceneClipPrepared, processingWidget, &ProcessingWidget::setSceneAndClip);
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -588,10 +597,7 @@ void MainWindow::setScene(const ScenePtr& scene)
     {
         return;
     }
-
-    _metadataWidgetDock->setVisible(true);
-    _operationsWidgetDock->setVisible(true);
-
+    
     emit sceneSelected(scene);
 }
 
@@ -907,9 +913,6 @@ void MainWindow::finishLoadScenes()
     TableModel* tableModel = new TableModel(_dataset, this);
     _scenesMainView->setModel(tableModel);
     _scenesMainView->resizeColumnsToContents();
-
-    _scenesMainDock->setVisible(true);
-    _scenesSecondDock->setVisible(true);
 
     connect(_scenesMainView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onMainTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
 

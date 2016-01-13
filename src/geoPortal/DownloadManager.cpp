@@ -76,7 +76,7 @@ void DownloadManager::downloadOverview(const ScenePtr& scene)
     }
 }
 
-void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxBand, const ClipInfoPtr& clipInfo)
+void DownloadManager::downloadScene(const ScenePtr& scene, const ClipInfoPtr& clipInfo)
 {
     //Нельзя скачивать одновременно 2 сцены
     if (_downloadPaths.size() > 0)
@@ -86,16 +86,16 @@ void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxB
     }
 
     QUrl url;
-    if (clipInfo)
+    if (!clipInfo->isFullSize())
     {
         qDebug() << "Download clip name " << clipInfo->uniqueName();
 
-        osgEarth::Bounds b = clipInfo->bounds();
+        osgEarth::Bounds b = *clipInfo->bounds();
 
         url = QString("http://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
                                 .arg(scene->sceneId())
-                                .arg(minBand)
-                                .arg(maxBand)
+                                .arg(clipInfo->minBand())
+                                .arg(clipInfo->maxBand())
                                 .arg(b.xMin(), 0, 'f', 10)
                                 .arg(b.yMax(), 0, 'f', 10)
                                 .arg(b.xMax(), 0, 'f', 10)
@@ -105,7 +105,7 @@ void DownloadManager::downloadScene(const ScenePtr& scene, int minBand, int maxB
     {
         qDebug() << "Download full size";
 
-        url = QString("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2").arg(scene->sceneId()).arg(minBand).arg(maxBand);
+        url = QString("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2").arg(scene->sceneId()).arg(clipInfo->minBand()).arg(clipInfo->maxBand());
     }
 
     QNetworkReply* reply = _dataManager->networkAccessManager().get(QNetworkRequest(url));

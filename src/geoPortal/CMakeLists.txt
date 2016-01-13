@@ -2,6 +2,7 @@ SET(APP_NAME GeoPortal)
 
 set(LIB_QT_UIS	
 	ui/MainWindow.ui
+	ui/ProcessingWidget.ui
 	ui/SceneOperationsWidget.ui
 	ui/SettingsWidget.ui
 )
@@ -16,6 +17,7 @@ SET(HEADER_FILES
 	DownloadManager.hpp	
 	MainWindow.hpp
 	MetadataWidget.hpp
+	ProcessingWidget.hpp
 	ProxyModel.hpp
 	Scene.hpp
 	SceneOperationsWidget.hpp
@@ -23,6 +25,7 @@ SET(HEADER_FILES
 	SettingsWidget.hpp
 	Storage.hpp
 	TableModel.hpp
+	Utils.hpp
 )
 
 SET(SRC_FILES
@@ -32,6 +35,7 @@ SET(SRC_FILES
 	DownloadManager.cpp	
 	MainWindow.cpp
 	MetadataWidget.cpp
+	ProcessingWidget.cpp
 	Program.cpp
 	ProxyModel.cpp
 	Scene.cpp
@@ -40,6 +44,7 @@ SET(SRC_FILES
 	SettingsWidget.cpp
 	Storage.cpp
 	TableModel.cpp
+	Utils.cpp
 )
 
 INCLUDE_DIRECTORIES(

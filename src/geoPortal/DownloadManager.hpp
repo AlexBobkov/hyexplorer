@@ -2,6 +2,7 @@
 
 #include "DataManager.hpp"
 #include "Scene.hpp"
+#include "ClipInfo.hpp"
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -27,7 +28,7 @@ namespace portal
     public slots:
         void importScene(const ScenePtr& scene);
         void downloadOverview(const ScenePtr& scene);
-        void downloadScene(const ScenePtr& scene, int minBand, int maxBand, const ClipInfoPtr& clipInfo = ClipInfoPtr());
+        void downloadScene(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
                    
     private:        
         void processRedirectReply();

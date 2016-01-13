@@ -105,9 +105,7 @@ _mapNode(mapNode)
         settings.contains("Rectangle/yMin") &&
         settings.contains("Rectangle/yMax"))
     {
-        osgEarth::Bounds bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
-
-        _clipInfo = std::make_shared<ClipInfo>(bounds);
+        _bounds = osgEarth::Bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());        
     }
 }
 
@@ -306,16 +304,13 @@ void DataManager::showScene(const ScenePtr& scene, int band, const ClipInfoPtr& 
     }
 }
 
-void DataManager::setClipInfo(const ClipInfoPtr& ci)
+void DataManager::setBounds(const osgEarth::Bounds& b)
 {
-    _clipInfo = ci;
-
-    if (_clipInfo)
-    {
-        QSettings settings;
-        settings.setValue("Rectangle/xMin", _clipInfo->bounds().xMin());
-        settings.setValue("Rectangle/xMax", _clipInfo->bounds().xMax());
-        settings.setValue("Rectangle/yMin", _clipInfo->bounds().yMin());
-        settings.setValue("Rectangle/yMax", _clipInfo->bounds().yMax());
-    }
+    _bounds = b;
+    
+    QSettings settings;
+    settings.setValue("Rectangle/xMin", _bounds->xMin());
+    settings.setValue("Rectangle/xMax", _bounds->xMax());
+    settings.setValue("Rectangle/yMin", _bounds->yMin());
+    settings.setValue("Rectangle/yMax", _bounds->yMax());
 }

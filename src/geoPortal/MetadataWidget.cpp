@@ -59,6 +59,7 @@ void MetadataWidget::initUi()
     _variantManager = new QtVariantPropertyManager(this);
 
     _browser = new QtTreePropertyBrowser(this);
+    qobject_cast<QtTreePropertyBrowser*>(_browser)->setHeaderVisible(false);
     _browser->setFactoryForManager(_variantManager, new QtVariantEditorFactory(this));
     layout->addWidget(_browser);
 }

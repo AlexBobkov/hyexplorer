@@ -42,8 +42,8 @@ namespace portal
 
         void showOverview(const ScenePtr& scene, const QString& filepath);
 
-        ClipInfoPtr clipInfo() const { return _clipInfo; }
-        void setClipInfo(const ClipInfoPtr& ci);
+        const boost::optional<osgEarth::Bounds>& bounds() const { return _bounds; }
+        void setBounds(const osgEarth::Bounds& b);
 
         void showScene(const ScenePtr& scene, int band, const ClipInfoPtr& clipInfo);
 
@@ -64,7 +64,7 @@ namespace portal
         osg::ref_ptr<osg::Node> _circleNode;
         osg::ref_ptr<osg::Node> _overlayNode;
 
-        ClipInfoPtr _clipInfo;
+        boost::optional<osgEarth::Bounds> _bounds;
 
         QStringList _coverageNames;
         std::map<QString, osgEarth::ImageLayerOptions> _coverageMap;

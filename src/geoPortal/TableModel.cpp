@@ -73,7 +73,7 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
     {
         if (section == 0)
         {
-            return tr("Scene Id");
+            return tr("Идентификатор сцены");
         }
         else if (section == 1)
         {
