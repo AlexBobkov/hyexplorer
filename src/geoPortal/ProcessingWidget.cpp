@@ -1,6 +1,7 @@
 #include "ProcessingWidget.hpp"
 #include "Storage.hpp"
 #include "Utils.hpp"
+#include "Operations.hpp"
 
 #include <QDebug>
 #include <QSettings>
@@ -55,7 +56,7 @@ void ProcessingWidget::initUi()
     });
 
     //---------------------------------------
-    
+
     for (const auto& tool : _tools)
     {
         _ui.toolComboBox->addItem(QFileInfo(tool).fileName());
@@ -65,8 +66,8 @@ void ProcessingWidget::initUi()
     {
         _ui.processButton->setEnabled(false);
     }
-        
-    connect(_ui.processButton, &QPushButton::clicked, this, &ProcessingWidget::startImageCorrection);    
+
+    connect(_ui.processButton, &QPushButton::clicked, this, &ProcessingWidget::startImageCorrection);
     connect(_ui.showProcessedTableButton, &QPushButton::clicked, this, &ProcessingWidget::showTableWithProcessedFiles);
 }
 
@@ -101,212 +102,34 @@ void ProcessingWidget::setSceneAndClip(const ScenePtr& scene, const ClipInfoPtr&
 
 void ProcessingWidget::startImageCorrection()
 {
-    int toolIndex = _ui.toolComboBox->currentIndex();
-    QString program = _tools[toolIndex];
-    QString dir = QFileInfo(program).absolutePath();
-    _appName = QFileInfo(program).fileName();
+    QString program = _tools[_ui.toolComboBox->currentIndex()];
 
     qDebug() << "Program" << program;
-        
-    QString filepath = Storage::sceneBandPath(_scene, _ui.bandSpinBox->value(), _clipInfo);
-    if (!QFileInfo::exists(filepath))
+
+    QString inputFilepath = Storage::sceneBandPath(_scene, _ui.bandSpinBox->value(), _clipInfo);
+    if (!QFileInfo::exists(inputFilepath))
     {
-        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Файл для обработки %0 не найден").arg(filepath));
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Файл для обработки %0 не найден").arg(inputFilepath));
         return;
     }
 
-    //------------------------------------
+    QString outputFilepath = Storage::processedFilePath(_scene, _ui.bandSpinBox->value(), genetrateRandomName());
 
+    ProcessingOperation* op = new ProcessingOperation(_scene, _ui.bandSpinBox->value(), program, inputFilepath, outputFilepath, &_dataManager->networkAccessManager(), this);
+    connect(op, &ProcessingOperation::finished, this, [op, this, outputFilepath]()
     {
-        QFile data(dir  + "/data.txt");
-        data.open(QFile::WriteOnly);
-
-        QTextStream out(&data);
-        out << filepath.toLocal8Bit() << "\n";
-
-        data.close();
-    }
-
-    //------------------------------------
-
-    {
-        _proccessedOutputFilepath = Storage::processedFilePath(_scene, _ui.bandSpinBox->value(), genetrateRandomName());
-
-        QFile result(dir + "/result.txt");
-        result.open(QFile::WriteOnly);
-
-        QTextStream out(&result);
-        out << _proccessedOutputFilepath.toLocal8Bit() << "\n";
-
-        result.close();
-    }
-
-    //------------------------------------
-        
-    qDebug() << "Image correction started";
-
-    setEnabled(false);
-
-    emit processingStarted();
-    
-    QProcess* matlabProcess = new QProcess(this);
-    matlabProcess->setWorkingDirectory(dir);
-
-    connect(matlabProcess, static_cast<void(QProcess::*)(QProcess::ProcessError)>(&QProcess::error), this, [matlabProcess, this](QProcess::ProcessError error)
-    {
-        qDebug() << "Image correnction failed. Error code" << error;
-
-        matlabProcess->deleteLater();
-
-        setEnabled(true);
-
-        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Ошибка при выполнении обработки. Код %0").arg(error));
-
-        emit processingFinished();
-    });
-
-    connect(matlabProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, [matlabProcess, this](int exitCode, QProcess::ExitStatus exitStatus)
-    {
-        qDebug() << "Image correnction finished. Exit code" << exitCode << "exit status" << exitStatus;
-                
-        matlabProcess->deleteLater();
-
-        if (QFileInfo::exists(_proccessedOutputFilepath))
-        {
-            openExplorer(_proccessedOutputFilepath);
-
-            uploadProccessedFile();
-        }
-        else
-        {
-            setEnabled(true);
-
-            QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Обработка прервана пользователем"));
-
-            emit processingFinished();
-        }
-    });
-
-    matlabProcess->start(program, QStringList());
-}
-
-void ProcessingWidget::uploadProccessedFile()
-{
-    qDebug() << "Upload " << _proccessedOutputFilepath;
-
-    double contrast = 123.0;
-    double sharpness = 45.0;
-    int blocksize = 666;
-
-    //------------------------------------
-
-    QFileInfo fileInfo(_proccessedOutputFilepath);
-
-    QString paramsFilepath = fileInfo.absolutePath() + "/" + fileInfo.completeBaseName() + ".txt";
-    if (!QFileInfo::exists(paramsFilepath))
-    {
-        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Не найден файл с параметрами обработки %0").arg(paramsFilepath));
-
-        emit processingFinished();
-
-        return;
-    }
-
-    QFile paramsFile(paramsFilepath);
-    paramsFile.open(QIODevice::ReadOnly | QIODevice::Text);
-
-    QTextStream in(&paramsFile);
-    QString line1 = in.readLine();
-    QString line2 = in.readLine();
-
-    if (line2.isNull())
-    {
-        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Не удалось прочитать параметры обработки %0").arg(paramsFilepath));
-
-        emit processingFinished();
-
-        return;
-    }
-
-    paramsFile.close();
-
-    //------------------------------------
-
-    QHttpMultiPart* multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-
-    //------------------------------------
-
-    QHttpPart imagePart;
-    imagePart.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/octet-stream"));
-    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"file\";filename=\"%0\"").arg(fileInfo.fileName()));
-
-    QFile* file = new QFile(_proccessedOutputFilepath);
-    file->open(QIODevice::ReadOnly);
-    imagePart.setBodyDevice(file);
-    file->setParent(multiPart); // we cannot delete the file now, so delete it with the multiPart
-
-    multiPart->append(imagePart);
-
-    //------------------------------------
-
-    QHttpPart bandPart;
-    bandPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"band\""));
-    bandPart.setBody(QByteArray::number(_ui.bandSpinBox->value()));
-
-    multiPart->append(bandPart);
-
-    //------------------------------------
-
-    QHttpPart contrastPart;
-    contrastPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"appname\""));
-    contrastPart.setBody(_appName.toUtf8());
-
-    multiPart->append(contrastPart);
-
-    //------------------------------------
-
-    QHttpPart sharpnessPart;
-    sharpnessPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"processingtime\""));
-    sharpnessPart.setBody(QDateTime::currentDateTime().toString(Qt::ISODate).toUtf8());
-
-    multiPart->append(sharpnessPart);
-
-    //------------------------------------
-
-    QHttpPart blocksizePart;
-    blocksizePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"params\""));
-    blocksizePart.setBody(line2.toUtf8());
-
-    multiPart->append(blocksizePart);
-
-    //------------------------------------
-
-    QUrl url = QString("http://virtualglobe.ru/geoportalapi/processed/%0").arg(_scene->sceneId());
-
-    QNetworkReply* reply = _dataManager->networkAccessManager().post(QNetworkRequest(url), multiPart);
-
-    multiPart->setParent(reply); // delete the multiPart with the reply
-
-    connect(reply, &QNetworkReply::finished, this, [reply, this]()
-    {
-        reply->deleteLater();
-
-        setEnabled(true);
-
-        if (reply->error() != QNetworkReply::NoError)
-        {
-            qDebug() << "Error " << reply->error() << " " << reply->errorString();            
-
-            QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Ошибка при загрузке файла на сервер %1 %2").arg(reply->error()).arg(reply->errorString()));
-
-            emit processingFinished();
-
-            return;
-        }
+        op->deleteLater();
 
         QMessageBox::information(qApp->activeWindow(), tr("Обработка"), tr("Обработка завершена. Обработанный файл был загружен на сервер"));
 
-        emit processingFinished();
+        openExplorer(outputFilepath);
+    });
+
+    connect(op, &ProcessingOperation::error, this, [op, this](const QString& text)
+    {
+        op->deleteLater();
+
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), text);
     });
 }
 
@@ -315,20 +138,20 @@ void ProcessingWidget::showTableWithProcessedFiles()
     QDialog tableWindow;
 
     QVBoxLayout* layout = new QVBoxLayout;
-    
+
     QSqlQueryModel* model = new QSqlQueryModel(&tableWindow);
-    model->setQuery(QString("SELECT processingtime, appname, band, params, filename FROM public.processedimages where sceneid='%0'").arg(_scene->sceneId()));    
+    model->setQuery(QString("SELECT processingtime, appname, band, params, filename FROM public.processedimages where sceneid='%0'").arg(_scene->sceneId()));
     model->setHeaderData(0, Qt::Horizontal, tr("Время обработки"));
     model->setHeaderData(1, Qt::Horizontal, tr("Инструмент"));
     model->setHeaderData(2, Qt::Horizontal, tr("Канал"));
     model->setHeaderData(3, Qt::Horizontal, tr("Параметры обработки"));
     model->setHeaderData(4, Qt::Horizontal, tr("Имя файла"));
 
-    QTableView* view = new QTableView(&tableWindow);    
+    QTableView* view = new QTableView(&tableWindow);
     view->setModel(model);
     view->resizeColumnsToContents();
     layout->addWidget(view);
-        
+
     QPushButton* button = new QPushButton(tr("Скачать"), &tableWindow);
     button->setMaximumWidth(100);
     layout->addWidget(button);
@@ -365,7 +188,7 @@ void ProcessingWidget::downloadProcessedFile(const QString& filename)
     }
 
     QUrl url = QString("http://virtualglobe.ru/geoportal/Hyperion/scenes/%0/processed/%1").arg(_scene->sceneId()).arg(filename);
-                
+
     QNetworkReply* reply = _dataManager->networkAccessManager().get(QNetworkRequest(url));
     connect(reply, &QNetworkReply::finished, this, [reply, this]()
     {

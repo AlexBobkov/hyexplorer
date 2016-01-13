@@ -40,8 +40,5 @@ namespace portal
 
         ScenePtr _scene;
         ClipInfoPtr _clipInfo;        
-                
-        QString _proccessedOutputFilepath;
-        QString _appName;
     };
 }

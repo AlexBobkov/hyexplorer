@@ -17,6 +17,7 @@ SET(HEADER_FILES
 	DownloadManager.hpp	
 	MainWindow.hpp
 	MetadataWidget.hpp
+	Operations.hpp
 	ProcessingWidget.hpp
 	ProxyModel.hpp
 	Scene.hpp
@@ -35,6 +36,7 @@ SET(SRC_FILES
 	DownloadManager.cpp	
 	MainWindow.cpp
 	MetadataWidget.cpp
+	Operations.cpp
 	ProcessingWidget.cpp
 	Program.cpp
 	ProxyModel.cpp
