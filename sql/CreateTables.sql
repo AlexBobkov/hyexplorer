@@ -81,13 +81,13 @@ ALTER TABLE public.aviris
 CREATE TABLE public.processedimages
 (
   id serial,
-  sceneid character varying NOT NULL,
+  processingtime timestamp with time zone,
+  appname character varying NOT NULL,
+  sceneid character varying NOT NULL,  
   band integer,
+  params character varying,  
+  filename character varying,
   bounds geography(Polygon,4326),  
-  contrast double precision,
-  sharpness double precision,
-  blocksize integer,
-  filename character varying,  
   CONSTRAINT processedimages_pk PRIMARY KEY (id),
   CONSTRAINT processedimages_fk FOREIGN KEY (sceneid)
       REFERENCES public.scenes (sceneid) MATCH SIMPLE

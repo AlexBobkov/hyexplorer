@@ -42,5 +42,6 @@ namespace portal
         ClipInfoPtr _clipInfo;        
                 
         QString _proccessedOutputFilepath;
+        QString _appName;
     };
 }

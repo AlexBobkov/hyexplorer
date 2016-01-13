@@ -104,6 +104,7 @@ void ProcessingWidget::startImageCorrection()
     int toolIndex = _ui.toolComboBox->currentIndex();
     QString program = _tools[toolIndex];
     QString dir = QFileInfo(program).absolutePath();
+    _appName = QFileInfo(program).fileName();
 
     qDebug() << "Program" << program;
         
@@ -215,11 +216,19 @@ void ProcessingWidget::uploadProccessedFile()
     paramsFile.open(QIODevice::ReadOnly | QIODevice::Text);
 
     QTextStream in(&paramsFile);
-    while (!in.atEnd())
+    QString line1 = in.readLine();
+    QString line2 = in.readLine();
+
+    if (line2.isNull())
     {
-        QString line = in.readLine();
-        qDebug() << "Read line" << line;
+        QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), tr("Не удалось прочитать параметры обработки %0").arg(paramsFilepath));
+
+        emit processingFinished();
+
+        return;
     }
+
+    paramsFile.close();
 
     //------------------------------------
 
@@ -249,24 +258,24 @@ void ProcessingWidget::uploadProccessedFile()
     //------------------------------------
 
     QHttpPart contrastPart;
-    contrastPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"contrast\""));
-    contrastPart.setBody(QByteArray::number(contrast, 'f', 7));
+    contrastPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"appname\""));
+    contrastPart.setBody(_appName.toUtf8());
 
     multiPart->append(contrastPart);
 
     //------------------------------------
 
     QHttpPart sharpnessPart;
-    sharpnessPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"sharpness\""));
-    sharpnessPart.setBody(QByteArray::number(sharpness, 'f', 7));
+    sharpnessPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"processingtime\""));
+    sharpnessPart.setBody(QDateTime::currentDateTime().toString(Qt::ISODate).toUtf8());
 
     multiPart->append(sharpnessPart);
 
     //------------------------------------
 
     QHttpPart blocksizePart;
-    blocksizePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"blocksize\""));
-    blocksizePart.setBody(QByteArray::number(blocksize));
+    blocksizePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data;name=\"params\""));
+    blocksizePart.setBody(line2.toUtf8());
 
     multiPart->append(blocksizePart);
 
@@ -308,15 +317,16 @@ void ProcessingWidget::showTableWithProcessedFiles()
     QVBoxLayout* layout = new QVBoxLayout;
     
     QSqlQueryModel* model = new QSqlQueryModel(&tableWindow);
-    model->setQuery(QString("SELECT band, contrast, sharpness, blocksize, filename FROM public.processedimages where sceneid='%0'").arg(_scene->sceneId()));    
-    model->setHeaderData(0, Qt::Horizontal, tr("Канал"));
-    model->setHeaderData(1, Qt::Horizontal, tr("Контраст"));
-    model->setHeaderData(2, Qt::Horizontal, tr("Резкость"));
-    model->setHeaderData(3, Qt::Horizontal, tr("Размер блока"));
+    model->setQuery(QString("SELECT processingtime, appname, band, params, filename FROM public.processedimages where sceneid='%0'").arg(_scene->sceneId()));    
+    model->setHeaderData(0, Qt::Horizontal, tr("Время обработки"));
+    model->setHeaderData(1, Qt::Horizontal, tr("Инструмент"));
+    model->setHeaderData(2, Qt::Horizontal, tr("Канал"));
+    model->setHeaderData(3, Qt::Horizontal, tr("Параметры обработки"));
+    model->setHeaderData(4, Qt::Horizontal, tr("Имя файла"));
 
     QTableView* view = new QTableView(&tableWindow);    
     view->setModel(model);
-    view->resizeColumnToContents(4);
+    view->resizeColumnsToContents();
     layout->addWidget(view);
         
     QPushButton* button = new QPushButton(tr("Скачать"), &tableWindow);
@@ -339,7 +349,7 @@ void ProcessingWidget::showTableWithProcessedFiles()
 
     tableWindow.setLayout(layout);
     tableWindow.setWindowTitle(tr("Обработанные файлы для сцены %0").arg(_scene->sceneId()));
-    tableWindow.resize(600, 300);
+    tableWindow.resize(800, 300);
     tableWindow.exec();
 }
 
