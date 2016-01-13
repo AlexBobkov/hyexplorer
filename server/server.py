@@ -260,14 +260,14 @@ def processed_upload(sceneid):
             ####################
             
             try:
+                appname = request.form['appname']
+                processingtime = request.form['processingtime']                
                 band = int(request.form['band'])
-                contrast = float(request.form['contrast'])
-                sharpness = float(request.form['sharpness'])
-                blocksize = int(request.form['blocksize'])
+                params = request.form['params']
             except ValueError:
                 return 'Failed to parse params'
             
-            app.logger.info('Params %s %s %s %s', band, contrast, sharpness, blocksize)
+            app.logger.info('Params %s %s %s %s', appname, processingtime, band, params)
             
             ####################
             
@@ -313,7 +313,7 @@ def processed_upload(sceneid):
             conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
 
             cur = conn.cursor()
-            cur.execute("insert into public.processedimages (sceneid, bounds, band, contrast, sharpness, blocksize, filename) values (%s, ST_GeographyFromText(%s), %s, %s, %s, %s, %s);", (sceneid, polystr, band, contrast, sharpness, blocksize, filename))
+            cur.execute("insert into public.processedimages (processingtime, appname, sceneid, bounds, band, params, filename) values (%s, %s, %s, ST_GeographyFromText(%s), %s, %s, %s);", (processingtime, appname, sceneid, polystr, band, params, filename))
             conn.commit()
             cur.close()
             conn.close()
