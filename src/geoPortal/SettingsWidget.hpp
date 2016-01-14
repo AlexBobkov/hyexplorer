@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "ui_SettingsWidget.h"
 #include "DataManager.hpp"
