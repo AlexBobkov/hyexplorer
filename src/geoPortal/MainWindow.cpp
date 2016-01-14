@@ -363,6 +363,8 @@ void MainWindow::initUi()
     _ui.sceneIdCheckBox->setChecked(settings.value("Query/sceneIdEnabled", false).toBool());
     _ui.sceneIdLineEdit->setText(settings.value("Query/sceneIdText", QString()).toString());
 
+    _ui.hasSceneCheckBox->setChecked(settings.value("Query/hasSceneEnabled", false).toBool());
+
     _ui.dateGroupBox->setChecked(settings.value("Query/dateEnabled", false).toBool());
     _ui.dateTimeEditFrom->setDateTime(settings.value("Query/dateFrom", QDateTime::currentDateTime().addYears(-1)).toDateTime());
     _ui.dateTimeEditTo->setDateTime(settings.value("Query/dateTo", QDateTime::currentDateTime()).toDateTime());
@@ -659,6 +661,8 @@ void MainWindow::executeQuery()
 
     settings.setValue("Query/sceneIdEnabled", _ui.sceneIdCheckBox->isChecked());
     settings.setValue("Query/sceneIdText", _ui.sceneIdLineEdit->text());
+
+    settings.setValue("Query/hasSceneEnabled", _ui.hasSceneCheckBox->isChecked());
     
     settings.setValue("Query/dateEnabled", _ui.dateGroupBox->isChecked());
     settings.setValue("Query/dateFrom", _ui.dateTimeEditFrom->dateTime());
@@ -777,6 +781,14 @@ void MainWindow::executeQuery()
         for (const auto& q : activeQueries)
         {
             q->addCondition(QString("sceneid='%0'").arg(_ui.sceneIdLineEdit->text()));
+        }
+    }
+
+    if (_ui.hasSceneCheckBox->isChecked())
+    {
+        for (const auto& q : activeQueries)
+        {
+            q->addCondition(QString("hasscene"));
         }
     }
 
