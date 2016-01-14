@@ -7,6 +7,7 @@
 #include "SettingsWidget.hpp"
 #include "SceneOperationsWidget.hpp"
 #include "Operations.hpp"
+#include "Version.hpp"
 
 #include <osgEarth/Terrain>
 #include <osgEarthAnnotation/CircleNode>
@@ -313,9 +314,10 @@ void MainWindow::initUi()
 
         QString text = tr("<html><head/><body>"
                           "<p align='center'><span style='font-size:12pt;'>Геопортал</span></p>"
+                          "<p>Версия: %0</p>"
                           "<p>Разработчики:<br/>Александр Бобков<br/>Денис Учаев</p>"
                           "<p>Разработка поддержана грантом РФФИ №13-05-12086</p>"
-                          "</body></html>");
+                          "</body></html>").arg(Version::str);
 
         QLabel* aboutLabel = new QLabel(text);
         aboutLabel->setTextFormat(Qt::RichText);
@@ -558,7 +560,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(onRectangleSelectFailed()));
 
     {
-        QDockWidget* dock = new QDockWidget(tr("Операции со сценой"));
+        QDockWidget* dock = new QDockWidget(tr("Параметры сохранения"));
         dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
         dock->setWidget(sceneOperationsWidget);
         addDockWidget(Qt::RightDockWidgetArea, dock);

@@ -1,0 +1,10 @@
+#include "Version.hpp"
+
+/*
+Не редактируйте файл Version.cpp напрямую. Он автоматически сгененерирован с помощью CMake по шаблону в файле Version.cpp.in
+*/
+
+unsigned int portal::Version::majorVersion = ${GEOPORTAL_MAJOR_VERSION};
+unsigned int portal::Version::minorVersion = ${GEOPORTAL_MINOR_VERSION};
+unsigned int portal::Version::patchVersion = ${GEOPORTAL_PATCH_VERSION};
+const char* portal::Version::str = "${GEOPORTAL_MAJOR_VERSION}.${GEOPORTAL_MINOR_VERSION}.${GEOPORTAL_PATCH_VERSION}";

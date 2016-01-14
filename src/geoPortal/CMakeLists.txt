@@ -26,6 +26,7 @@ SET(HEADER_FILES
 	Storage.hpp
 	TableModel.hpp
 	Utils.hpp
+	Version.hpp
 )
 
 SET(SRC_FILES
@@ -45,6 +46,7 @@ SET(SRC_FILES
 	Storage.cpp
 	TableModel.cpp
 	Utils.cpp
+	Version.cpp
 )
 
 INCLUDE_DIRECTORIES(

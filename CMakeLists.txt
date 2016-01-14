@@ -16,8 +16,13 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 #######################################################################
 
 SET(GEOPORTAL_MAJOR_VERSION 0 CACHE STRING "Major version")
-SET(GEOPORTAL_MINOR_VERSION 2 CACHE STRING "Minor version")
+SET(GEOPORTAL_MINOR_VERSION 3 CACHE STRING "Minor version")
 SET(GEOPORTAL_PATCH_VERSION 0 CACHE STRING "Patch version")
+
+CONFIGURE_FILE(
+	${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp.in
+	${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp
+)
 
 #######################################################################
 
