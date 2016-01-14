@@ -536,6 +536,9 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
     connect(this, &MainWindow::sceneSelected, sceneOperationsWidget, &SceneOperationsWidget::setScene);
+    
+    connect(sceneOperationsWidget, &SceneOperationsWidget::progressChanged, _progressBar, &QProgressBar::setValue);
+    connect(sceneOperationsWidget, &SceneOperationsWidget::progressReset, _progressBar, &QProgressBar::reset);
 
     connect(sceneOperationsWidget, &SceneOperationsWidget::selectRectangleRequested, this, [sceneOperationsWidget, this]()
     {
@@ -582,11 +585,6 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     _downloadManager = new DownloadManager(_dataManager, this);
 
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
-
-    connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
-    
-    connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));    
-    connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));       
 }
 
 void MainWindow::setScene(const ScenePtr& scene)
@@ -916,22 +914,6 @@ void MainWindow::finishLoadScenes()
 
     _progressBar->setMaximum(100);
     _ui.dockWidget->setEnabled(true);
-}
-
-void MainWindow::finishImport(const ScenePtr& scene, bool result, const QString& message)
-{
-    _progressBar->reset();
-
-    if (result)
-    {
-        scene->setSceneExistence(true);
-
-        QMessageBox::information(qApp->activeWindow(), tr("Cцена получена"), message);
-    }
-    else
-    {
-        QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), message);
-    }
 }
 
 //-------------------------------------------------------

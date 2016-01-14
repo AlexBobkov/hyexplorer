@@ -18,27 +18,11 @@ namespace portal
     public:
         explicit DownloadManager(const DataManagerPtr& dataManager, QObject* parent = 0);
         virtual ~DownloadManager();
-
-    signals:
-        void sceneDownloadFinished(const ScenePtr& scene, bool result, const QString& message);
-        void importFinished(const ScenePtr& scene, bool result, const QString& message);
-
-        void progressChanged(int);
-        
+     
     public slots:
-        void importScene(const ScenePtr& scene);
         void downloadOverview(const ScenePtr& scene);
                    
-    private:        
-        void processRedirectReply();
-        void processDownloadReply();
-        
+    private:
         DataManagerPtr _dataManager;
-
-        QUrl _oldRedirectUrl;
-
-        QProgressDialog* _progressDialog;
-        QNetworkReply* _longDownloadReply;
-        QFile* _tempFile;
     };
 }

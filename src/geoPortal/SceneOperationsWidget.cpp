@@ -21,7 +21,8 @@ using namespace portal;
 
 SceneOperationsWidget::SceneOperationsWidget(const DataManagerPtr& dataManager, QWidget* parent) :
 QWidget(parent),
-_dataManager(dataManager)
+_dataManager(dataManager),
+_importing(false)
 {
     initUi();
 }
@@ -44,9 +45,45 @@ void SceneOperationsWidget::initUi()
 
     connect(_ui.importButton, &QPushButton::clicked, this, [this]()
     {
-        _ui.importButton->setVisible(false);
+        _importing = true;
 
-        emit importSceneRequested(_scene);
+        _ui.importButton->setEnabled(!_importing);        
+
+        ImportSceneOperation* op = new ImportSceneOperation(_scene, &_dataManager->networkAccessManager(), this);
+
+        connect(op, &ImportSceneOperation::progressChanged, this, &SceneOperationsWidget::progressChanged);
+
+        connect(op, &ImportSceneOperation::finished, this, [op, this](const ScenePtr& scene)
+        {
+            op->deleteLater();
+            op->setParent(0);
+
+            QMessageBox::information(qApp->activeWindow(), tr("Импорт сцены"), tr("Сцена %0 успешно получена с сервера USGS и загружена на наш сервер").arg(scene->sceneId()));
+
+            _importing = false;
+
+            scene->setSceneExistence(true);
+
+            if (_scene == scene) //reload widget
+            {
+                setScene(ScenePtr());
+                setScene(scene);
+            }
+
+            emit progressReset();
+        });
+
+        connect(op, &ImportSceneOperation::error, this, [op, this](const QString& text)
+        {
+            op->deleteLater();
+            op->setParent(0);
+
+            QMessageBox::warning(qApp->activeWindow(), tr("Импорт сцены"), text);
+
+            _importing = false;
+
+            emit progressReset();
+        });
     });
 
     //---------------------------------------
@@ -108,6 +145,9 @@ void SceneOperationsWidget::initUi()
         _clipInfo->setMaxBand(_ui.toSpinBox->value());
                 
         DownloadSceneOperation* op = new DownloadSceneOperation(_scene, _clipInfo, &_dataManager->networkAccessManager(), this);
+
+        connect(op, &DownloadSceneOperation::progressChanged, this, &SceneOperationsWidget::progressChanged);
+
         connect(op, &DownloadSceneOperation::finished, this, [op, this](const ScenePtr& scene, const ClipInfoPtr& clipInfo)
         {
             op->deleteLater();
@@ -179,19 +219,22 @@ void SceneOperationsWidget::initUi()
 
 void SceneOperationsWidget::setScene(const ScenePtr& scene)
 {
-    if (!isEnabled())
-    {
-        qDebug() << "Attemp to change the scene during the downloading";
-        return;
-    }
-
     if (_scene == scene)
     {
         return;
     }
 
     _scene = scene;
+    _clipInfo.reset();
 
+    if (!_scene)
+    {
+        setEnabled(false);
+        return;
+    }
+
+    setEnabled(true);
+        
     if (scene->hasScene())
     {
         _ui.statusLabel->setText(tr("Сцена находится на нашем сервере и доступна для работы"));
@@ -226,6 +269,7 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
         _ui.downloadButton->setEnabled(false);
     }
 
+    _ui.importButton->setEnabled(!_importing);
     _ui.openFolderButton->setEnabled(false);
 }
 

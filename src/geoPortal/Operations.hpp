@@ -6,6 +6,9 @@
 #include <QObject>
 #include <QProcess>
 #include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QProgressDialog>
+#include <QFile>
 
 namespace portal
 {
@@ -21,6 +24,8 @@ namespace portal
         void finished(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
         void error(const QString& text);
 
+        void progressChanged(int);
+
     private:
         void downloadNextSceneBand();
 
@@ -31,6 +36,34 @@ namespace portal
 
         ScenePtr _scene;
         ClipInfoPtr _clipInfo;
+    };
+
+    class ImportSceneOperation : public QObject
+    {
+        Q_OBJECT
+
+    public:
+        explicit ImportSceneOperation(const ScenePtr& scene, QNetworkAccessManager* manager, QObject* parent = 0);
+        virtual ~ImportSceneOperation();
+
+    signals:
+        void finished(const ScenePtr& scene);
+        void error(const QString& text);
+
+        void progressChanged(int);
+
+    private:
+        void downloadScene();
+        void uploadScene();
+
+        QNetworkAccessManager* _networkManager;
+                
+        ScenePtr _scene;
+
+        QFile* _tempFile;
+        QNetworkReply* _downloadReply;
+        QNetworkReply* _uploadReply;
+        QProgressDialog* _progressDialog;
     };
 
     class ProcessingOperation : public QObject

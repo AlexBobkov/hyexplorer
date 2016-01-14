@@ -51,8 +51,6 @@ namespace portal
 
         void finishLoadScenes();
 
-        void finishImport(const ScenePtr& scene, bool result, const QString& message);
-
         void onRectangleSelected(const osgEarth::Bounds& bounds);
         void onRectangleSelectionFailed();
 

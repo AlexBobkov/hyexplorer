@@ -17,12 +17,13 @@ namespace portal
         virtual ~SceneOperationsWidget();
 
     signals:
-        void importSceneRequested(const ScenePtr& scene);
-
         void selectRectangleRequested();
         void rectangleChanged(const osgEarth::Bounds& b);
 
         void sceneClipPrepared(const ScenePtr& scene, const ClipInfoPtr&);
+
+        void progressChanged(int);
+        void progressReset();
         
     public slots:
         void setScene(const ScenePtr& scene);
@@ -38,5 +39,7 @@ namespace portal
         ClipInfoPtr _clipInfo;
 
         DataManagerPtr _dataManager;
+
+        bool _importing;
     };
 }
