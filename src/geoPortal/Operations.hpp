@@ -1,6 +1,7 @@
-﻿#pragma once
+#pragma once
 
 #include "Scene.hpp"
+#include "ClipInfo.hpp"
 
 #include <QObject>
 #include <QProcess>
@@ -8,6 +9,30 @@
 
 namespace portal
 {
+    class DownloadSceneOperation : public QObject
+    {
+        Q_OBJECT
+
+    public:
+        explicit DownloadSceneOperation(const ScenePtr& scene, const ClipInfoPtr& clipInfo, QNetworkAccessManager* manager, QObject* parent = 0);
+        virtual ~DownloadSceneOperation();
+
+    signals:
+        void finished(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
+        void error(const QString& text);
+
+    private:
+        void downloadNextSceneBand();
+
+        QNetworkAccessManager* _networkManager;
+
+        QStringList _downloadPaths;
+        int _downloadPathIndex;
+
+        ScenePtr _scene;
+        ClipInfoPtr _clipInfo;
+    };
+
     class ProcessingOperation : public QObject
     {
         Q_OBJECT

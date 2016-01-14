@@ -1,4 +1,5 @@
 #include "Operations.hpp"
+#include "Storage.hpp"
 
 #include <QFile>
 #include <QTextStream>
@@ -8,6 +9,150 @@
 #include <QNetworkReply>
 
 using namespace portal;
+
+DownloadSceneOperation::DownloadSceneOperation(const ScenePtr& scene, const ClipInfoPtr& clipInfo, QNetworkAccessManager* manager, QObject* parent) :
+QObject(parent),
+_networkManager(manager),
+_scene(scene),
+_clipInfo(clipInfo)
+{
+    QUrl url;
+    if (!_clipInfo->isFullSize())
+    {
+        qDebug() << "Download clip name " << _clipInfo->uniqueName();
+
+        osgEarth::Bounds b = *_clipInfo->bounds();
+
+        url = QString("http://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
+            .arg(_scene->sceneId())
+            .arg(_clipInfo->minBand())
+            .arg(_clipInfo->maxBand())
+            .arg(b.xMin(), 0, 'f', 10)
+            .arg(b.yMax(), 0, 'f', 10)
+            .arg(b.xMax(), 0, 'f', 10)
+            .arg(b.yMin(), 0, 'f', 10);
+    }
+    else
+    {
+        qDebug() << "Download full size";
+
+        url = QString("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2")
+            .arg(_scene->sceneId())
+            .arg(_clipInfo->minBand())
+            .arg(_clipInfo->maxBand());
+    }
+
+    QNetworkReply* reply = _networkManager->get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, [reply, this]()
+    {
+        reply->deleteLater();
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            emit error(tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(_scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
+            return;
+        }
+
+        QByteArray data = reply->readAll();
+        if (data.isNull() || data.isEmpty())
+        {
+            emit error(tr("При скачивании сцены %0 получен пустой ответ").arg(_scene->sceneId()));
+            return;
+        }
+
+        if (!data.startsWith("SUCCESS"))
+        {
+            emit error(tr("Сцена %0 не найдена на сервере").arg(_scene->sceneId()));
+            return;
+        }
+
+        QTextStream stream(data);
+        QString line = stream.readLine(); //SUCCESS line
+        while (!line.isNull())
+        {
+            line = stream.readLine();
+            if (!line.isNull() && !line.isEmpty())
+            {
+                _downloadPaths.push_back(line);
+            }
+        }
+
+        if (_downloadPaths.size() == 0)
+        {
+            emit error(tr("Каналы для сцены %0 не найдены").arg(_scene->sceneId()));
+            return;
+        }
+
+        _downloadPathIndex = 0;
+        downloadNextSceneBand();
+    });
+}
+
+DownloadSceneOperation::~DownloadSceneOperation()
+{
+
+}
+
+void DownloadSceneOperation::downloadNextSceneBand()
+{
+    assert(_downloadPathIndex < _downloadPaths.size());
+
+    QNetworkRequest request(_downloadPaths[_downloadPathIndex]);
+
+    QString path = Storage::sceneBandPath(_scene, request.url().fileName(), _clipInfo);
+    if (QFile::exists(path))
+    {
+        _downloadPathIndex++;
+        if (_downloadPathIndex >= _downloadPaths.size())
+        {
+            emit finished(_scene, _clipInfo);
+            return;
+        }
+
+        downloadNextSceneBand();
+    }
+    else
+    {
+        QNetworkReply* reply = _networkManager->get(request);
+        connect(reply, &QNetworkReply::finished, this, [reply, this]()
+        {
+            reply->deleteLater();
+
+            if (reply->error() != QNetworkReply::NoError)
+            {
+                emit error(tr("При скачивании сцены %0 произошла ошибка %1 %2").arg(_scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
+                return;
+            }
+
+            QByteArray data = reply->readAll();
+            if (data.isNull() || data.isEmpty())
+            {
+                emit error(tr("При скачивании сцены %0 получен пустой ответ").arg(_scene->sceneId()));
+                return;
+            }
+
+            qDebug() << "SceneBand " << _downloadPathIndex;
+
+            QString path = Storage::sceneBandPath(_scene, reply->url().fileName(), _clipInfo);
+
+            QFile localFile(path);
+            localFile.open(QIODevice::WriteOnly);
+            localFile.write(data);
+            localFile.close();
+
+            _downloadPathIndex++;
+            if (_downloadPathIndex >= _downloadPaths.size())
+            {
+                emit finished(_scene, _clipInfo);
+                return;
+            }
+
+            downloadNextSceneBand();
+        });
+    }
+}
+
+//====================================================================================
 
 ProcessingOperation::ProcessingOperation(const ScenePtr& scene, int band, const QString& toolFilepath, const QString& inputFilepath, const QString& outputFilepath, QNetworkAccessManager* manager, QObject* parent) :
 QObject(parent),

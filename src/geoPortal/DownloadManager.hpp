@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "DataManager.hpp"
 #include "Scene.hpp"
@@ -28,17 +28,12 @@ namespace portal
     public slots:
         void importScene(const ScenePtr& scene);
         void downloadOverview(const ScenePtr& scene);
-        void downloadScene(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
                    
     private:        
         void processRedirectReply();
         void processDownloadReply();
-        void downloadNextSceneBand(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
         
         DataManagerPtr _dataManager;
-                                
-        QStringList _downloadPaths;
-        int _downloadPathIndex;
 
         QUrl _oldRedirectUrl;
 

@@ -1,6 +1,7 @@
 #include "SceneOperationsWidget.hpp"
 #include "Storage.hpp"
 #include "Utils.hpp"
+#include "Operations.hpp"
 
 #include <QDebug>
 #include <QSettings>
@@ -105,8 +106,32 @@ void SceneOperationsWidget::initUi()
         }
         _clipInfo->setMinBand(_ui.fromSpinBox->value());
         _clipInfo->setMaxBand(_ui.toSpinBox->value());
+                
+        DownloadSceneOperation* op = new DownloadSceneOperation(_scene, _clipInfo, &_dataManager->networkAccessManager(), this);
+        connect(op, &DownloadSceneOperation::finished, this, [op, this](const ScenePtr& scene, const ClipInfoPtr& clipInfo)
+        {
+            op->deleteLater();
+            op->setParent(0);
 
-        emit downloadSceneRequested(_scene, _clipInfo);
+            QMessageBox::information(qApp->activeWindow(), tr("Скачивание сцены"), tr("Выбранные каналы скачаны"));
+
+            setEnabled(true);
+            
+            _ui.openFolderButton->setEnabled(true);
+            openExplorer(Storage::sceneBandDir(scene, clipInfo).path());
+
+            emit sceneClipPrepared(scene, clipInfo);
+        });
+
+        connect(op, &DownloadSceneOperation::error, this, [op, this](const QString& text)
+        {
+            op->deleteLater();
+            op->setParent(0);
+
+            QMessageBox::warning(qApp->activeWindow(), tr("Скачивание сцены"), text);
+
+            setEnabled(true);
+        });
     });
     
     connect(_ui.openFolderButton, &QPushButton::clicked, this, [this]()
@@ -150,26 +175,6 @@ void SceneOperationsWidget::initUi()
     connect(_ui.rightSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
     connect(_ui.topSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
     connect(_ui.bottomSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
-}
-
-void SceneOperationsWidget::onSceneDownloaded(const ScenePtr& scene, bool result, const QString& message)
-{
-    setEnabled(true);
-
-    if (result)
-    {
-        _ui.openFolderButton->setEnabled(true);
-
-        QMessageBox::information(qApp->activeWindow(), tr("Выбранные каналы получены"), message);
-
-        openExplorer(Storage::sceneBandDir(_scene, _clipInfo).path());
-
-        emit sceneClipPrepared(_scene, _clipInfo);
-    }
-    else
-    {
-        QMessageBox::warning(qApp->activeWindow(), tr("Ошибка получения сцены"), message);
-    }
 }
 
 void SceneOperationsWidget::setScene(const ScenePtr& scene)

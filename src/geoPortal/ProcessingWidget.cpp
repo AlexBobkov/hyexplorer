@@ -119,6 +119,7 @@ void ProcessingWidget::startImageCorrection()
     connect(op, &ProcessingOperation::finished, this, [op, this, outputFilepath]()
     {
         op->deleteLater();
+        op->setParent(0);
 
         QMessageBox::information(qApp->activeWindow(), tr("Обработка"), tr("Обработка завершена. Обработанный файл был загружен на сервер"));
 
@@ -128,6 +129,7 @@ void ProcessingWidget::startImageCorrection()
     connect(op, &ProcessingOperation::error, this, [op, this](const QString& text)
     {
         op->deleteLater();
+        op->setParent(0);
 
         QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), text);
     });

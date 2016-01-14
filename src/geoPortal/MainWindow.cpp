@@ -537,6 +537,21 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
 
+    connect(sceneOperationsWidget, &SceneOperationsWidget::selectRectangleRequested, this, [sceneOperationsWidget, this]()
+    {
+        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+        handler->setRectangleMode(true);
+    });
+
+    connect(sceneOperationsWidget, &SceneOperationsWidget::rectangleChanged, this, [sceneOperationsWidget, this](const osgEarth::Bounds& bounds)
+    {
+        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
+        handler->setInitialRectangle(bounds);
+    });
+
+    connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(onRectangleSelected(const osgEarth::Bounds&)));
+    connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(onRectangleSelectFailed()));
+
     {
         QDockWidget* dock = new QDockWidget(tr("Операции со сценой"));
         dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -567,27 +582,10 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
 
     connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
-    connect(sceneOperationsWidget, SIGNAL(downloadSceneRequested(const ScenePtr&, const ClipInfoPtr&)), _downloadManager, SLOT(downloadScene(const ScenePtr&, const ClipInfoPtr&)));
-    
-    connect(sceneOperationsWidget, &SceneOperationsWidget::selectRectangleRequested, this, [sceneOperationsWidget, this]()
-    {
-        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setRectangleMode(true);
-    });
-
-    connect(sceneOperationsWidget, &SceneOperationsWidget::rectangleChanged, this, [sceneOperationsWidget, this](const osgEarth::Bounds& bounds)
-    {
-        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setInitialRectangle(bounds);
-    });
-
-    connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(onRectangleSelected(const osgEarth::Bounds&)));
-    connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(onRectangleSelectFailed()));
     
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));    
     connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
-    connect(_downloadManager, SIGNAL(sceneDownloadFinished(const ScenePtr&, bool, const QString&)), sceneOperationsWidget, SLOT(onSceneDownloaded(const ScenePtr&, bool, const QString&)));
-
+    
     connect(sceneOperationsWidget, &SceneOperationsWidget::sceneClipPrepared, processingWidget, &ProcessingWidget::setSceneAndClip);
 }
 
