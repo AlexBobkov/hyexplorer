@@ -16,11 +16,8 @@ namespace portal
         explicit ProcessingWidget(const DataManagerPtr& dataManager, QWidget* parent = 0);        
         virtual ~ProcessingWidget();
 
-    signals:
-        void processingStarted();
-        void processingFinished();
-
     public slots:
+        void setScene(const ScenePtr& scene);
         void setSceneAndClip(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
 
     private slots:        

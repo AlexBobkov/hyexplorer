@@ -520,7 +520,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
 
     MetadataWidget* metadataWidget = new MetadataWidget(this);
-    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), metadataWidget, SLOT(setScene(const ScenePtr&)));
+    connect(this, &MainWindow::sceneSelected, metadataWidget, &MetadataWidget::setScene);
 
     {
         QDockWidget* dock = new QDockWidget(tr("Метаданные сцены"));
@@ -535,7 +535,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
 
     SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
-    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), sceneOperationsWidget, SLOT(setScene(const ScenePtr&)));
+    connect(this, &MainWindow::sceneSelected, sceneOperationsWidget, &SceneOperationsWidget::setScene);
 
     connect(sceneOperationsWidget, &SceneOperationsWidget::selectRectangleRequested, this, [sceneOperationsWidget, this]()
     {
@@ -565,6 +565,8 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
 
     ProcessingWidget* processingWidget = new ProcessingWidget(_dataManager, this);
+    connect(this, &MainWindow::sceneSelected, processingWidget, &ProcessingWidget::setScene);
+    connect(sceneOperationsWidget, &SceneOperationsWidget::sceneClipPrepared, processingWidget, &ProcessingWidget::setSceneAndClip);
 
     {
         QDockWidget* dock = new QDockWidget(tr("Обработка сцены"));
@@ -584,9 +586,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     connect(sceneOperationsWidget, SIGNAL(importSceneRequested(const ScenePtr&)), _downloadManager, SLOT(importScene(const ScenePtr&)));
     
     connect(_downloadManager, SIGNAL(progressChanged(int)), _progressBar, SLOT(setValue(int)));    
-    connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));
-    
-    connect(sceneOperationsWidget, &SceneOperationsWidget::sceneClipPrepared, processingWidget, &ProcessingWidget::setSceneAndClip);
+    connect(_downloadManager, SIGNAL(importFinished(const ScenePtr&, bool, const QString&)), this, SLOT(finishImport(const ScenePtr&, bool, const QString&)));       
 }
 
 void MainWindow::setScene(const ScenePtr& scene)

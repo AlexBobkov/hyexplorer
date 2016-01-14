@@ -71,13 +71,33 @@ void ProcessingWidget::initUi()
     connect(_ui.showProcessedTableButton, &QPushButton::clicked, this, &ProcessingWidget::showTableWithProcessedFiles);
 }
 
+void ProcessingWidget::setScene(const ScenePtr& scene)
+{
+    if (!scene)
+    {
+        return;
+    }
+
+    if (_scene == scene)
+    {
+        return;
+    }
+
+    _scene = scene;
+    _clipInfo.reset();
+
+    setEnabled(true);
+    
+    _ui.sceneLabel->setText(QString("Сцена %0.\nДля запуска обработки скачайте каналы").arg(_scene->sceneId()));
+    _ui.processButton->setEnabled(false);
+}
+
 void ProcessingWidget::setSceneAndClip(const ScenePtr& scene, const ClipInfoPtr& clipInfo)
 {
-    //if (!isEnabled())
-    //{
-    //    qDebug() << "Attemp to change scene and clip during processing";
-    //    return;
-    //}
+    if (!scene)
+    {
+        return;
+    }
 
     _scene = scene;
     _clipInfo = clipInfo;
@@ -95,6 +115,7 @@ void ProcessingWidget::setSceneAndClip(const ScenePtr& scene, const ClipInfoPtr&
     }
 
     _ui.sceneLabel->setText(text);
+    _ui.processButton->setEnabled(_ui.toolComboBox->count() != 0);
 
     _ui.bandSpinBox->setMinimum(_clipInfo->minBand());
     _ui.bandSpinBox->setMaximum(_clipInfo->maxBand());
@@ -113,6 +134,8 @@ void ProcessingWidget::startImageCorrection()
         return;
     }
 
+    setEnabled(false);
+
     QString outputFilepath = Storage::processedFilePath(_scene, _ui.bandSpinBox->value(), genetrateRandomName());
 
     ProcessingOperation* op = new ProcessingOperation(_scene, _ui.bandSpinBox->value(), program, inputFilepath, outputFilepath, &_dataManager->networkAccessManager(), this);
@@ -123,6 +146,8 @@ void ProcessingWidget::startImageCorrection()
 
         QMessageBox::information(qApp->activeWindow(), tr("Обработка"), tr("Обработка завершена. Обработанный файл был загружен на сервер"));
 
+        setEnabled(true);
+
         openExplorer(outputFilepath);
     });
 
@@ -132,6 +157,8 @@ void ProcessingWidget::startImageCorrection()
         op->setParent(0);
 
         QMessageBox::warning(qApp->activeWindow(), tr("Обработка"), text);
+
+        setEnabled(true);
     });
 }
 
