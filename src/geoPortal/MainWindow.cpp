@@ -8,14 +8,7 @@
 #include "SceneOperationsWidget.hpp"
 #include "Operations.hpp"
 #include "Version.hpp"
-
-#include <osgEarth/Terrain>
-#include <osgEarthAnnotation/CircleNode>
-#include <osgEarthAnnotation/FeatureNode>
-#include <osgEarthFeatures/Feature>
-#include <osgEarthSymbology/Geometry>
-#include <osgEarthSymbology/Style>
-#include <osgEarthSymbology/LineSymbol>
+#include "EventHandlers.hpp"
 
 #include <QAction>
 #include <QDockWidget>
@@ -37,253 +30,7 @@
 #include <functional>
 
 using namespace osgEarth;
-using namespace osgEarth::Features;
-using namespace osgEarth::Symbology;
 using namespace portal;
-
-namespace
-{
-    class SelectPointMouseHandler : public osgGA::GUIEventHandler
-    {
-    public:
-        typedef std::function<void(const osgEarth::GeoPoint&)> PointMoveCallbackType;
-        typedef std::function<void()> PointClickCallbackType;
-        typedef std::function<void(const osgEarth::Bounds&)> RectangleCreateCallbackType;
-        typedef std::function<void()> RectangleFailCallbackType;
-
-        SelectPointMouseHandler(osgEarth::MapNode* mapNode,
-                                const PointMoveCallbackType &pcb,
-                                const PointClickCallbackType& fcb,
-                                const RectangleCreateCallbackType& rcb,
-                                const RectangleFailCallbackType& rfcb) :
-                                osgGA::GUIEventHandler(),
-                                _mapNode(mapNode),
-                                _pointCB(pcb),
-                                _pointClickCB(fcb),
-                                _rectangleCB(rcb),
-                                _rectangleFailCB(rfcb),
-                                _rectangleMode(false),
-                                _mouseX(0.0),
-                                _mouseY(0.0)
-        {
-        }
-
-        ~SelectPointMouseHandler()
-        {
-        }
-
-        void setRectangleMode(bool b)
-        {
-            _rectangleMode = b;
-
-            if (_rectangleMode)
-            {
-                _firstCorner.reset();
-                _ring = nullptr;
-                _feature = nullptr;
-            }
-        }
-
-        void setInitialRectangle(const osgEarth::Bounds& b)
-        {
-            _initialBounds = b;
-            updateFeature(osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMin(), b.yMax()),
-                          osgEarth::GeoPoint(_mapNode->getMapSRS(), b.xMax(), b.yMin()));
-        }
-
-        bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
-        {
-            if (_rectangleMode)
-            {
-                return handleRectangle(ea, aa);
-            }
-            else
-            {
-                return handleSimple(ea, aa);
-            }
-        }
-
-        bool handleSimple(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
-        {
-            osgViewer::View* view = static_cast<osgViewer::View*>(aa.asView());
-
-            if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE ||
-                (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON) ||
-                (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON))
-            {
-                osg::Vec3d world;
-                if (_mapNode->getTerrain()->getWorldCoordsUnderMouse(aa.asView(), ea.getX(), ea.getY(), world))
-                {
-                    osgEarth::GeoPoint mapPoint;
-                    mapPoint.fromWorld(_mapNode->getMapSRS(), world);
-
-                    _pointCB(mapPoint);
-                }
-
-                if (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
-                {
-                    _mouseX = ea.getX();
-                    _mouseY = ea.getY();
-                }
-
-                if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
-                {
-                    if (fabs(ea.getX() - _mouseX) < 2.0f && fabs(ea.getY() - _mouseY) < 2.0f)
-                    {
-                        _pointClickCB();
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        bool handleRectangle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa)
-        {
-            osgViewer::View* view = static_cast<osgViewer::View*>(aa.asView());
-
-            if (ea.getEventType() == osgGA::GUIEventAdapter::PUSH && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
-            {
-                osgEarth::GeoPoint mapPoint;
-                if (!computeMapPoint(aa.asView(), ea.getX(), ea.getY(), mapPoint))
-                {
-                    resetFeature();
-                    _rectangleMode = false;                    
-                    _rectangleFailCB();
-                    return false;
-                }
-
-                _mouseX = ea.getX();
-                _mouseY = ea.getY();
-            }
-            else if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
-            {
-                osgEarth::GeoPoint mapPoint;
-                if (!computeMapPoint(aa.asView(), ea.getX(), ea.getY(), mapPoint))
-                {
-                    resetFeature();
-                    _rectangleMode = false;
-                    _rectangleFailCB();
-                    return false;
-                }
-
-                if (fabs(ea.getX() - _mouseX) < 2.0f && fabs(ea.getY() - _mouseY) < 2.0f)
-                {
-                    if (!_firstCorner)
-                    {
-                        _firstCorner = mapPoint;
-                    }
-                    else
-                    {
-                        updateFeature(*_firstCorner, mapPoint);
-
-                        osgEarth::Bounds b;
-                        b.expandBy(_firstCorner->x(), _firstCorner->y());
-                        b.expandBy(mapPoint.x(), mapPoint.y());
-                        _initialBounds = b;
-                        _rectangleCB(b);
-
-                        _rectangleMode = false;
-                    }
-                }                
-            }
-            else if (ea.getEventType() == osgGA::GUIEventAdapter::RELEASE && ea.getButton() != osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
-            {
-                resetFeature();
-                _rectangleMode = false;
-                _rectangleFailCB();
-                return false;
-            }
-            else if (ea.getEventType() == osgGA::GUIEventAdapter::MOVE)
-            {
-                osgEarth::GeoPoint mapPoint;
-                if (!computeMapPoint(aa.asView(), ea.getX(), ea.getY(), mapPoint))
-                {
-                    return false;
-                }
-
-                if (_firstCorner)
-                {
-                    updateFeature(*_firstCorner, mapPoint);
-                }                
-            }
-
-            return false;
-        }
-
-    protected:
-        bool computeMapPoint(osg::View* view, float mx, float my, osgEarth::GeoPoint& point)
-        {
-            osg::Vec3d world;
-            if (_mapNode->getTerrain()->getWorldCoordsUnderMouse(view, mx, my, world))
-            {
-                point.fromWorld(_mapNode->getMapSRS(), world);
-                return true;
-            }
-
-            return false;
-        }
-
-        void updateFeature(const osgEarth::GeoPoint& point1, const osgEarth::GeoPoint& point2)
-        {
-            if (!_ring)
-            {
-                _ring = new osgEarth::Symbology::Ring();
-
-                osgEarth::Symbology::Style pathStyle;
-                pathStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color::Blue;
-                pathStyle.getOrCreate<LineSymbol>()->stroke()->width() = 2.0f;
-                pathStyle.getOrCreate<LineSymbol>()->stroke()->stipplePattern() = 0x0F0F;
-                pathStyle.getOrCreate<LineSymbol>()->tessellation() = 20;
-                pathStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
-                pathStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_SCENE;
-
-                _feature = new osgEarth::Features::Feature(_ring, _mapNode->getMapSRS(), pathStyle);
-
-                if (!_featureNode.valid())
-                {
-                    _featureNode = new osgEarth::Annotation::FeatureNode(_mapNode.get(), _feature);
-                    _mapNode->addChild(_featureNode);
-                }
-            }
-
-            osg::Vec3d p1 = point1.vec3d();
-            osg::Vec3d p2 = point2.vec3d();
-
-            _ring->clear();
-            _ring->push_back(osg::Vec3d(osg::minimum(p1.x(), p2.x()), osg::maximum(p1.y(), p2.y()), 0.0));
-            _ring->push_back(osg::Vec3d(osg::maximum(p1.x(), p2.x()), osg::maximum(p1.y(), p2.y()), 0.0));
-            _ring->push_back(osg::Vec3d(osg::maximum(p1.x(), p2.x()), osg::minimum(p1.y(), p2.y()), 0.0));
-            _ring->push_back(osg::Vec3d(osg::minimum(p1.x(), p2.x()), osg::minimum(p1.y(), p2.y()), 0.0));
-
-            _featureNode->setFeature(_feature);
-        }
-        
-        void resetFeature()
-        {
-            updateFeature(osgEarth::GeoPoint(_mapNode->getMapSRS(), _initialBounds.xMin(), _initialBounds.yMax()),
-                          osgEarth::GeoPoint(_mapNode->getMapSRS(), _initialBounds.xMax(), _initialBounds.yMin()));
-        }
-
-        osg::observer_ptr<MapNode>  _mapNode;
-        PointMoveCallbackType _pointCB;
-        PointClickCallbackType _pointClickCB;
-        RectangleCreateCallbackType _rectangleCB;
-        RectangleFailCallbackType _rectangleFailCB;
-
-        bool _rectangleMode;
-        boost::optional<osgEarth::GeoPoint> _firstCorner;
-
-        osg::ref_ptr<osgEarth::Symbology::Ring> _ring;
-        osg::ref_ptr<osgEarth::Features::Feature> _feature;
-        osg::ref_ptr<osgEarth::Annotation::FeatureNode> _featureNode;
-
-        float _mouseX;
-        float _mouseY;
-
-        osgEarth::Bounds _initialBounds;
-    };
-}
 
 MainWindow::MainWindow() :
 QMainWindow(),
@@ -297,6 +44,9 @@ _mousePosLabel(0)
 
 MainWindow::~MainWindow()
 {
+    _dataManager->removeReportHandler(_mouseReportHandler);
+    _dataManager->setDefaultActionHandler(0);
+    _dataManager->setActionHandler(0);
 }
 
 void MainWindow::initUi()
@@ -348,7 +98,7 @@ void MainWindow::initUi()
     connect(_ui.metadataAction, &QAction::triggered, this, [this]()
     {
         QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
-    });    
+    });
 
     connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
 
@@ -442,7 +192,7 @@ void MainWindow::initUi()
     _ui.meanElevationToSpinBox->setValue(settings.value("Query/meanElevationTo").toDouble());
 
     //--
-        
+
     sensorChanged();
 
     _ui.toolsMenu->addAction(_ui.dockWidget->toggleViewAction());
@@ -475,9 +225,9 @@ void MainWindow::initUi()
     connect(_scenesSecondView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
 
     _ui.toolsMenu->addAction(scenesSecondDock->toggleViewAction());
-        
+
     //--------------------------------------------
-                
+
     _progressBar = new QProgressBar(this);
     _progressBar->setMaximumWidth(200);
     _progressBar->setMinimum(0);
@@ -504,24 +254,86 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 {
     _dataManager = dataManager;
 
-    _handler = new SelectPointMouseHandler(_dataManager->mapNode(),
-                                           std::bind(&MainWindow::onMousePositionChanged, this, std::placeholders::_1),
-                                           std::bind(&MainWindow::onMouseClicked, this),
-                                           std::bind(&MainWindow::onRectangleSelected, this, std::placeholders::_1),
-                                           std::bind(&MainWindow::onRectangleSelectionFailed, this));
-
-    _dataManager->view()->addEventHandler(_handler);
-
-    //--------------------------------------------
-
-    if (_dataManager->bounds())
+    _mouseReportHandler = new ReportMoveMouseHandler(
+        _dataManager->mapNode(),
+        [this](const osgEarth::GeoPoint& point)
     {
-        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setInitialRectangle(*_dataManager->bounds());
-    }
+        if (_ui.selectPointButton->isChecked())
+        {
+            _ui.longitudeSpinBox->setValue(point.x());
+            _ui.latitudeSpinBox->setValue(point.y());
+        }        
+
+        _mousePosLabel->setText(tr("Указатель: B: %1° L: %2°")
+                                .arg(point.y(), 0, 'f', 8)
+                                .arg(point.x(), 0, 'f', 8));
+    });
+
+    _dataManager->addReportHandler(_mouseReportHandler);
 
     //--------------------------------------------
 
+    _sceneSelectHandler = new ReportClickMouseHandler(
+        _dataManager->mapNode(),
+        [this](const osgEarth::GeoPoint& point)
+    {
+        if (_dataset && _dataset->isInitialized())
+        {
+            _dataset->selectScenesUnderPointer(point);
+
+            ProxyModel* proxyModel = new ProxyModel(_dataset, this);
+            proxyModel->setSourceModel(_scenesMainView->model());
+
+            _scenesSecondView->setModel(proxyModel);
+            _scenesSecondView->resizeColumnsToContents();
+
+            connect(_scenesSecondView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSecondTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
+
+            if (proxyModel->rowCount() > 0)
+            {
+                _scenesSecondView->selectionModel()->select(proxyModel->index(0, 0), QItemSelectionModel::ClearAndSelect);
+
+                ScenePtr scene = proxyModel->data(proxyModel->index(0, 0), Qt::UserRole).value<ScenePtr>();
+                setScene(scene);
+            }
+        }
+    },
+        [this]()
+    {
+    });
+
+    _dataManager->setDefaultActionHandler(_sceneSelectHandler);
+
+    //--------------------------------------------
+
+    _centerSelectHandler = new ReportClickMouseHandler(
+        _dataManager->mapNode(),
+        [this](const osgEarth::GeoPoint& point)
+    {
+        _dataManager->setCircleNode(point, _ui.distanceSpinBox->value() * 1000.0);
+
+        QMetaObject::invokeMethod(_ui.selectPointButton, "setChecked", Qt::QueuedConnection, Q_ARG(bool, false));
+    },
+        [this]()
+    {
+        QMetaObject::invokeMethod(_ui.selectPointButton, "setChecked", Qt::QueuedConnection, Q_ARG(bool, false));
+    });
+
+    _dataManager->addReportHandler(_centerSelectHandler);
+
+    connect(_ui.selectPointButton, &QPushButton::toggled, this, [this](bool b)
+    {
+        if (b)
+        {
+            _dataManager->setActionHandler(_centerSelectHandler);
+        }
+        else
+        {
+            _dataManager->setActionHandler(0);
+        }
+    });
+
+    //--------------------------------------------
 
     MetadataWidget* metadataWidget = new MetadataWidget(this);
     connect(this, &MainWindow::sceneSelected, metadataWidget, &MetadataWidget::setScene);
@@ -537,27 +349,11 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
 
     //--------------------------------------------
 
-
     SceneOperationsWidget* sceneOperationsWidget = new SceneOperationsWidget(_dataManager, this);
     connect(this, &MainWindow::sceneSelected, sceneOperationsWidget, &SceneOperationsWidget::setScene);
-    
+
     connect(sceneOperationsWidget, &SceneOperationsWidget::progressChanged, _progressBar, &QProgressBar::setValue);
     connect(sceneOperationsWidget, &SceneOperationsWidget::progressReset, _progressBar, &QProgressBar::reset);
-
-    connect(sceneOperationsWidget, &SceneOperationsWidget::selectRectangleRequested, this, [sceneOperationsWidget, this]()
-    {
-        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setRectangleMode(true);
-    });
-
-    connect(sceneOperationsWidget, &SceneOperationsWidget::rectangleChanged, this, [sceneOperationsWidget, this](const osgEarth::Bounds& bounds)
-    {
-        SelectPointMouseHandler* handler = static_cast<SelectPointMouseHandler*>(_handler.get());
-        handler->setInitialRectangle(bounds);
-    });
-
-    connect(this, SIGNAL(rectangleSelected(const osgEarth::Bounds&)), sceneOperationsWidget, SLOT(onRectangleSelected(const osgEarth::Bounds&)));
-    connect(this, SIGNAL(rectangleSelectFailed()), sceneOperationsWidget, SLOT(onRectangleSelectFailed()));
 
     {
         QDockWidget* dock = new QDockWidget(tr("Параметры сохранения"));
@@ -585,11 +381,11 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     }
 
     //--------------------------------------------
-        
+
     connect(this, &MainWindow::sceneSelected, this, [this](const ScenePtr& scene)
     {
         DownloadOverviewOperation* op = new DownloadOverviewOperation(scene, &_dataManager->networkAccessManager(), this);
-        
+
         connect(op, &DownloadOverviewOperation::finished, this, [op, this](const ScenePtr& scene, const QString& filepath)
         {
             op->deleteLater();
@@ -616,7 +412,7 @@ void MainWindow::setScene(const ScenePtr& scene)
     {
         return;
     }
-    
+
     emit sceneSelected(scene);
 }
 
@@ -665,7 +461,7 @@ void MainWindow::executeQuery()
     settings.setValue("Query/sceneIdText", _ui.sceneIdLineEdit->text());
 
     settings.setValue("Query/hasSceneEnabled", _ui.hasSceneCheckBox->isChecked());
-    
+
     settings.setValue("Query/dateEnabled", _ui.dateGroupBox->isChecked());
     settings.setValue("Query/dateFrom", _ui.dateTimeEditFrom->dateTime());
     settings.setValue("Query/dateTo", _ui.dateTimeEditTo->dateTime());
@@ -947,64 +743,6 @@ void MainWindow::finishLoadScenes()
 
     _progressBar->setMaximum(100);
     _ui.dockWidget->setEnabled(true);
-}
-
-//-------------------------------------------------------
-
-void MainWindow::onMousePositionChanged(const osgEarth::GeoPoint& point)
-{
-    if (_ui.selectPointButton->isChecked())
-    {
-        _ui.longitudeSpinBox->setValue(point.x());
-        _ui.latitudeSpinBox->setValue(point.y());
-    }
-    else
-    {
-        _point = point;
-    }
-
-    _mousePosLabel->setText(tr("Указатель: B: %1° L: %2°")
-                            .arg(point.y(), 0, 'f', 8)
-                            .arg(point.x(), 0, 'f', 8));
-}
-
-void MainWindow::onMouseClicked()
-{
-    if (_ui.selectPointButton->isChecked())
-    {
-        _ui.selectPointButton->setChecked(false);
-    }
-    else
-    {
-        if (_dataset && _dataset->isInitialized())
-        {
-            _dataset->selectScenesUnderPointer(_point);
-
-            ProxyModel* proxyModel = new ProxyModel(_dataset, this);
-            proxyModel->setSourceModel(_scenesMainView->model());
-
-            _scenesSecondView->setModel(proxyModel);
-            _scenesSecondView->resizeColumnsToContents();
-
-            connect(_scenesSecondView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSecondTableViewSelectionChanged(const QItemSelection&, const QItemSelection&)));
-
-            if (proxyModel->rowCount() > 0)
-            {
-                ScenePtr scene = proxyModel->data(proxyModel->index(0, 0), Qt::UserRole).value<ScenePtr>();
-                setScene(scene);
-            }
-        }
-    }
-}
-
-void MainWindow::onRectangleSelected(const osgEarth::Bounds& bounds)
-{
-    emit rectangleSelected(bounds);
-}
-
-void MainWindow::onRectangleSelectionFailed()
-{
-    emit rectangleSelectFailed();
 }
 
 //-------------------------------------------------------

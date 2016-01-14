@@ -14,6 +14,7 @@ SET(HEADER_FILES
 	ClipInfo.hpp
 	DataManager.hpp
 	DataSet.hpp
+	EventHandlers.hpp
 	MainWindow.hpp
 	MetadataWidget.hpp
 	Operations.hpp
@@ -33,6 +34,7 @@ SET(SRC_FILES
 	ClipInfo.cpp
 	DataManager.cpp
 	DataSet.cpp
+	EventHandlers.cpp
 	MainWindow.cpp
 	MetadataWidget.cpp
 	Operations.cpp

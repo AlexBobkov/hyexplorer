@@ -3,6 +3,7 @@
 #include "ui_MainWindow.h"
 #include "Scene.hpp"
 #include "DataManager.hpp"
+#include "EventHandlers.hpp"
 
 #include <osgGA/GUIEventHandler>
 #include <osgViewer/View>
@@ -36,8 +37,6 @@ namespace portal
 
     signals:
         void sceneSelected(const ScenePtr& scene);
-        void rectangleSelected(const osgEarth::Bounds& b);
-        void rectangleSelectFailed();
 
     private slots:
         void executeQuery();
@@ -50,9 +49,6 @@ namespace portal
 
         void finishLoadScenes();
 
-        void onRectangleSelected(const osgEarth::Bounds& bounds);
-        void onRectangleSelectionFailed();
-
         void sensorChanged();
 
     protected:
@@ -60,10 +56,6 @@ namespace portal
 
     private:
         void initUi();
-
-        void onMousePositionChanged(const osgEarth::GeoPoint& point);
-        void onMouseClicked();        
-
         void loadScenes();
 
         Ui::MainWindow _ui;
@@ -72,15 +64,15 @@ namespace portal
 
         DataManagerPtr _dataManager;
 
-        osg::ref_ptr<osgGA::GUIEventHandler> _handler;
-        
+        osg::ref_ptr<ReportMoveMouseHandler> _mouseReportHandler;
+        osg::ref_ptr<ReportClickMouseHandler> _sceneSelectHandler;
+        osg::ref_ptr<ReportClickMouseHandler> _centerSelectHandler;
+
         QTableView* _scenesMainView;
         QTableView* _scenesSecondView;
 
         QLabel* _mousePosLabel;
 
         DataSetPtr _dataset;
-
-        osgEarth::GeoPoint _point; //координаты клика мышкой
     };
 }

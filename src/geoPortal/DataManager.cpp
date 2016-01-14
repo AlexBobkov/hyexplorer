@@ -105,7 +105,59 @@ _mapNode(mapNode)
         settings.contains("Rectangle/yMin") &&
         settings.contains("Rectangle/yMax"))
     {
-        _bounds = osgEarth::Bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());        
+        _bounds = osgEarth::Bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
+    }
+}
+
+void DataManager::addReportHandler(osgGA::GUIEventHandler* handler)
+{
+    _view->addEventHandler(handler);
+}
+
+void DataManager::removeReportHandler(osgGA::GUIEventHandler* handler)
+{
+    _view->removeEventHandler(handler);
+}
+
+void DataManager::setDefaultActionHandler(osgGA::GUIEventHandler* handler)
+{
+    if (_defaultHandler == handler)
+    {
+        return;
+    }
+
+    if (_defaultHandler)
+    {
+        _view->removeEventHandler(_defaultHandler);
+    }
+
+    _defaultHandler = handler;
+
+    if (_defaultHandler)
+    {
+        _view->addEventHandler(_defaultHandler);
+    }
+}
+
+void DataManager::setActionHandler(osgGA::GUIEventHandler* handler)
+{
+    if (_currentHandler == handler)
+    {
+        return;
+    }
+
+    if (_currentHandler)
+    {
+        _view->removeEventHandler(_currentHandler);
+        _view->addEventHandler(_defaultHandler);
+    }
+
+    _currentHandler = handler;
+
+    if (_currentHandler)
+    {
+        _view->removeEventHandler(_defaultHandler);
+        _view->addEventHandler(_currentHandler);
     }
 }
 
@@ -273,7 +325,7 @@ void DataManager::showScene(const ScenePtr& scene, int band, const ClipInfoPtr& 
     {
         return;
     }
-        
+
     QString filepath = Storage::sceneBandPath(_scene, band, clipInfo);
     if (!QFileInfo::exists(filepath))
     {
@@ -307,7 +359,7 @@ void DataManager::showScene(const ScenePtr& scene, int band, const ClipInfoPtr& 
 void DataManager::setBounds(const osgEarth::Bounds& b)
 {
     _bounds = b;
-    
+
     QSettings settings;
     settings.setValue("Rectangle/xMin", _bounds->xMin());
     settings.setValue("Rectangle/xMax", _bounds->xMax());

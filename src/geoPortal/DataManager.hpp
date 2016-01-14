@@ -29,7 +29,13 @@ namespace portal
 
         bool atmosphereVisibility() const;
         void setAtmosphereVisibility(bool b);
-        
+
+        void addReportHandler(osgGA::GUIEventHandler* handler);
+        void removeReportHandler(osgGA::GUIEventHandler* handler);
+
+        void setDefaultActionHandler(osgGA::GUIEventHandler* handler);
+        void setActionHandler(osgGA::GUIEventHandler* handler);
+
         void setDataSet(const DataSetPtr& dataset);
 
         void setCircleNode(const osgEarth::GeoPoint& center, double radius);
@@ -56,8 +62,11 @@ namespace portal
         osg::ref_ptr<osgViewer::View> _view;
         osg::ref_ptr<osgEarth::MapNode> _mapNode;
 
+        osg::ref_ptr<osgGA::GUIEventHandler> _defaultHandler;
+        osg::ref_ptr<osgGA::GUIEventHandler> _currentHandler;
+
         osg::ref_ptr<osgEarth::Util::SkyNode> _sky;
-        
+
         DataSetPtr _dataset;
         ScenePtr _scene;
 

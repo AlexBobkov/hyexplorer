@@ -47,7 +47,7 @@ void SceneOperationsWidget::initUi()
     {
         _importing = true;
 
-        _ui.importButton->setEnabled(!_importing);        
+        _ui.importButton->setEnabled(!_importing);
 
         ImportSceneOperation* op = new ImportSceneOperation(_scene, &_dataManager->networkAccessManager(), this);
 
@@ -96,7 +96,7 @@ void SceneOperationsWidget::initUi()
 
     _ui.fromSpinBox->setMaximum(_ui.toSpinBox->value());
     _ui.toSpinBox->setMinimum(_ui.fromSpinBox->value());
-       
+
     connect(_ui.fromSpinBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i)
     {
         QSettings settings;
@@ -115,7 +115,39 @@ void SceneOperationsWidget::initUi()
 
     //---------------------------------------
 
-    connect(_ui.selectFragmentButton, &QPushButton::clicked, this, &SceneOperationsWidget::selectRectangleRequested);
+    _drawRectangleHandler = new DrawRectangleMouseHandler(_dataManager->mapNode(),
+                                                          [this](const osgEarth::Bounds& b)
+    {
+        _ui.selectFragmentButton->setChecked(false);
+
+        _ui.leftSpinBox->setMaximum(b.xMax());
+        _ui.rightSpinBox->setMinimum(b.xMin());
+        _ui.topSpinBox->setMinimum(b.yMin());
+        _ui.bottomSpinBox->setMaximum(b.yMax());
+
+        _ui.leftSpinBox->setValue(b.xMin());
+        _ui.rightSpinBox->setValue(b.xMax());
+        _ui.topSpinBox->setValue(b.yMax());
+        _ui.bottomSpinBox->setValue(b.yMin());
+
+        _dataManager->setBounds(b);
+    },
+        [this]()
+    {
+        _ui.selectFragmentButton->setChecked(false);
+    });
+
+    if (_dataManager->bounds())
+    {
+        _drawRectangleHandler->setInitialRectangle(*_dataManager->bounds());
+    }
+
+    connect(_ui.selectFragmentButton, &QPushButton::clicked, this, [this]()
+    {
+        _drawRectangleHandler->setRectangleMode(true);
+
+        _dataManager->setActionHandler(_drawRectangleHandler);
+    });
 
     //---------------------------------------
 
@@ -145,7 +177,7 @@ void SceneOperationsWidget::initUi()
         }
         _clipInfo->setMinBand(_ui.fromSpinBox->value());
         _clipInfo->setMaxBand(_ui.toSpinBox->value());
-                
+
         DownloadSceneOperation* op = new DownloadSceneOperation(_scene, _clipInfo, &_dataManager->networkAccessManager(), this);
 
         connect(op, &DownloadSceneOperation::progressChanged, this, &SceneOperationsWidget::progressChanged);
@@ -158,7 +190,7 @@ void SceneOperationsWidget::initUi()
             QMessageBox::information(qApp->activeWindow(), tr("Скачивание сцены"), tr("Выбранные каналы скачаны"));
 
             setEnabled(true);
-            
+
             _ui.openFolderButton->setEnabled(true);
             openExplorer(Storage::sceneBandDir(scene, clipInfo).path());
 
@@ -177,11 +209,11 @@ void SceneOperationsWidget::initUi()
 
         op->start();
     });
-    
+
     connect(_ui.openFolderButton, &QPushButton::clicked, this, [this]()
     {
         openExplorer(Storage::sceneBandDir(_scene, _clipInfo).path());
-    });    
+    });
 
     //---------------------------------------
 
@@ -209,10 +241,10 @@ void SceneOperationsWidget::initUi()
         _ui.bottomSpinBox->setMaximum(_ui.topSpinBox->value());
 
         osgEarth::Bounds b(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value());
-        
+
         _dataManager->setBounds(b);
 
-        emit rectangleChanged(b);
+        _drawRectangleHandler->setInitialRectangle(b);
     };
 
     connect(_ui.leftSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);
@@ -238,7 +270,7 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
     }
 
     setEnabled(true);
-        
+
     if (scene->hasScene())
     {
         _ui.statusLabel->setText(tr("Сцена находится на нашем сервере и доступна для работы"));
@@ -276,26 +308,3 @@ void SceneOperationsWidget::setScene(const ScenePtr& scene)
     _ui.importButton->setEnabled(!_importing);
     _ui.openFolderButton->setEnabled(false);
 }
-
-void SceneOperationsWidget::onRectangleSelected(const osgEarth::Bounds& b)
-{
-    _ui.selectFragmentButton->setChecked(false);
-
-    _ui.leftSpinBox->setMaximum(b.xMax());
-    _ui.rightSpinBox->setMinimum(b.xMin());
-    _ui.topSpinBox->setMinimum(b.yMin());
-    _ui.bottomSpinBox->setMaximum(b.yMax());
-
-    _ui.leftSpinBox->setValue(b.xMin());
-    _ui.rightSpinBox->setValue(b.xMax());
-    _ui.topSpinBox->setValue(b.yMax());
-    _ui.bottomSpinBox->setValue(b.yMin());
-    
-    _dataManager->setBounds(b);
-}
-
-void SceneOperationsWidget::onRectangleSelectFailed()
-{
-    _ui.selectFragmentButton->setChecked(false);
-}
-
