@@ -118,7 +118,7 @@ void SceneOperationsWidget::initUi()
     _drawRectangleHandler = new DrawRectangleMouseHandler(_dataManager->mapNode(),
                                                           [this](const osgEarth::Bounds& b)
     {
-        _ui.selectFragmentButton->setChecked(false);
+        QMetaObject::invokeMethod(_ui.selectFragmentButton, "setChecked", Qt::QueuedConnection, Q_ARG(bool, false));
 
         _ui.leftSpinBox->setMaximum(b.xMax());
         _ui.rightSpinBox->setMinimum(b.xMin());
@@ -132,21 +132,24 @@ void SceneOperationsWidget::initUi()
 
         _dataManager->setBounds(b);
     },
+        std::bind(&DataManager::drawBounds, _dataManager, std::placeholders::_1),
         [this]()
     {
-        _ui.selectFragmentButton->setChecked(false);
+        QMetaObject::invokeMethod(_ui.selectFragmentButton, "setChecked", Qt::QueuedConnection, Q_ARG(bool, false));
     });
 
-    if (_dataManager->bounds())
+    connect(_ui.selectFragmentButton, &QPushButton::toggled, this, [this](bool b)
     {
-        _drawRectangleHandler->setInitialRectangle(*_dataManager->bounds());
-    }
-
-    connect(_ui.selectFragmentButton, &QPushButton::clicked, this, [this]()
-    {
-        _drawRectangleHandler->setRectangleMode(true);
-
-        _dataManager->setActionHandler(_drawRectangleHandler);
+        if (b)
+        {
+            _drawRectangleHandler->reset();
+            _dataManager->setActionHandler(_drawRectangleHandler);
+        }
+        else
+        {            
+            _dataManager->setActionHandler(0);
+            _dataManager->drawBounds(*_dataManager->bounds()); //return to old bounds
+        }
     });
 
     //---------------------------------------
@@ -243,8 +246,7 @@ void SceneOperationsWidget::initUi()
         osgEarth::Bounds b(_ui.leftSpinBox->value(), _ui.bottomSpinBox->value(), _ui.rightSpinBox->value(), _ui.topSpinBox->value());
 
         _dataManager->setBounds(b);
-
-        _drawRectangleHandler->setInitialRectangle(b);
+        _dataManager->drawBounds(b);
     };
 
     connect(_ui.leftSpinBox, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, clipSpinBoxCB);

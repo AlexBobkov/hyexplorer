@@ -70,40 +70,30 @@ namespace portal
     {
     public:
         typedef std::function<void(const osgEarth::Bounds&)> RectangleCreateCallbackType;
+        typedef std::function<void(const osgEarth::Bounds&)> RectangleDrawCallbackType;
         typedef std::function<void()> RectangleFailCallbackType;
 
         DrawRectangleMouseHandler(osgEarth::MapNode* mapNode,
                                 const RectangleCreateCallbackType& rcb,
-                                const RectangleFailCallbackType& rfcb);
+                                const RectangleDrawCallbackType& dcb,
+                                const RectangleFailCallbackType& fcb);
 
-        void setRectangleMode(bool b);
-
-        void setInitialRectangle(const osgEarth::Bounds& b);
+        void reset();
 
         bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
 
-        bool handleRectangle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
-
     protected:
         bool computeMapPoint(osg::View* view, float mx, float my, osgEarth::GeoPoint& point);
-        void updateFeature(const osgEarth::GeoPoint& point1, const osgEarth::GeoPoint& point2);
-        void resetFeature();
 
         osg::observer_ptr<osgEarth::MapNode>  _mapNode;
 
-        RectangleCreateCallbackType _rectangleCB;
-        RectangleFailCallbackType _rectangleFailCB;
+        RectangleCreateCallbackType _createCB;
+        RectangleDrawCallbackType _drawCB;
+        RectangleFailCallbackType _failCB;
 
-        bool _rectangleMode;
-        boost::optional<osgEarth::GeoPoint> _firstCorner;
-
-        osg::ref_ptr<osgEarth::Symbology::Ring> _ring;
-        osg::ref_ptr<osgEarth::Features::Feature> _feature;
-        osg::ref_ptr<osgEarth::Annotation::FeatureNode> _featureNode;
+        boost::optional<osgEarth::GeoPoint> _firstCorner;                
 
         float _mouseX;
         float _mouseY;
-
-        osgEarth::Bounds _initialBounds;
     };
 }

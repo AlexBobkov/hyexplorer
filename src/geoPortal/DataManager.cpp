@@ -106,6 +106,8 @@ _mapNode(mapNode)
         settings.contains("Rectangle/yMax"))
     {
         _bounds = osgEarth::Bounds(settings.value("Rectangle/xMin").toDouble(), settings.value("Rectangle/yMin").toDouble(), settings.value("Rectangle/xMax").toDouble(), settings.value("Rectangle/yMax").toDouble());
+
+        drawBounds(*_bounds);
     }
 }
 
@@ -365,4 +367,36 @@ void DataManager::setBounds(const osgEarth::Bounds& b)
     settings.setValue("Rectangle/xMax", _bounds->xMax());
     settings.setValue("Rectangle/yMin", _bounds->yMin());
     settings.setValue("Rectangle/yMax", _bounds->yMax());
+}
+
+void DataManager::drawBounds(const osgEarth::Bounds& b)
+{
+    if (!_ring)
+    {
+        _ring = new osgEarth::Symbology::Ring();
+
+        osgEarth::Symbology::Style pathStyle;
+        pathStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color::Blue;
+        pathStyle.getOrCreate<LineSymbol>()->stroke()->width() = 2.0f;
+        pathStyle.getOrCreate<LineSymbol>()->stroke()->stipplePattern() = 0x0F0F;
+        pathStyle.getOrCreate<LineSymbol>()->tessellation() = 20;
+        pathStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
+        pathStyle.getOrCreate<AltitudeSymbol>()->technique() = AltitudeSymbol::TECHNIQUE_SCENE;
+
+        _feature = new osgEarth::Features::Feature(_ring, _mapNode->getMapSRS(), pathStyle);
+
+        if (!_featureNode.valid())
+        {
+            _featureNode = new osgEarth::Annotation::FeatureNode(_mapNode.get(), _feature);
+            _mapNode->addChild(_featureNode);
+        }
+    }
+    
+    _ring->clear();
+    _ring->push_back(osg::Vec3d(b.xMin(), b.yMax(), 0.0));
+    _ring->push_back(osg::Vec3d(b.xMax(), b.yMax(), 0.0));
+    _ring->push_back(osg::Vec3d(b.xMax(), b.yMin(), 0.0));
+    _ring->push_back(osg::Vec3d(b.xMin(), b.yMin(), 0.0));
+
+    _featureNode->setFeature(_feature);
 }

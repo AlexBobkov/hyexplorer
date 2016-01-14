@@ -7,6 +7,7 @@
 #include <osgEarth/Bounds>
 #include <osgEarth/MapNode>
 #include <osgEarthUtil/Sky>
+#include <osgEarthAnnotation/FeatureNode>
 
 #include <QStringList>
 #include <QNetworkAccessManager>
@@ -50,6 +51,7 @@ namespace portal
 
         const boost::optional<osgEarth::Bounds>& bounds() const { return _bounds; }
         void setBounds(const osgEarth::Bounds& b);
+        void drawBounds(const osgEarth::Bounds& b);
 
         void showScene(const ScenePtr& scene, int band, const ClipInfoPtr& clipInfo);
 
@@ -81,6 +83,10 @@ namespace portal
         osg::ref_ptr<osgEarth::ImageLayer> _sceneLayer;
 
         QNetworkAccessManager _networkManager;
+
+        osg::ref_ptr<osgEarth::Symbology::Ring> _ring;
+        osg::ref_ptr<osgEarth::Features::Feature> _feature;
+        osg::ref_ptr<osgEarth::Annotation::FeatureNode> _featureNode;
     };
 
     typedef std::shared_ptr<DataManager> DataManagerPtr;
