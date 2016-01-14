@@ -160,6 +160,8 @@ void ProcessingWidget::startImageCorrection()
 
         setEnabled(true);
     });
+
+    op->start();
 }
 
 void ProcessingWidget::showTableWithProcessedFiles()

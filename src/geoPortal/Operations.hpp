@@ -12,13 +12,35 @@
 
 namespace portal
 {
+    class DownloadOverviewOperation : public QObject
+    {
+        Q_OBJECT
+
+    public:
+        explicit DownloadOverviewOperation(const ScenePtr& scene, QNetworkAccessManager* manager, QObject* parent = 0);
+        virtual ~DownloadOverviewOperation() {}
+
+        void start();
+
+    signals:
+        void finished(const ScenePtr& scene, const QString& filepath);
+        void error(const QString& text);
+
+    private:
+        QNetworkAccessManager* _networkManager;
+
+        ScenePtr _scene;
+    };
+
     class DownloadSceneOperation : public QObject
     {
         Q_OBJECT
 
     public:
         explicit DownloadSceneOperation(const ScenePtr& scene, const ClipInfoPtr& clipInfo, QNetworkAccessManager* manager, QObject* parent = 0);
-        virtual ~DownloadSceneOperation();
+        virtual ~DownloadSceneOperation() {}
+
+        void start();
 
     signals:
         void finished(const ScenePtr& scene, const ClipInfoPtr& clipInfo);
@@ -44,7 +66,9 @@ namespace portal
 
     public:
         explicit ImportSceneOperation(const ScenePtr& scene, QNetworkAccessManager* manager, QObject* parent = 0);
-        virtual ~ImportSceneOperation();
+        virtual ~ImportSceneOperation() {}
+        
+        void start();
 
     signals:
         void finished(const ScenePtr& scene);
@@ -72,7 +96,9 @@ namespace portal
 
     public:
         explicit ProcessingOperation(const ScenePtr& scene, int band, const QString& toolFilepath, const QString& inputFilepath, const QString& outputFilepath, QNetworkAccessManager* manager, QObject* parent = 0);
-        virtual ~ProcessingOperation();
+        virtual ~ProcessingOperation() {}
+
+        void start();
 
     signals:
         void finished();

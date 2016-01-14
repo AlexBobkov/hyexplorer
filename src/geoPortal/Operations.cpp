@@ -11,11 +11,72 @@
 
 using namespace portal;
 
+DownloadOverviewOperation::DownloadOverviewOperation(const ScenePtr& scene, QNetworkAccessManager* manager, QObject* parent) :
+QObject(parent),
+_networkManager(manager),
+_scene(scene)
+{
+}
+
+void DownloadOverviewOperation::start()
+{
+    if (!_scene->hasOverview())
+    {
+        emit error(tr("Сцена не имеет обзора"));
+        return;
+    }
+
+    QString path = Storage::overviewPath(_scene, _scene->overviewName());
+
+    if (QFile::exists(path))
+    {
+        emit finished(_scene, path);
+        return;
+    }
+
+    QNetworkRequest request(QString("http://virtualglobe.ru/geoportal/%0/overviews/%1").arg(_scene->sensor()).arg(_scene->overviewName()));
+
+    QNetworkReply* reply = _networkManager->get(request);
+    connect(reply, &QNetworkReply::finished, this, [reply, this]()
+    {
+        reply->deleteLater();
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            emit error(tr("При получении обзора сцены %0 произошла ошибка %1 %2").arg(_scene->sceneId()).arg(reply->error()).arg(reply->errorString()));
+            return;
+        }
+
+        QByteArray data = reply->readAll();
+        if (data.isNull() || data.isEmpty())
+        {
+            emit error(tr("При скачивании обзора сцены %0 получен пустой ответ").arg(_scene->sceneId()));
+            return;
+        }
+
+        QString path = Storage::overviewPath(_scene, reply->url().fileName());
+
+        QFile localFile(path);
+        localFile.open(QIODevice::WriteOnly);
+        localFile.write(data);
+        localFile.close();
+
+        emit finished(_scene, path);
+    });
+}
+
+//====================================================================================
+
 DownloadSceneOperation::DownloadSceneOperation(const ScenePtr& scene, const ClipInfoPtr& clipInfo, QNetworkAccessManager* manager, QObject* parent) :
 QObject(parent),
 _networkManager(manager),
 _scene(scene),
 _clipInfo(clipInfo)
+{
+
+}
+
+void DownloadSceneOperation::start()
 {
     QUrl url;
     if (!_clipInfo->isFullSize())
@@ -87,11 +148,6 @@ _clipInfo(clipInfo)
         _downloadPathIndex = 0;
         downloadNextSceneBand();
     });
-}
-
-DownloadSceneOperation::~DownloadSceneOperation()
-{
-
 }
 
 void DownloadSceneOperation::downloadNextSceneBand()
@@ -167,7 +223,10 @@ _uploadReply(0),
 _progressDialog(0)
 {
     assert(!_scene->hasScene());
+}
 
+void ImportSceneOperation::start()
+{
     QNetworkRequest request(QString("https://ers.cr.usgs.gov/login/"));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
 
@@ -191,10 +250,6 @@ _progressDialog(0)
         QNetworkReply* redirectReply = _networkManager->get(request);
         connect(redirectReply, &QNetworkReply::finished, this, &ImportSceneOperation::downloadScene);
     });
-}
-
-ImportSceneOperation::~ImportSceneOperation()
-{
 }
 
 void ImportSceneOperation::downloadScene()
@@ -369,6 +424,10 @@ _inputFilepath(inputFilepath),
 _outputFilepath(outputFilepath),
 _process(0)
 {
+}
+
+void ProcessingOperation::start()
+{
     QString workingDirectory = QFileInfo(_toolFilepath).absolutePath();
 
     {
@@ -430,11 +489,6 @@ _process(0)
 
     qDebug() << "Start " << QFileInfo(_toolFilepath).fileName();
     qDebug() << "Working dir " << workingDirectory;
-}
-
-ProcessingOperation::~ProcessingOperation()
-{
-
 }
 
 void ProcessingOperation::uploadProccessedFile()

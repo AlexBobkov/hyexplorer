@@ -6,6 +6,7 @@
 #include "ProxyModel.hpp"
 #include "SettingsWidget.hpp"
 #include "SceneOperationsWidget.hpp"
+#include "Operations.hpp"
 
 #include <osgEarth/Terrain>
 #include <osgEarthAnnotation/CircleNode>
@@ -288,7 +289,6 @@ QMainWindow(),
 _progressBar(0),
 _scenesMainView(0),
 _scenesSecondView(0),
-_downloadManager(0),
 _mousePosLabel(0)
 {
     initUi();
@@ -581,10 +581,29 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     }
 
     //--------------------------------------------
+        
+    connect(this, &MainWindow::sceneSelected, this, [this](const ScenePtr& scene)
+    {
+        DownloadOverviewOperation* op = new DownloadOverviewOperation(scene, &_dataManager->networkAccessManager(), this);
+        
+        connect(op, &DownloadOverviewOperation::finished, this, [op, this](const ScenePtr& scene, const QString& filepath)
+        {
+            op->deleteLater();
+            op->setParent(0);
 
-    _downloadManager = new DownloadManager(_dataManager, this);
+            _dataManager->showOverview(scene, filepath);
+        });
 
-    connect(this, SIGNAL(sceneSelected(const ScenePtr&)), _downloadManager, SLOT(downloadOverview(const ScenePtr&)));
+        connect(op, &DownloadOverviewOperation::error, this, [op, this](const QString& text)
+        {
+            op->deleteLater();
+            op->setParent(0);
+
+            qDebug() << text;
+        });
+
+        op->start();
+    });
 }
 
 void MainWindow::setScene(const ScenePtr& scene)

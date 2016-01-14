@@ -14,7 +14,6 @@ SET(HEADER_FILES
 	ClipInfo.hpp
 	DataManager.hpp
 	DataSet.hpp
-	DownloadManager.hpp	
 	MainWindow.hpp
 	MetadataWidget.hpp
 	Operations.hpp
@@ -33,7 +32,6 @@ SET(SRC_FILES
 	ClipInfo.cpp
 	DataManager.cpp
 	DataSet.cpp
-	DownloadManager.cpp	
 	MainWindow.cpp
 	MetadataWidget.cpp
 	Operations.cpp

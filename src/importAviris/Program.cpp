@@ -200,7 +200,7 @@ int main(int argc, char** argv)
     QString queryStream;
     queryStream = "BEGIN;";
 
-    int counter = 0;
+    unsigned int counter = 0;
     for (; counter < scenesOrder.size(); counter++)
     {
         queryStream += sceneIdToQuery[scenesOrder[counter]];

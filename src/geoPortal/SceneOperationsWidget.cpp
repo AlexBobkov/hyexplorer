@@ -84,6 +84,8 @@ void SceneOperationsWidget::initUi()
 
             emit progressReset();
         });
+
+        op->start();
     });
 
     //---------------------------------------
@@ -172,6 +174,8 @@ void SceneOperationsWidget::initUi()
 
             setEnabled(true);
         });
+
+        op->start();
     });
     
     connect(_ui.openFolderButton, &QPushButton::clicked, this, [this]()

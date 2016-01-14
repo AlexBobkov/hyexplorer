@@ -3,7 +3,6 @@
 #include "ui_MainWindow.h"
 #include "Scene.hpp"
 #include "DataManager.hpp"
-#include "DownloadManager.hpp"
 
 #include <osgGA/GUIEventHandler>
 #include <osgViewer/View>
@@ -77,8 +76,6 @@ namespace portal
         
         QTableView* _scenesMainView;
         QTableView* _scenesSecondView;
-
-        DownloadManager* _downloadManager;
 
         QLabel* _mousePosLabel;
 
