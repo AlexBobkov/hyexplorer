@@ -63,7 +63,7 @@ void MainWindow::initUi()
         dialog.setLayout(vLayout);
 
         QString text = tr("<html><head/><body>"
-                          "<p align='center'><span style='font-size:12pt;'>Геопортал</span></p>"
+                          "<p align='center'><span style='font-size:12pt;'>Геопортал HyExplorer</span></p>"
                           "<p>Версия: %0. Время сборки %1 %2</p>"
                           "<p>Разработчики:<br/><a href='mailto:alexander.e.bobkov@gmail.com'>Александр Бобков</a><br/><a href='mailto:d-uchaev@ya.ru'>Денис Учаев</a></p>"
                           "<p>Разработка поддержана грантом РФФИ №13-05-12086</p>"
@@ -318,9 +318,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     {
         QMetaObject::invokeMethod(_ui.selectPointButton, "setChecked", Qt::QueuedConnection, Q_ARG(bool, false));
     });
-
-    _dataManager->addReportHandler(_centerSelectHandler);
-
+        
     connect(_ui.selectPointButton, &QPushButton::toggled, this, [this](bool b)
     {
         if (b)

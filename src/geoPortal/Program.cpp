@@ -33,9 +33,9 @@ int main(int argc, char** argv)
 {
     srand(time(NULL));
 
-    QCoreApplication::setOrganizationName("Bobkov");
-    QCoreApplication::setOrganizationDomain("alexander-bobkov.ru");
-    QCoreApplication::setApplicationName("GeoPortal");
+    QCoreApplication::setOrganizationName("MIIGAiK");
+    QCoreApplication::setOrganizationDomain("miigaik.ru");
+    QCoreApplication::setApplicationName("HyExplorer");
 
     QApplication app(argc, argv);
 
@@ -58,12 +58,12 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    //---------------------------------------------------
+
     int cores = osgEarth::Registry::capabilities().getNumProcessors();
     osg::DisplaySettings::instance()->setNumOfDatabaseThreadsHint(osg::clampAbove(cores, 2));
     osg::DisplaySettings::instance()->setNumOfHttpDatabaseThreadsHint(osg::clampAbove(cores / 2, 1));
-
-    MainWindow appWin;
-
+    
     osg::ref_ptr<osg::Node> node = osgDB::readNodeFile("data/globe.earth");
     osg::ref_ptr<osgEarth::MapNode> mapNode = osgEarth::MapNode::findMapNode(node);
 
@@ -86,6 +86,9 @@ int main(int argc, char** argv)
    
     DataManagerPtr dataManager = std::make_shared<DataManager>(viewer, mapNode);
 
+    //---------------------------------------------------
+
+    MainWindow appWin;
     appWin.setCentralWidget(viewerWidget);
     appWin.setDataManager(dataManager);
     
@@ -100,6 +103,5 @@ int main(int argc, char** argv)
 
     appWin.show();
 
-    int result = app.exec();
-    return result;
+    return app.exec();
 }
