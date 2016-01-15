@@ -31,29 +31,40 @@ namespace portal
         bool atmosphereVisibility() const;
         void setAtmosphereVisibility(bool b);
 
+        //-------------------
+
         void addReportHandler(osgGA::GUIEventHandler* handler);
         void removeReportHandler(osgGA::GUIEventHandler* handler);
 
         void setDefaultActionHandler(osgGA::GUIEventHandler* handler);
         void setActionHandler(osgGA::GUIEventHandler* handler);
 
+        //-------------------
+
         void setDataSet(const DataSetPtr& dataset);
+
+        void showOverview(const ScenePtr& scene, const QString& filepath);
+
+        void showScene(const ScenePtr& scene, int band, const ClipInfoPtr& clipInfo);
+        void zoomToScene(const ScenePtr& scene);
+
+        //-------------------
 
         void setCircleNode(const osgEarth::GeoPoint& center, double radius);
         void removeCircleNode();
 
-        void zoomToScene(const ScenePtr& scene);
-
+        //-------------------
+                
         const QStringList& coverageNames() const { return _coverageNames; }
         void setCoverage(const QString& coverageName);
 
-        void showOverview(const ScenePtr& scene, const QString& filepath);
+        //-------------------        
 
         const boost::optional<osgEarth::Bounds>& bounds() const { return _bounds; }
         void setBounds(const osgEarth::Bounds& b);
         void drawBounds(const osgEarth::Bounds& b);
 
-        void showScene(const ScenePtr& scene, int band, const ClipInfoPtr& clipInfo);
+        //-------------------
 
         QNetworkAccessManager& networkAccessManager() { return _networkManager; }
 
@@ -74,9 +85,7 @@ namespace portal
 
         osg::ref_ptr<osg::Node> _circleNode;
         osg::ref_ptr<osg::Node> _overlayNode;
-
-        boost::optional<osgEarth::Bounds> _bounds;
-
+        
         QStringList _coverageNames;
         std::map<QString, osgEarth::ImageLayerOptions> _coverageMap;
 
@@ -84,6 +93,7 @@ namespace portal
 
         QNetworkAccessManager _networkManager;
 
+        boost::optional<osgEarth::Bounds> _bounds;
         osg::ref_ptr<osgEarth::Symbology::Ring> _ring;
         osg::ref_ptr<osgEarth::Features::Feature> _feature;
         osg::ref_ptr<osgEarth::Annotation::FeatureNode> _featureNode;
