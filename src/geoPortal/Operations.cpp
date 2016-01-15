@@ -8,6 +8,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QApplication>
+#include <QTextCodec>
 
 using namespace portal;
 
@@ -435,7 +436,8 @@ void ProcessingOperation::start()
         data.open(QFile::WriteOnly);
 
         QTextStream out(&data);
-        out << _inputFilepath.toLocal8Bit() << "\n";
+        //out.setCodec(QTextCodec::codecForName("UTF-8"));
+        out << _inputFilepath << "\n";
 
         data.close();
     }
@@ -447,7 +449,8 @@ void ProcessingOperation::start()
         result.open(QFile::WriteOnly);
 
         QTextStream out(&result);
-        out << _outputFilepath.toLocal8Bit() << "\n";
+        //out.setCodec(QTextCodec::codecForName("UTF-8"));
+        out << _outputFilepath << "\n";
 
         result.close();
     }

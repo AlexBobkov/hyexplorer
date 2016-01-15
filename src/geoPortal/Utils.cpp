@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QDesktopServices>
 #include <QProcess>
+#include <QDebug>
 
 using namespace portal;
 
@@ -30,10 +31,10 @@ void portal::openExplorer(const QString& path)
 {
     if (QFileInfo(path).isDir())
     {
-        QDesktopServices::openUrl(QUrl(QString("file:///") + path.toLocal8Bit()));
+        QDesktopServices::openUrl(QUrl(QString("file:///") + path));
     }
     else
     {
-        QProcess::startDetached(QString("explorer.exe /select,\"%0\"").arg(QDir::toNativeSeparators(path.toLocal8Bit())));
+        QProcess::startDetached(QString("explorer.exe /select,\"%0\"").arg(QDir::toNativeSeparators(path)));
     }
 }
