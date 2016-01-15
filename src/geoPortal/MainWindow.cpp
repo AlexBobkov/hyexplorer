@@ -64,7 +64,7 @@ void MainWindow::initUi()
         dialog.setLayout(vLayout);
 
         QString text = tr("<html><head/><body>"
-                          "<p align='center'><span style='font-size:12pt;'>Геопортал HyExplorer</span></p>"
+                          "<p align='center'><span style='font-size:12pt;'>HyExplorer</span></p>"
                           "<p>Версия: %0. Время сборки %1 %2</p>"
                           "<p>Разработчики:<br/><a href='mailto:alexander.e.bobkov@gmail.com'>Александр Бобков</a><br/><a href='mailto:d-uchaev@ya.ru'>Денис Учаев</a></p>"
                           "<p>Разработка поддержана грантом РФФИ №13-05-12086</p>"
@@ -96,9 +96,14 @@ void MainWindow::initUi()
         widget->show();
     });
 
-    connect(_ui.metadataAction, &QAction::triggered, this, [this]()
+    connect(_ui.metadataHyperionAction, &QAction::triggered, this, [this]()
     {
         QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
+    });
+
+    connect(_ui.dataAvirisAction, &QAction::triggered, this, [this]()
+    {
+        QDesktopServices::openUrl(QUrl("http://aviris.jpl.nasa.gov/alt_locator/111013_AV_Download.readme"));
     });
 
     connect(_ui.doQueryButton, &QPushButton::clicked, this, &MainWindow::executeQuery);

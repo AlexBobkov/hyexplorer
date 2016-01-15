@@ -27,7 +27,8 @@
     <property name="title">
      <string>Справка</string>
     </property>
-    <addaction name="metadataAction"/>
+    <addaction name="metadataHyperionAction"/>
+    <addaction name="dataAvirisAction"/>
     <addaction name="aboutAction"/>
    </widget>
    <widget class="QMenu" name="toolsMenu">
@@ -925,14 +926,19 @@
     <string>О программе</string>
    </property>
   </action>
-  <action name="metadataAction">
+  <action name="metadataHyperionAction">
    <property name="text">
-    <string>Описание метаданных Гипериона</string>
+    <string>Описание метаданных Hyperion</string>
    </property>
   </action>
   <action name="settingsAction">
    <property name="text">
     <string>Настройки</string>
+   </property>
+  </action>
+  <action name="dataAvirisAction">
+   <property name="text">
+    <string>Описание данных AVIRIS</string>
    </property>
   </action>
  </widget>
