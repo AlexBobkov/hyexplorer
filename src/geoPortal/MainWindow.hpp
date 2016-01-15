@@ -28,12 +28,8 @@ namespace portal
         Q_OBJECT
 
     public:
-        explicit MainWindow();
+        explicit MainWindow(const DataManagerPtr& dataManager);
         virtual ~MainWindow();
-
-        void setDataManager(const DataManagerPtr& dataManager);
-
-        void setScene(const ScenePtr& scene);
 
     signals:
         void sceneSelected(const ScenePtr& scene);
@@ -41,22 +37,16 @@ namespace portal
     private slots:
         void executeQuery();
 
-        void selectScene(const QModelIndex& index);
-        void zoomToScene(const QModelIndex& index);
-
         void onMainTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
         void onSecondTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
 
         void finishLoadScenes();
-
-        void sensorChanged();
-
+        
     protected:
         void closeEvent(QCloseEvent* event) override;
 
     private:
         void initUi();
-        void loadScenes();
 
         Ui::MainWindow _ui;
 

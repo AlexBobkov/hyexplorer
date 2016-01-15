@@ -88,10 +88,9 @@ int main(int argc, char** argv)
 
     //---------------------------------------------------
 
-    MainWindow appWin;
+    MainWindow appWin(dataManager);
     appWin.setCentralWidget(viewerWidget);
-    appWin.setDataManager(dataManager);
-    
+        
     QSettings settings;    
     if (!settings.contains("StoragePath"))
     {

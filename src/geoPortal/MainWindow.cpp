@@ -32,8 +32,9 @@
 using namespace osgEarth;
 using namespace portal;
 
-MainWindow::MainWindow() :
+MainWindow::MainWindow(const DataManagerPtr& dataManager) :
 QMainWindow(),
+_dataManager(dataManager),
 _progressBar(0),
 _scenesMainView(0),
 _scenesSecondView(0),
@@ -100,10 +101,19 @@ void MainWindow::initUi()
         QDesktopServices::openUrl(QUrl("https://lta.cr.usgs.gov/EO1.html"));
     });
 
-    connect(_ui.doQueryButton, SIGNAL(clicked()), this, SLOT(executeQuery()));
+    connect(_ui.doQueryButton, &QPushButton::clicked, this, &MainWindow::executeQuery);
 
-    connect(_ui.hyperionCheckBox, SIGNAL(toggled(bool)), this, SLOT(sensorChanged()));
-    connect(_ui.avirisCheckBox, SIGNAL(toggled(bool)), this, SLOT(sensorChanged()));
+    auto sensorChangedCB = [this](bool)
+    {
+        _ui.commonGroupBox->setVisible(_ui.hyperionCheckBox->isChecked() || _ui.avirisCheckBox->isChecked());
+        _ui.hyperionGroupBox->setVisible(_ui.hyperionCheckBox->isChecked() && !_ui.avirisCheckBox->isChecked());
+        _ui.avirisGroupBox->setVisible(!_ui.hyperionCheckBox->isChecked() && _ui.avirisCheckBox->isChecked());
+    };
+
+    connect(_ui.hyperionCheckBox, &QCheckBox::toggled, this, sensorChangedCB);
+    connect(_ui.avirisCheckBox, &QCheckBox::toggled, this, sensorChangedCB);
+
+    sensorChangedCB(true);
 
     //--------------------------------------------
 
@@ -193,8 +203,6 @@ void MainWindow::initUi()
 
     //--
 
-    sensorChanged();
-
     _ui.toolsMenu->addAction(_ui.dockWidget->toggleViewAction());
 
     //--------------------------------------------
@@ -206,8 +214,16 @@ void MainWindow::initUi()
     _scenesMainView = new QTableView(this);
     scenesMainDock->setWidget(_scenesMainView);
 
-    connect(_scenesMainView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
-    connect(_scenesMainView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
+    connect(_scenesMainView, &QTableView::clicked, this, [this](const QModelIndex& index)
+    {
+        ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
+        emit sceneSelected(scene);
+    });
+    connect(_scenesMainView, &QTableView::doubleClicked, this, [this](const QModelIndex& index)
+    {
+        ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
+        _dataManager->zoomToScene(scene);
+    });
 
     _ui.toolsMenu->addAction(scenesMainDock->toggleViewAction());
 
@@ -221,8 +237,16 @@ void MainWindow::initUi()
     _scenesSecondView = new QTableView(this);
     scenesSecondDock->setWidget(_scenesSecondView);
 
-    connect(_scenesSecondView, SIGNAL(clicked(const QModelIndex&)), this, SLOT(selectScene(const QModelIndex&)));
-    connect(_scenesSecondView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(zoomToScene(const QModelIndex&)));
+    connect(_scenesSecondView, &QTableView::clicked, this, [this](const QModelIndex& index)
+    {
+        ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
+        emit sceneSelected(scene);
+    });
+    connect(_scenesSecondView, &QTableView::doubleClicked, this, [this](const QModelIndex& index)
+    {
+        ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
+        _dataManager->zoomToScene(scene);
+    });
 
     _ui.toolsMenu->addAction(scenesSecondDock->toggleViewAction());
 
@@ -239,20 +263,8 @@ void MainWindow::initUi()
 
     _mousePosLabel = new QLabel(tr("Указатель:"));
     statusBar()->addWidget(_mousePosLabel, 0);
-}
 
-void MainWindow::closeEvent(QCloseEvent* event)
-{
-    QSettings settings;
-    settings.setValue("MainWindow/geometry", saveGeometry());
-    //settings.setValue("MainWindow/windowState", saveState());
-
-    QMainWindow::closeEvent(event);
-}
-
-void MainWindow::setDataManager(const DataManagerPtr& dataManager)
-{
-    _dataManager = dataManager;
+    //--------------------------------------------
 
     _mouseReportHandler = new ReportMoveMouseHandler(
         _dataManager->mapNode(),
@@ -262,7 +274,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
         {
             _ui.longitudeSpinBox->setValue(point.x());
             _ui.latitudeSpinBox->setValue(point.y());
-        }        
+        }
 
         _mousePosLabel->setText(tr("Указатель: B: %1° L: %2°")
                                 .arg(point.y(), 0, 'f', 8)
@@ -294,7 +306,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
                 _scenesSecondView->selectionModel()->select(proxyModel->index(0, 0), QItemSelectionModel::ClearAndSelect);
 
                 ScenePtr scene = proxyModel->data(proxyModel->index(0, 0), Qt::UserRole).value<ScenePtr>();
-                setScene(scene);
+                emit sceneSelected(scene);
             }
         }
     },
@@ -318,7 +330,7 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     {
         QMetaObject::invokeMethod(_ui.selectPointButton, "setChecked", Qt::QueuedConnection, Q_ARG(bool, false));
     });
-        
+
     connect(_ui.selectPointButton, &QPushButton::toggled, this, [this](bool b)
     {
         if (b)
@@ -404,21 +416,13 @@ void MainWindow::setDataManager(const DataManagerPtr& dataManager)
     });
 }
 
-void MainWindow::setScene(const ScenePtr& scene)
+void MainWindow::closeEvent(QCloseEvent* event)
 {
-    if (!scene)
-    {
-        return;
-    }
+    QSettings settings;
+    settings.setValue("MainWindow/geometry", saveGeometry());
+    //settings.setValue("MainWindow/windowState", saveState());
 
-    emit sceneSelected(scene);
-}
-
-void MainWindow::sensorChanged()
-{
-    _ui.commonGroupBox->setVisible(_ui.hyperionCheckBox->isChecked() || _ui.avirisCheckBox->isChecked());
-    _ui.hyperionGroupBox->setVisible(_ui.hyperionCheckBox->isChecked() && !_ui.avirisCheckBox->isChecked());
-    _ui.avirisGroupBox->setVisible(!_ui.hyperionCheckBox->isChecked() && _ui.avirisCheckBox->isChecked());
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::executeQuery()
@@ -719,16 +723,14 @@ void MainWindow::executeQuery()
 
     //--
 
-    QtConcurrent::run(this, &MainWindow::loadScenes);
-}
+    QtConcurrent::run([this]()
+    {
+        _dataset->selectScenes();
 
-void MainWindow::loadScenes()
-{
-    _dataset->selectScenes();
+        _dataManager->setDataSet(_dataset);
 
-    _dataManager->setDataSet(_dataset);
-
-    QMetaObject::invokeMethod(this, "finishLoadScenes", Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, "finishLoadScenes", Qt::QueuedConnection);
+    });
 }
 
 void MainWindow::finishLoadScenes()
@@ -744,18 +746,6 @@ void MainWindow::finishLoadScenes()
 }
 
 //-------------------------------------------------------
-
-void MainWindow::selectScene(const QModelIndex& index)
-{
-    ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
-    setScene(scene);
-}
-
-void MainWindow::zoomToScene(const QModelIndex& index)
-{
-    ScenePtr scene = index.data(Qt::UserRole).value<ScenePtr>();
-    _dataManager->zoomToScene(scene);
-}
 
 void MainWindow::onMainTableViewSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
 {
