@@ -45,6 +45,9 @@ void SceneOperationsWidget::initUi()
 
     connect(_ui.importButton, &QPushButton::clicked, this, [this]()
     {
+        QMessageBox::information(qApp->activeWindow(), tr("Импорт сцены"), tr("Импорт сцены отключен из-за нехватки свободного места"));
+        return;
+
         _importing = true;
 
         _ui.importButton->setEnabled(!_importing);
