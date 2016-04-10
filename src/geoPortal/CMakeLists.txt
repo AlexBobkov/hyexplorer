@@ -1,4 +1,4 @@
-SET(APP_NAME GeoPortal)
+SET(APP_NAME HyExplorer)
 
 set(LIB_QT_UIS	
 	ui/MainWindow.ui
