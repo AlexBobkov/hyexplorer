@@ -99,7 +99,23 @@ void HyperionQuery::selectScenes(std::vector<ScenePtr>& scenes, const ProgressCa
         }
 
         QString polygonStr = scene->attrib("bounds").toString();
-        scene->setGeometry(GeometryUtils::geometryFromWKT(polygonStr.toUtf8().constData()));
+
+        osg::ref_ptr<Geometry> geometry = GeometryUtils::geometryFromWKT(polygonStr.toUtf8().constData());
+
+        //ѕровер€ем, пересекает ли полигон антимеридиан
+        Bounds bounds = geometry->getBounds();
+        if (bounds.width() > 180.0)
+        {
+            for (auto& p = geometry->begin(); p != geometry->end(); ++p)
+            {
+                if (p->x() < 0.0)
+                {
+                    p->x() += 360.0;
+                }
+            }
+        }
+
+        scene->setGeometry(geometry);
 
         scenes.push_back(scene);
     }
@@ -171,7 +187,23 @@ void AvirisQuery::selectScenes(std::vector<ScenePtr>& scenes, const ProgressCall
         }
 
         QString polygonStr = scene->attrib("bounds").toString();
-        scene->setGeometry(GeometryUtils::geometryFromWKT(polygonStr.toUtf8().constData()));
+
+        osg::ref_ptr<Geometry> geometry = GeometryUtils::geometryFromWKT(polygonStr.toUtf8().constData());
+
+        //ѕровер€ем, пересекает ли полигон антимеридиан
+        Bounds bounds = geometry->getBounds();
+        if (bounds.width() > 180.0)
+        {
+            for (auto& p = geometry->begin(); p != geometry->end(); ++p)
+            {
+                if (p->x() < 0.0)
+                {
+                    p->x() += 360.0;
+                }
+            }
+        }
+
+        scene->setGeometry(geometry);
 
         scenes.push_back(scene);        
     }
