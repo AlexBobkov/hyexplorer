@@ -7,7 +7,7 @@
 import psycopg2
 
 #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
-conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
+conn = psycopg2.connect("host=virtualglobe.ru dbname=GeoPortal user=portal password=PortalPass")
 
 cur = conn.cursor()
 cur.execute("select sceneid from scenes where hasoverview;")

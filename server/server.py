@@ -58,7 +58,7 @@ def overview(sensor, sceneid):
             file.save(os.path.join(PUBLIC_FOLDER + "/" + sensor + "/overviews", filename))
 
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
-            conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
+            conn = psycopg2.connect("host=virtualglobe.ru dbname=GeoPortal user=portal password=PortalPass")
 
             cur = conn.cursor()
             cur.execute("update scenes set hasoverview=TRUE, overviewname=%s where sceneid=%s;", (filename, sceneid))
@@ -87,7 +87,7 @@ def scene_upload(sceneid):
             file.save(os.path.join(SCENES_FOLDER, filename))
 
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
-            conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
+            conn = psycopg2.connect("host=virtualglobe.ru dbname=GeoPortal user=portal password=PortalPass")
 
             cur = conn.cursor()
             cur.execute("update scenes set hasscene=TRUE where sceneid=%s;", (sceneid,))
@@ -310,7 +310,7 @@ def processed_upload(sceneid):
             ####################
             
             #conn = psycopg2.connect("host=localhost dbname=GeoPortal user=user password=user")
-            conn = psycopg2.connect("host=178.62.140.44 dbname=GeoPortal user=portal password=PortalPass")
+            conn = psycopg2.connect("host=virtualglobe.ru dbname=GeoPortal user=portal password=PortalPass")
 
             cur = conn.cursor()
             cur.execute("insert into public.processedimages (processingtime, appname, sceneid, bounds, band, params, filename) values (%s, %s, %s, ST_GeographyFromText(%s), %s, %s, %s);", (processingtime, appname, sceneid, polystr, band, params, filename))
