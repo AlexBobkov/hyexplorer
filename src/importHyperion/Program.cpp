@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     db.setUserName("user");
     db.setPassword("user");
 #else
-    db.setHostName("178.62.140.44");
+    db.setHostName("virtualglobe.ru");
     db.setDatabaseName("GeoPortal");
     db.setUserName("portal");
     db.setPassword("PortalPass");

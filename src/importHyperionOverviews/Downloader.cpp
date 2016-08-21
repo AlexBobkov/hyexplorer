@@ -143,7 +143,7 @@ void Downloader::uploadOverview(const QString& sceneid, const QString& filepath)
 #if 0
     QNetworkRequest request(QString("http://localhost:5000/overview/%0").arg(sceneid));
 #elif 0
-    QNetworkRequest request(QString("http://178.62.140.44:5000/overview/%0").arg(sceneid));
+    QNetworkRequest request(QString("http://virtualglobe.ru:5000/overview/%0").arg(sceneid));
 #else
     QNetworkRequest request(QString("http://virtualglobe.ru/geoportalapi/overview/%0").arg(sceneid));
 #endif
