@@ -59,7 +59,7 @@ void DownloadOverviewOperation::start()
         return;
     }
 
-    QNetworkRequest request(QString("http://virtualglobe.ru/geoportal/%0/overviews/%1").arg(_scene->sensor()).arg(_scene->overviewName()));
+    QNetworkRequest request(QString("https://virtualglobe.ru/geoportal/%0/overviews/%1").arg(_scene->sensor()).arg(_scene->overviewName()));
 
     QNetworkReply* reply = _networkManager->get(request);
     connect(reply, &QNetworkReply::finished, this, [reply, this]()
@@ -110,7 +110,7 @@ void DownloadSceneOperation::start()
 
         osgEarth::Bounds b = *_clipInfo->bounds();
 
-        url = QString("http://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
+        url = QString("https://virtualglobe.ru/geoportalapi/sceneclip/%0/%1/%2?leftgeo=%3&upgeo=%4&rightgeo=%5&downgeo=%6")
             .arg(_scene->sceneId())
             .arg(_clipInfo->minBand())
             .arg(_clipInfo->maxBand())
@@ -123,7 +123,7 @@ void DownloadSceneOperation::start()
     {
         qDebug() << "Download full size";
 
-        url = QString("http://virtualglobe.ru/geoportalapi/scene/%0/%1/%2")
+        url = QString("https://virtualglobe.ru/geoportalapi/scene/%0/%1/%2")
             .arg(_scene->sceneId())
             .arg(_clipInfo->minBand())
             .arg(_clipInfo->maxBand());
@@ -398,7 +398,7 @@ void ImportSceneOperation::uploadScene()
 
     _downloadReply = 0;
 
-    QUrl url = QString("http://virtualglobe.ru/geoportalapi/scene/%0").arg(_scene->sceneId());
+    QUrl url = QString("https://virtualglobe.ru/geoportalapi/scene/%0").arg(_scene->sceneId());
 
     _uploadReply = _networkManager->post(QNetworkRequest(url), multiPart);
 
@@ -599,7 +599,7 @@ void ProcessingOperation::uploadProccessedFile()
 
     //------------------------------------
 
-    QUrl url = QString("http://virtualglobe.ru/geoportalapi/processed/%0").arg(_scene->sceneId());
+    QUrl url = QString("https://virtualglobe.ru/geoportalapi/processed/%0").arg(_scene->sceneId());
 
     QNetworkReply* reply = _networkManager->post(QNetworkRequest(url), multiPart);
     connect(reply, &QNetworkReply::finished, this, [reply, this]()
