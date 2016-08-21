@@ -1,69 +1,53 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.0.0)
 
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
-SET_PROPERTY(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake Targets")
+project(HyExplorer)
 
-PROJECT(GeoPortal)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake Targets")
 
-SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
+set(CMAKE_DEBUG_POSTFIX "d")
 
-INCLUDE(cotire)
-INCLUDE(MacroUtils)
+include(cotire)
 
-SET(CMAKE_AUTOMOC ON)
-SET(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-#######################################################################
-
-SET(GEOPORTAL_MAJOR_VERSION 0 CACHE STRING "Major version")
-SET(GEOPORTAL_MINOR_VERSION 3 CACHE STRING "Minor version")
-SET(GEOPORTAL_PATCH_VERSION 0 CACHE STRING "Patch version")
-
-CONFIGURE_FILE(
-	${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp.in
-	${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp
-)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 #######################################################################
 
-SET(Boost_USE_MULTITHREADED ON)
-SET(Boost_USE_STATIC_LIBS OFF)
-ADD_DEFINITIONS(-DBOOST_ALL_DYN_LINK)
-FIND_PACKAGE(Boost 1.55.0 COMPONENTS filesystem log log_setup locale regex date_time system thread chrono REQUIRED)	
+find_package(OSG REQUIRED)
+find_package(OsgEarth REQUIRED)
 
-#FIND_PACKAGE(GDAL)
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5OpenGL REQUIRED)
+find_package(Qt5Sql REQUIRED)
+find_package(Qt5Xml REQUIRED)
+find_package(Qt5Network REQUIRED)
+find_package(Qt5LinguistTools REQUIRED)
 
-FIND_PACKAGE(Qt5Core QUIET)
-FIND_PACKAGE(Qt5Widgets QUIET)
-FIND_PACKAGE(Qt5Gui QUIET)
-FIND_PACKAGE(Qt5OpenGL QUIET)
-FIND_PACKAGE(Qt5Sql QUIET)
-FIND_PACKAGE(Qt5Xml QUIET)
-FIND_PACKAGE(Qt5Network REQUIRED)
-FIND_PACKAGE(Qt5LinguistTools QUIET)
-SET(QT_INCLUDES ${Qt5Widgets_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Sql_INCLUDE_DIRS} ${Qt5Svg_INCLUDE_DIRS} ${Qt5Xml_INCLUDE_DIRS} ${Qt5Network_INCLUDE_DIRS})
+find_package(QtPropertyBrowser REQUIRED)
 
-FIND_PACKAGE(PropertyBrowser)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+find_package(Boost 1.55.0 COMPONENTS filesystem log log_setup locale regex date_time system thread chrono REQUIRED) 
 
-FIND_PACKAGE(OSG REQUIRED)
-FIND_PACKAGE(OsgEarth REQUIRED)
+#######################################################################
 
-SET(CMAKE_INCLUDE_PATH CACHE STRING "Put your additional include dir here...")
-SET(CMAKE_LIBRARY_PATH CACHE STRING "Put your additional lib dir here...")
+set(GEOPORTAL_MAJOR_VERSION 0 CACHE STRING "Major version")
+set(GEOPORTAL_MINOR_VERSION 3 CACHE STRING "Minor version")
+set(GEOPORTAL_PATCH_VERSION 0 CACHE STRING "Patch version")
 
-SET(CMAKE_DEBUG_POSTFIX "d")
-
-INCLUDE_DIRECTORIES(
-	${PROJECT_SOURCE_DIR}/include
-	${CMAKE_INCLUDE_PATH}
+configure_file(
+    ${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp.in
+    ${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp
 )
 
-LINK_DIRECTORIES(
-	${CMAKE_LIBRARY_PATH}
-)
+#######################################################################
 
-ADD_SUBDIRECTORY(src/importAviris)
-ADD_SUBDIRECTORY(src/importAvirisOverviews)
-ADD_SUBDIRECTORY(src/importHyperion)
-ADD_SUBDIRECTORY(src/importHyperionOverviews)
-ADD_SUBDIRECTORY(src/geoPortal)
+add_subdirectory(src/importAviris)
+add_subdirectory(src/importAvirisOverviews)
+add_subdirectory(src/importHyperion)
+add_subdirectory(src/importHyperionOverviews)
+add_subdirectory(src/geoPortal)

@@ -1,90 +1,74 @@
-SET(APP_NAME HyExplorer)
-
-set(LIB_QT_UIS	
-	ui/MainWindow.ui
-	ui/ProcessingWidget.ui
-	ui/SceneOperationsWidget.ui
-	ui/SettingsWidget.ui
+set(LIB_QT_UIS
+    ui/MainWindow.ui
+    ui/ProcessingWidget.ui
+    ui/SceneOperationsWidget.ui
+    ui/SettingsWidget.ui
 )
 
-QT5_WRAP_UI(LIB_UI_HDRS ${LIB_QT_UIS})
+qt5_wrap_ui(LIB_UI_HDRS ${LIB_QT_UIS})
 
-SET(HEADER_FILES
-	${LIB_UI_HDRS}
-	ClipInfo.hpp
-	DataManager.hpp
-	DataSet.hpp
-	EventHandlers.hpp
-	MainWindow.hpp
-	MetadataWidget.hpp
-	Operations.hpp
-	ProcessingWidget.hpp
-	ProxyModel.hpp
-	Scene.hpp
-	SceneOperationsWidget.hpp
-	SensorQuery.hpp
-	SettingsWidget.hpp
-	Storage.hpp
-	TableModel.hpp
-	Utils.hpp
-	Version.hpp
+set(HEADER_FILES
+    ${LIB_UI_HDRS}
+    ClipInfo.hpp
+    DataManager.hpp
+    DataSet.hpp
+    EventHandlers.hpp
+    MainWindow.hpp
+    MetadataWidget.hpp
+    Operations.hpp
+    ProcessingWidget.hpp
+    ProxyModel.hpp
+    Scene.hpp
+    SceneOperationsWidget.hpp
+    SensorQuery.hpp
+    SettingsWidget.hpp
+    Storage.hpp
+    TableModel.hpp
+    Utils.hpp
+    Version.hpp
 )
 
-SET(SRC_FILES
-	ClipInfo.cpp
-	DataManager.cpp
-	DataSet.cpp
-	EventHandlers.cpp
-	MainWindow.cpp
-	MetadataWidget.cpp
-	Operations.cpp
-	ProcessingWidget.cpp
-	Program.cpp
-	ProxyModel.cpp
-	Scene.cpp
-	SceneOperationsWidget.cpp
-	SensorQuery.cpp
-	SettingsWidget.cpp
-	Storage.cpp
-	TableModel.cpp
-	Utils.cpp
-	Version.cpp
+set(SRC_FILES
+    ClipInfo.cpp
+    DataManager.cpp
+    DataSet.cpp
+    EventHandlers.cpp
+    MainWindow.cpp
+    MetadataWidget.cpp
+    Operations.cpp
+    ProcessingWidget.cpp
+    Program.cpp
+    ProxyModel.cpp
+    Scene.cpp
+    SceneOperationsWidget.cpp
+    SensorQuery.cpp
+    SettingsWidget.cpp
+    Storage.cpp
+    TableModel.cpp
+    Utils.cpp
+    Version.cpp
 )
 
-INCLUDE_DIRECTORIES(
-	${PROJECT_SOURCE_DIR}/include
-	${CMAKE_INCLUDE_PATH}	
-	${GDAL_INCLUDE_DIR}
-	${Boost_INCLUDE_DIRS}
-	${QT_INCLUDES}
-	${OSG_INCLUDE_DIRS}	
-	${OSGEARTH_INCLUDE_DIRS}
-	${QT_PROPERTYBROWSER_INCLUDE_DIR}
+add_executable(HyExplorer ${SRC_FILES} ${HEADER_FILES})
+
+target_compile_definitions(HyExplorer PRIVATE BOOST_ALL_DYN_LINK)
+
+target_include_directories(HyExplorer PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${Boost_INCLUDE_DIRS}
+    ${OSG_INCLUDE_DIRS}
+    ${OSGEARTH_INCLUDE_DIRS}
 )
 
-ADD_EXECUTABLE(${APP_NAME} ${SRC_FILES} ${HEADER_FILES})
-
-TARGET_LINK_LIBRARIES(${APP_NAME}	
-	${OSGEARTH_LIBRARIES}
-	${QT_PROPERTYBROWSER_LIBRARIES}
+target_link_libraries(HyExplorer
+    ${OSG_LIBRARIES}
+    ${OSGEARTH_LIBRARIES}
+    ${Boost_LIBRARIES}
+    Qt5::Widgets
+    Qt5::OpenGL
+    Qt5::Network
+    Qt5::Sql
+    Qt::QtPropertyBrowser
 )
 
-LINK_WITH_VARIABLES(${APP_NAME}
-	OPENTHREADS_LIBRARY
-	OSG_LIBRARY
-	OSGUTIL_LIBRARY
-	OSGDB_LIBRARY
-	OSGVIEWER_LIBRARY
-	OSGTEXT_LIBRARY
-	OSGPARTICLE_LIBRARY
-	OSGGA_LIBRARY
-	OSGVOLUME_LIBRARY
-	OSGQT_LIBRARY
-	GDAL_LIBRARY
-)
-
-IF(Qt5Widgets_FOUND)
-    QT5_USE_MODULES(${APP_NAME} Gui Widgets OpenGL Sql Xml Network)
-ENDIF(Qt5Widgets_FOUND)
-
-INSTALL(TARGETS ${APP_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS HyExplorer RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})

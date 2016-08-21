@@ -1,26 +1,24 @@
-SET(APP_NAME ImportAvirisOverviews)
-
-SET(HEADER_FILES
-	Downloader.hpp
+set(HEADER_FILES
+    Downloader.hpp
 )
 
-SET(SRC_FILES	
-	Downloader.cpp
-	Program.cpp
+set(SRC_FILES
+    Downloader.cpp
+    Program.cpp
 )
 
-INCLUDE_DIRECTORIES(
-	${PROJECT_SOURCE_DIR}/include
-	${CMAKE_INCLUDE_PATH}	
-	${GDAL_INCLUDE_DIR}
-	${Boost_INCLUDE_DIRS}
-	${QT_INCLUDES}
+add_executable(ImportAvirisOverviews ${SRC_FILES} ${HEADER_FILES})
+
+target_include_directories(ImportAvirisOverviews PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${Boost_INCLUDE_DIRS}
 )
 
-ADD_EXECUTABLE(${APP_NAME} ${SRC_FILES} ${HEADER_FILES})
+target_link_libraries(ImportAvirisOverviews
+    ${Boost_LIBRARIES}
+    Qt5::Widgets
+    Qt5::Sql
+    Qt5::Network
+)
 
-IF(Qt5Widgets_FOUND)
-    QT5_USE_MODULES(${APP_NAME} Gui Widgets OpenGL Sql Xml Network)
-ENDIF(Qt5Widgets_FOUND)
-
-INSTALL(TARGETS ${APP_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS ImportAvirisOverviews RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})

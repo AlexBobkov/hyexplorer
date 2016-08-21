@@ -26,10 +26,8 @@
 
 #include "Scene.hpp"
 
-#define QT_QTPROPERTYBROWSER_IMPORT
-#include <QtVariantPropertyManager>
-#include <QtVariantEditorFactory>
-#include <QtTreePropertyBrowser>
+#include <qtvariantproperty.h>
+#include <qttreepropertybrowser.h>
 
 namespace portal
 {

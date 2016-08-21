@@ -1,24 +1,21 @@
-SET(APP_NAME ImportHyperion)
-
-SET(HEADER_FILES	
+set(HEADER_FILES
 )
 
-SET(SRC_FILES	
-	Program.cpp
+set(SRC_FILES
+    Program.cpp
 )
 
-INCLUDE_DIRECTORIES(
-	${PROJECT_SOURCE_DIR}/include
-	${CMAKE_INCLUDE_PATH}	
-	${GDAL_INCLUDE_DIR}
-	${Boost_INCLUDE_DIRS}
-	${QT_INCLUDES}
+add_executable(ImportHyperion ${SRC_FILES} ${HEADER_FILES})
+
+target_include_directories(ImportHyperion PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${Boost_INCLUDE_DIRS}
 )
 
-ADD_EXECUTABLE(${APP_NAME} ${SRC_FILES} ${HEADER_FILES})
+target_link_libraries(ImportHyperion
+    ${Boost_LIBRARIES}
+    Qt5::Widgets
+    Qt5::Sql
+)
 
-IF(Qt5Widgets_FOUND)
-    QT5_USE_MODULES(${APP_NAME} Gui Widgets OpenGL Sql Xml)
-ENDIF(Qt5Widgets_FOUND)
-
-INSTALL(TARGETS ${APP_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS ImportHyperion RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})

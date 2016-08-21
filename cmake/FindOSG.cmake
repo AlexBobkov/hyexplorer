@@ -10,7 +10,7 @@
 # directory, and source directory, respectively
 # OSGDIR or OSG_SOURCE_DIR: osg source directory, typically OpenSceneGraph
 # OSG_DIR or OSG_BUILD_DIR: osg build directory, place in which you've
-#    built osg via cmake 
+#    built osg via cmake
 
 # Header files are presumed to be included like
 # #include <osg/PositionAttitudeTransform>
@@ -37,7 +37,7 @@ FIND_PATH( ${THIS_OSG_INCLUDE_DIR} ${THIS_OSG_INCLUDE_FILE}
         /Library/Frameworks
     PATH_SUFFIXES
         /include/
-		/inc/
+        /inc/
 )
 
 ENDMACRO( FIND_OSG_INCLUDE THIS_OSG_INCLUDE_DIR THIS_OSG_INCLUDE_FILE )
@@ -75,8 +75,8 @@ FIND_LIBRARY(${MYLIBRARY}
         /build/lib64/
         /Build/lib/
         /Build/lib64/
-		/win/32/debug/lib/
-		/win/32/release/lib/		
+        /win/32/debug/lib/
+        /win/32/release/lib/
      )
 
 ENDMACRO(FIND_OSG_LIBRARY LIBRARY LIBRARYNAME)
@@ -137,6 +137,48 @@ IF( OSG_LIBRARY AND OSG_INCLUDE_DIR )
     SET( OSG_FOUND "YES" )
     SET( OSG_INCLUDE_DIRS ${OSG_INCLUDE_DIR} ${OSG_GEN_INCLUDE_DIR} )
     GET_FILENAME_COMPONENT( OSG_LIBRARIES_DIR ${OSG_LIBRARY} PATH )
+
+    IF(OSG_LIBRARY_DEBUG)
+        SET(OSG_LIBRARIES
+            optimized ${OSG_LIBRARY} debug ${OSG_LIBRARY_DEBUG}
+            optimized ${OSGUTIL_LIBRARY} debug ${OSGUTIL_LIBRARY_DEBUG}
+            optimized ${OSGDB_LIBRARY} debug ${OSGDB_LIBRARY_DEBUG}
+            optimized ${OSGTEXT_LIBRARY} debug ${OSGTEXT_LIBRARY_DEBUG}
+            optimized ${OSGTERRAIN_LIBRARY} debug ${OSGTERRAIN_LIBRARY_DEBUG}
+            optimized ${OSGFX_LIBRARY} debug ${OSGFX_LIBRARY_DEBUG}
+            optimized ${OSGPARTICLE_LIBRARY} debug ${OSGPARTICLE_LIBRARY_DEBUG}
+            optimized ${OSGSIM_LIBRARY} debug ${OSGSIM_LIBRARY_DEBUG}
+            optimized ${OSGVIEWER_LIBRARY} debug ${OSGVIEWER_LIBRARY_DEBUG}
+            optimized ${OSGGA_LIBRARY} debug ${OSGGA_LIBRARY_DEBUG}
+            optimized ${OSGWIDGET_LIBRARY} debug ${OSGWIDGET_LIBRARY_DEBUG}
+            optimized ${OSGSHADOW_LIBRARY} debug ${OSGSHADOW_LIBRARY_DEBUG}
+            optimized ${OSGMANIPULATOR_LIBRARY} debug ${OSGMANIPULATOR_LIBRARY_DEBUG}
+            optimized ${OSGQT_LIBRARY} debug ${OSGQT_LIBRARY_DEBUG}
+            optimized ${OSGVOLUME_LIBRARY} debug ${OSGVOLUME_LIBRARY_DEBUG}
+            optimized ${OSGANIMATION_LIBRARY} debug ${OSGANIMATION_LIBRARY_DEBUG}
+            optimized ${OPENTHREADS_LIBRARY} debug ${OPENTHREADS_LIBRARY_DEBUG}
+        )
+    ELSE(OSG_LIBRARY_DEBUG)
+        SET(OSG_LIBRARIES
+            ${OSG_LIBRARY}
+            ${OSGUTIL_LIBRARY}
+            ${OSGDB_LIBRARY}
+            ${OSGTEXT_LIBRARY}
+            ${OSGTERRAIN_LIBRARY}
+            ${OSGFX_LIBRARY}
+            ${OSGPARTICLE_LIBRARY}
+            ${OSGSIM_LIBRARY}
+            ${OSGVIEWER_LIBRARY}
+            ${OSGGA_LIBRARY}
+            ${OSGWIDGET_LIBRARY}
+            ${OSGSHADOW_LIBRARY}
+            ${OSGMANIPULATOR_LIBRARY}
+            ${OSGQT_LIBRARY}
+            ${OSGVOLUME_LIBRARY}
+            ${OSGANIMATION_LIBRARY}
+            ${OPENTHREADS_LIBRARY}
+        )
+    ENDIF(OSG_LIBRARY_DEBUG)
 ENDIF( OSG_LIBRARY AND OSG_INCLUDE_DIR )
 
 
