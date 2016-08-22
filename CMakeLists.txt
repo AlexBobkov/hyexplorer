@@ -29,15 +29,13 @@ find_package(Qt5LinguistTools REQUIRED)
 
 find_package(QtPropertyBrowser REQUIRED)
 
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
-find_package(Boost 1.55.0 COMPONENTS filesystem log log_setup locale regex date_time system thread chrono REQUIRED) 
+find_package(Boost 1.55.0 REQUIRED)
 
 #######################################################################
 
 set(GEOPORTAL_MAJOR_VERSION 0 CACHE STRING "Major version")
 set(GEOPORTAL_MINOR_VERSION 3 CACHE STRING "Minor version")
-set(GEOPORTAL_PATCH_VERSION 0 CACHE STRING "Patch version")
+set(GEOPORTAL_PATCH_VERSION 1 CACHE STRING "Patch version")
 
 configure_file(
     ${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp.in
