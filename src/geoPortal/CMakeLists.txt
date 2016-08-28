@@ -46,7 +46,6 @@ set(SRC_FILES
     Storage.cpp
     TableModel.cpp
     Utils.cpp
-    Version.cpp
 )
 
 add_executable(HyExplorer ${SRC_FILES} ${HEADER_FILES})

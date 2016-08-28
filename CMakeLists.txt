@@ -38,8 +38,8 @@ set(GEOPORTAL_MINOR_VERSION 3 CACHE STRING "Minor version")
 set(GEOPORTAL_PATCH_VERSION 1 CACHE STRING "Patch version")
 
 configure_file(
-    ${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp.in
-    ${PROJECT_SOURCE_DIR}/src/geoPortal/Version.cpp
+    ${PROJECT_SOURCE_DIR}/src/geoPortal/Version.hpp.in
+    ${PROJECT_SOURCE_DIR}/src/geoPortal/Version.hpp
 )
 
 #######################################################################

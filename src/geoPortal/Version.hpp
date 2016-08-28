@@ -24,18 +24,20 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+
 namespace portal
 {
     /**
-    Описании версии геопортала
+    Описании версии HyExplorer
     */
     struct Version
     {
-        static unsigned int majorVersion;
-        static unsigned int minorVersion;
-        static unsigned int patchVersion;
+        static constexpr uint32_t majorVersion = 0;
+        static constexpr uint32_t minorVersion = 3;
+        static constexpr uint32_t patchVersion = 1;
 
-        static const char* str;
+        static std::string str() { return "0.3.1"; }
     };
-
 }

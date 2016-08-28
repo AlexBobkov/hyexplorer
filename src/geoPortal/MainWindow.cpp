@@ -92,7 +92,7 @@ void MainWindow::initUi()
                           "<p>Версия: %0. Время сборки %1 %2</p>"
                           "<p>Разработчики:<br/><a href='mailto:alexander.e.bobkov@gmail.com'>Александр Бобков</a><br/><a href='mailto:d-uchaev@ya.ru'>Денис Учаев</a></p>"
                           "<p>Разработка поддержана грантом РФФИ №13-05-12086</p>"
-                          "</body></html>").arg(Version::str).arg(__DATE__).arg(__TIME__);
+                          "</body></html>").arg(QString::fromStdString(Version::str())).arg(__DATE__).arg(__TIME__);
 
         QLabel* aboutLabel = new QLabel(text);
         aboutLabel->setTextFormat(Qt::RichText);
