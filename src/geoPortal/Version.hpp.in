@@ -30,7 +30,7 @@
 namespace portal
 {
     /**
-    Описании версии HyExplorer
+    Описание версии HyExplorer
     */
     struct Version
     {
