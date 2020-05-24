@@ -1,0 +1,15 @@
+[Unit]
+Description=Geoportal uWSGI app
+Requires=network.target
+
+[Service]
+ExecStart=/usr/bin/uwsgi --ini /opt/hyexplorer/hyexplorer/server/geoportal.ini
+User=www-data
+Group=www-data
+Restart=on-failure
+KillSignal=SIGQUIT
+Type=notify
+
+[Install]
+WantedBy=multi-user.target
+

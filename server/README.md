@@ -1,11 +1,11 @@
 Инструкция по установке серверной части HyExplorer
 ==================================================
 
-Протестировано на Федоре 24.
+Протестировано на Ubuntu 20.04
 
 Установить Mercurial:
 
-    sudo dnf install mercurial
+    sudo apt-get install mercurial
 
 Клонировать репозиторий:
 
@@ -15,9 +15,8 @@
 
 Установить дополнительные пакеты:
 
-    sudo dnf install python3-flask
-    sudo dnf install python3-psycopg2
-    sudo dnf install gdal-python3
+    sudo apt-get install build-essential
+    sudo apt-get install python3-flask python3-psycopg2 python3-gdal
 
 Чтобы проверить работу сервера, можно запустить временный веб-сервер:
 
@@ -25,39 +24,41 @@
     
 Веб-сервер будет поднят на порту 5000, поэтому нужно его открыть в файерволе:
 
-    sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
+    sudo ufw allow 5000/tcp
     
 Проверочная ссылка: http://virtualglobe.ru:5000/overview/Hyperion/EO10010012012182110KF_SGS_01
 
-Но для полноценной работы лучше настроить веб-сервер Апач.
+Но для полноценной работы лучше настроить веб-сервер nginx.
 
-Сначала установить mod_wsgi:
-    
-    sudo dnf install python3-mod_wsgi
-    
-В конфиге Апача внутри секции VirtualHost дописать:
+Вписать в конфиг nginx секции для статических файлов и API:
 
-    WSGIDaemonProcess geoportal user=alex group=alex threads=5
-    WSGIScriptAlias /geoportalapi /opt/hyexplorer/hyexplorer/server/geoportal.wsgi
-    
-    <Directory "/opt/hyexplorer/hyexplorer/server">
-        WSGIProcessGroup geoportal
-        WSGIApplicationGroup %{GLOBAL}
-        WSGIScriptReloading On
-        Require all granted
-    </Directory>
-    
-Здесь указываются имя пользователя (alex), путь к файлу .wsgi и папка со скриптами.
+    location /geoportal/ {
+        root /opt/www;
+        try_files $uri $uri/ =404;
+    }
 
-Сделать рестарт Апача:
+    location = /geoportalapi { rewrite ^ /geoportalapi/; }
+    location /geoportalapi { try_files $uri @geoportalapi; }
+    location @geoportalapi {
+        include uwsgi_params;
+        uwsgi_pass unix:/tmp/geoportal.sock;
+    }
 
-    sudo systemctl restart httpd
-    
-Изменить права доступа SELinux для файла с логами:
+Порестартить nginx:
 
-    cd /opt/hyexplorer/hyexplorer/server
-    chcon -t httpd_log_t pylog.txt
+    sudo systemctl restart nginx
+
+Проверить работоспособность можно, если запустить uwsgi командой:
+
+    sudo -u www-data uwsgi geoportal.ini
     
+Далее нужно настроить службу:
+
+    sudo cp geoportal.service /etc/systemd/system/
+    sudo systemctl enable geoportal
+    sudo systemctl start geoportal
+
 Проверочная ссылка: https://virtualglobe.ru/geoportalapi/overview/Hyperion/EO10010012012182110KF_SGS_01
     
-Справка: http://flask-russian-docs.readthedocs.io/ru/latest/deploying/mod_wsgi.html
+Flask: https://flask.palletsprojects.com/en/1.1.x/deploying/uwsgi/
+UWSGI: https://uwsgi-docs.readthedocs.io/en/latest/index.html
