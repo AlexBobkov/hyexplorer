@@ -11,7 +11,7 @@
 
     mkdir /opt/hyexplorer
     cd /opt/hyexplorer
-    hg clone https://bitbucket.org/AlexBobkov/hyexplorer hyexplorer
+    git clone https://github.com/AlexBobkov/hyexplorer.git hyexplorer
 
 Установить дополнительные пакеты:
 
